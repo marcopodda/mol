@@ -90,7 +90,6 @@ class Model(nn.Module):
         h, vae_loss = self.vae(h)
 
         x = self.embedder(batch.inseq)
-        x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
         output, hidden = self.decoder(x, h)
         return output, vae_loss
@@ -104,7 +103,6 @@ class Model(nn.Module):
         h, vae_loss = self.vae(h)
 
         x = self.embedder(batch.inseq)
-        x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
         batch_size, seq_length, dim_embed = x.size()
         outputs = []
@@ -112,7 +110,7 @@ class Model(nn.Module):
         for i in range(seq_length):
             inp = x[:, i, :].unsqueeze(1)
             ctx = torch.zeros_like(inp, device=inp.device) if i == 0 else ctx
-            out, h, ctx, w = self.decoder.forward_attention(inp, h, ctx, enc_outputs)
+            out, h, ctx, w = self.decoder.forward_att(inp, h, ctx, enc_outputs)
             outputs.append(out.unsqueeze(1))
 
         outputs = torch.cat(outputs, dim=1)
