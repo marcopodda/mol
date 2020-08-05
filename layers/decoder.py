@@ -10,14 +10,11 @@ from layers.misc import WeightDropGRU
 
 
 class Attention(nn.Module):
-    def __init__(self, method, dim_hidden, max_length):
+    def __init__(self, dim_hidden, max_length):
         super().__init__()
 
-        self.method = method
         self.dim_hidden = dim_hidden
-
-        if self.method == 'general':
-            self.attn = nn.Linear(dim_hidden, dim_hidden)
+        self.attn = nn.Linear(dim_hidden, dim_hidden)
 
     def forward(self, hidden, encoder_outputs):
         attn_energies, seq_len = [], encoder_outputs.size(1)
@@ -32,16 +29,10 @@ class Attention(nn.Module):
         return F.softmax(attn_energies, dim=-1).unsqueeze(1)
 
     def score(self, hidden, encoder_output):
-        if self.method == 'dot':
-            encoder_output = encoder_output.view(*hidden.size())
-            encoder_output = encoder_output.transpose(2, 1)
-            energy = torch.bmm(hidden, encoder_output)
-
-        elif self.method == 'general':
-            energy = self.attn(encoder_output)
-            energy = energy.view(*hidden.size())
-            energy = energy.transpose(2, 1)
-            energy = torch.bmm(hidden, energy)
+        energy = self.attn(encoder_output)
+        energy = energy.view(*hidden.size())
+        energy = energy.transpose(2, 1)
+        energy = torch.bmm(hidden, energy)
 
         return energy.squeeze(1)
 
@@ -64,7 +55,7 @@ class Decoder(nn.Module):
                                  weight_dropout=rnn_dropout,
                                  dropout=rnn_dropout)
 
-        self.attention = Attention("general", dim_hidden=dim_hidden, max_length=max_length)
+        self.attention = Attention(dim_hidden=dim_hidden, max_length=max_length)
         self.proj = nn.Linear(dim_hidden * 2, dim_hidden)
         self.out = nn.Linear(dim_hidden, dim_output)
 

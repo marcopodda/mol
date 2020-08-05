@@ -73,7 +73,7 @@ class TrainModel(pl.LightningModule):
         return {"log": logs, "progress_bar": logs}
 
     def loss(self, outputs, targets, vae_loss):
-        loss = F.cross_entropy(outputs, targets, ignore_index=0)
+        loss = F.cross_entropy(outputs, targets, ignore_index=Tokens.PAD.value)
         return loss + vae_loss
 
 
