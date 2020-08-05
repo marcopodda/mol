@@ -84,6 +84,7 @@ def run(args):
     logger = TensorBoardLogger(save_dir="", version="generation", name=output_dir.stem)
     trainer = pl.Trainer(
         max_epochs=hparams.max_epochs,
+        progress_bar_refresh_rate=30,
         gradient_clip_val=hparams.clip_norm,
         fast_dev_run=args.debug,
         logger=logger,
