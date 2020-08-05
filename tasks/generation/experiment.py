@@ -15,8 +15,8 @@ from core.datasets.utils import to_batch
 from core.utils.serialization import load_yaml
 from core.utils.vocab import Tokens
 from core.utils.scores import accuracy
-from tasks.autoencoding.dataset import MolecularDataset
-from tasks.autoencoding.loader import MolecularDataLoader
+from tasks.generation.dataset import MolecularDataset
+from tasks.generation.loader import MolecularDataLoader
 from .model import Model
 
 
@@ -82,7 +82,7 @@ def run(args):
     output_dir = Path(args.output_dir)
     gpu = args.gpu if torch.cuda.is_available() else None
     hparams = Namespace(**load_yaml(args.config_file))
-    logger = TensorBoardLogger(save_dir="", version="autoencoding", name=output_dir.stem)
+    logger = TensorBoardLogger(save_dir="", version="generation", name=output_dir.stem)
     trainer = pl.Trainer(
         max_epochs=hparams.max_epochs,
         gradient_clip_val=hparams.clip_norm,
