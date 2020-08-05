@@ -43,6 +43,6 @@ class MolecularDataLoader:
             dataset=dataset,
             collate_fn=lambda b: self.collate(b),
             batch_size=self.hparams.batch_size,
-            shuffle=True,
+            shuffle=False,
             pin_memory=True,
             num_workers=self.hparams.num_workers)
