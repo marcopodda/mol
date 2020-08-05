@@ -58,7 +58,7 @@ class TrainModel(pl.LightningModule):
         return {"loss": loss}
     
     def training_epoch_end(self, outputs):
-        train_loss_mean = torch.stack([x['train_loss'] for x in outputs]).mean()
+        train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
         logs = {"train_loss": train_loss_mean}
         return {"log": logs, "progress_bar": logs}
 
