@@ -78,7 +78,7 @@ class TrainModel(pl.LightningModule):
         return loss + vae_loss
 
 
-def run_train(args):
+def run(args):
     output_dir = Path(args.output_dir)
     gpu = args.gpu if torch.cuda.is_available() else None
     hparams = Namespace(**load_yaml(args.config_file))

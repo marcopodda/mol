@@ -86,7 +86,7 @@ def save_embeddings(hparams, model, vocab, filename, device="cpu"):
     torch.save(embeddings, filename)
 
 
-def run_train(args):
+def run(args):
     output_dir = Path(args.output_dir)
     embeddings_dir = get_or_create_dir(output_dir / "embeddings")
     dataset_name = args.dataset_name

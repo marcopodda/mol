@@ -1,8 +1,14 @@
-from tasks.autoencoding.experiment import run_train as autoencode
-from tasks.pretraining.experiment import run_train as pretrain
-# from tasks.translation.experiment import run_train as translate
+from tasks.pretraining.experiment import run as pretrain
+from tasks.autoencoding.experiment import run as autoencode
+from tasks.generation.experiment import run as generate
+from tasks.optimization.experiment import run as optimize
+from tasks.translation.experiment import run as translate
+
 
 TASKS = {
     "pretrain": pretrain,
-    "autoencode": autoencode
+    "autoencode": autoencode,
+    "generate": generate,
+    "optimize": optimize,
+    "translate": translate
 }
