@@ -33,7 +33,7 @@ def get_dataset_info(name):
 
 def clean_ZINC(raw_data):
     raw_data = raw_data.replace(r'\n', '', regex=True)
-    return raw_data[:300]
+    return raw_data
 
 def postprocess_ZINC(cleaned_data, raw_data):
     return cleaned_data
