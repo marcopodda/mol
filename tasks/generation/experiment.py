@@ -55,23 +55,22 @@ class TrainModel(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         outputs, vae_loss = self.model(batch)
         loss = self.loss(outputs, batch.outseq.view(-1), vae_loss)
-        acc = accuracy(outputs, batch.outseq)
-        logs = {"loss": loss, "train_acc": acc}
-        pbar = {"train_acc": acc}
-        return {"loss": loss, "log": logs, "progress_bar": pbar}
+        return {"loss": loss}
+    
+    def training_epoch_end(self, outputs):
+        train_loss_mean = torch.stack([x['train_loss'] for x in outputs]).mean()
+        logs = {"train_loss": train_loss_mean}
+        return {"log": logs, "progress_bar": logs}
 
     def validation_step(self, batch, batch_idx):
         outputs, vae_loss = self.model(batch)
         loss = self.loss(outputs, batch.outseq.view(-1), vae_loss)
-        acc = accuracy(outputs, batch.outseq)
-        return {"val_loss": loss, "val_acc": acc}
+        return {"val_loss": loss}
 
     def validation_epoch_end(self, outputs):
         val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
-        val_acc_mean = torch.Tensor([x['val_acc'] for x in outputs]).mean()
-        logs = {"val_loss": val_loss_mean, "val_acc": val_acc_mean}
-        pbar = {"val_loss": val_loss_mean, "val_acc": val_acc_mean}
-        return {"log": logs, "progress_bar": pbar}
+        logs = {"val_loss": val_loss_mean}
+        return {"log": logs, "progress_bar": logs}
 
     def loss(self, outputs, targets, vae_loss):
         loss = F.cross_entropy(outputs, targets, ignore_index=0)
