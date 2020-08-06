@@ -9,7 +9,7 @@ class Sampler:
         self.hparams = model.hparams
         self.model = model
         self.vocab = vocab
-        self.max_length = 12
+        self.max_length = 13
         
     def run(self, num_samples=30000):
         model = self.model.to("cpu")
