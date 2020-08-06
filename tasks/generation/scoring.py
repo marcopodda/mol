@@ -9,8 +9,8 @@ from core.utils.serialization import load_yaml
 
 
 def score(output_dir, tokens_path, n_jobs=40):
-    vocab = Vocab.from_file(output_dir / "DATA" / "vocab.csv")
-    tokens_list = load_yaml(tokens_path)
+    vocab = Vocab.from_file(Path(output_dir) / "DATA" / "vocab.csv")
+    tokens_list = load_yaml(Path(tokens_path))
     
     mols = []
     for tokens in tokens_list:
