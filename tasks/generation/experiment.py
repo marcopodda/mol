@@ -106,7 +106,9 @@ def run_sampling(output_dir, dataset_name, config_path):
     
     for i, checkpoint_name in enumerate(ckpt_dir.glob("*.ckpt")):
         sample_path = Path(f"samples_{i}.yml")
+        
         if not sample_path.exists():
+            print(f"processing {saple_path}...")
             hparams = Namespace(**load_yaml(config_path))
             plw = PLWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
             sampler = Sampler(plw.model, plw.dataset.vocab)
