@@ -22,7 +22,3 @@ def score(output_dir, tokens_path, n_jobs=40):
     
     smis = [Chem.MolToSmiles(m) for m in mols]
     return get_all_metrics(smis, n_jobs=n_jobs)
-        
-    
-    
-    
