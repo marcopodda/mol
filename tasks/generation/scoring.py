@@ -8,7 +8,7 @@ from core.utils.vocab import Vocab
 from core.utils.serialization import load_yaml
 
 
-def score(tokens_path, n_jobs=40):
+def score(output_dir, tokens_path, n_jobs=40):
     vocab = Vocab.from_file(output_dir / "DATA" / "vocab.csv")
     tokens_list = load_yaml(tokens_path)
     
