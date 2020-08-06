@@ -103,12 +103,13 @@ def run_sampling(output_dir, dataset_name, config_path):
     
     all_samples = []
     
-    for checkpoint_name in ckpt_dir.glob("*.ckpt"):
-        hparams = Namespace(**load_yaml(config_path))
-        plw = PLWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
-        sampler = Sampler(plw.model, plw.dataset.vocab)
-        all_samples.append(sampler.run())
-        
-    return all_samples
+    for i, checkpoint_name in enumerate(ckpt_dir.glob("*.ckpt")):
+        sample_path = Path(f"samples_{i}.yml")
+        if not sample_path.exists():
+            hparams = Namespace(**load_yaml(config_path))
+            plw = PLWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
+            sampler = Sampler(plw.model, plw.dataset.vocab)
+            samples = sampler.run()
+            save_yaml(samples, f"samples_{i}.yml")
         
         
