@@ -113,6 +113,6 @@ def run_sampling(output_dir, dataset_name, config_path):
             plw = PLWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
             sampler = Sampler(plw.model, plw.dataset.vocab)
             samples = sampler.run()
-            save_yaml(samples, f"samples_{i}.yml")
+            save_yaml(samples, sample_path)
         
         
