@@ -1,3 +1,5 @@
+from argparse import Namespace
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -18,10 +20,14 @@ def get_vae_class(name):
 class Model(nn.Module):
     def __init__(self, hparams, output_dir, max_length):
         super().__init__()
+        
+        if isinstance(hparams, dict):
+            hparams = Namespace(**hparams)
+        
+        self.hparams = hparams
+        
         embeddings = torch.load(output_dir / "embeddings" / f"{hparams.embedding_type}.pt")
         num_embeddings = embeddings.size(0)
-
-        self.hparams = hparams
 
         self.max_length = max_length
         self.gnn_num_layers = hparams.gnn_num_layers

@@ -5,6 +5,7 @@ import numpy as np
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 import torch
 from torch.nn import functional as F
@@ -18,9 +19,10 @@ from core.utils.scores import accuracy
 from tasks.generation.dataset import MolecularDataset
 from tasks.generation.loader import MolecularDataLoader
 from .model import Model
+from .sampler import Sampler
 
 
-class TrainModel(pl.LightningModule):
+class PLWrapper(pl.LightningModule):
     def __init__(self, hparams, output_dir, name):
         super().__init__()
 
@@ -82,12 +84,28 @@ def run(args):
     gpu = args.gpu if torch.cuda.is_available() else None
     hparams = Namespace(**load_yaml(args.config_file))
     logger = TensorBoardLogger(save_dir=output_dir.parent, name=output_dir.stem, version=args.task)
+    ckpt_callback = ModelCheckpoint(save_top_k=-1)
     trainer = pl.Trainer(
         max_epochs=hparams.max_epochs,
+        checkpoint_callback=ckpt_callback,
         progress_bar_refresh_rate=30,
         gradient_clip_val=hparams.clip_norm,
         fast_dev_run=args.debug,
         logger=logger,
         gpus=gpu)
-    train_model = TrainModel(hparams, output_dir, args.dataset_name)
+    train_model = PLWrapper(hparams, output_dir, args.dataset_name)
     trainer.fit(train_model)
+    
+    
+def run_sampling(output_dir, dataset_name, config_path):
+    output_dir = Path(output_dir)
+    ckpt_dir = output_dir / "generation" / "checkpoints"
+    
+    checkpoint_name = next(ckpt_dir.glob("*.ckpt"))
+    #checkpoint = torch.load(checkpoint_name)
+    hparams = Namespace(**load_yaml(config_path))
+    plw = PLWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
+    sampler = Sampler(plw.model, plw.dataset.vocab)
+    return sampler.run()
+        
+        

@@ -1,4 +1,5 @@
 import numpy as np
+from argparse import Namespace
 
 from torch.utils import data
 
@@ -10,6 +11,10 @@ from core.utils.vocab import Tokens
 class MolecularDataset(data.Dataset):
     def __init__(self, hparams, output_dir, name):
         super().__init__()
+        
+        if isinstance(hparams, dict):
+            hparams = Namespace(**hparams)
+            
         self.data, self.vocab = get_data(output_dir, name, hparams.num_samples)
         self.max_length = self.data.length.max() + 1
 

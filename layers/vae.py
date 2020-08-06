@@ -33,7 +33,11 @@ class BaseVAE(nn.Module):
         self.bn_dec = nn.BatchNorm1d(dim_hidden)
         self.fc_out = nn.Linear(dim_hidden, self.rnn_num_layers * dim_input)
 
-    def decoder(self, z):
+    def decoder(self, z=None):
+        if z is None:
+            device = next(self.parameters()).device
+            z = torch.randn((1, self.fc_mean.out_features), device=device)
+            
         z = F.relu(self.bn_dec(self.fc_dec(z)))
         z = self.fc_out(z)
         return z.view(self.rnn_num_layers, -1, self.dim_input)
@@ -47,7 +51,6 @@ class MMDVAE(BaseVAE):
         return mean
 
     def forward(self, x):
-        device = next(self.parameters()).device
         mean = self.encoder(x)
         x_rec = self.decoder(mean)
         loss = self.loss(x, x_rec, mean)
