@@ -25,7 +25,8 @@ class MolecularDataset(data.Dataset):
         data = self.data.iloc[index]
         seq_len = data.length
         data = to_data(data, self.vocab, self.max_length)
-        to_mask = np.random.choice(range(1, seq_len))
-        data.inseq[:, to_mask] = Tokens.MASK.value
+        num_to_mask = np.random.choice(range(1, seq_len))
+        mask_idx = np.random.choice(range(seq_len), num_to_mask)
+        data.inseq[:, mask_idx] = Tokens.MASK.value
         return data
         
