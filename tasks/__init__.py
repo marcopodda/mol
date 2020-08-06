@@ -6,9 +6,9 @@ from tasks.translation.experiment import run as translate
 
 
 TASKS = {
-    "pretrain": pretrain,
-    "autoencode": autoencode,
-    "generate": generate,
-    "optimize": optimize,
-    "translate": translate
+    "pretraining": pretrain,
+    "autoencoding": autoencode,
+    "generation": generate,
+    "optimization": optimize,
+    "translation": translate
 }

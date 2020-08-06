@@ -81,7 +81,7 @@ def run(args):
     output_dir = Path(args.output_dir)
     gpu = args.gpu if torch.cuda.is_available() else None
     hparams = Namespace(**load_yaml(args.config_file))
-    logger = TensorBoardLogger(save_dir="", version="generation", name=output_dir.stem)
+    logger = TensorBoardLogger(save_dir=output_dir.parent, name=output_dir.stem, version=args.task)
     trainer = pl.Trainer(
         max_epochs=hparams.max_epochs,
         progress_bar_refresh_rate=30,
