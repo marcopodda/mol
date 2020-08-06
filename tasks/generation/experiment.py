@@ -16,6 +16,7 @@ from core.datasets.utils import to_batch
 from core.utils.serialization import load_yaml
 from core.utils.vocab import Tokens
 from core.utils.scores import accuracy
+from core.utils.serialization import save_yaml
 from tasks.generation.dataset import MolecularDataset
 from tasks.generation.loader import MolecularDataLoader
 from .model import Model
