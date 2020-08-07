@@ -96,6 +96,7 @@ class Model(nn.Module):
         h, vae_loss = self.vae(h)
 
         x = self.embedder(batch.inseq)
+        x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
         output, hidden = self.decoder(x, h)
         return output, vae_loss
@@ -109,6 +110,7 @@ class Model(nn.Module):
         h, vae_loss = self.vae(h)
 
         x = self.embedder(batch.inseq)
+        x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
         batch_size, seq_length, dim_embed = x.size()
         outputs = []
