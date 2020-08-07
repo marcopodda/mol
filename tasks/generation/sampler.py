@@ -43,7 +43,7 @@ class Sampler:
             x_emb = embedder(x)
             logits, h = decoder.forward(x_emb, h)
 
-            logits = self.top_k(logits)
+            # logits = self.top_k(logits)
             probs = F.softmax(logits / temp, dim=-1)
             token = torch.multinomial(probs, 1).item()
 

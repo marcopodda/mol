@@ -42,22 +42,19 @@ class MMDVAE(BaseVAE):
     def forward(self, x):
         z = self.encode(x)
         x_rec = self.decode(z)
-        loss = self.loss(x, x_rec, z)
+        loss = self.mmd(z)
         return x_rec, loss
-
-    def loss(self, x, x_rec, mean):
-        return self.mmd(mean)
 
     def gaussian_kernel(self, x, y, sigma_sqr=2.):
         diff = x[:, None, :] - y[None, :, :]
         pairwise_dist = torch.sum(diff ** 2, dim=-1)
         return torch.exp(-pairwise_dist / sigma_sqr)
 
-    def mmd(self, z):
-        q = torch.randn_like(z)
-        p_kernel = self.gaussian_kernel(z, z).mean()
+    def mmd(self, p):
+        q = torch.randn_like(p)
+        p_kernel = self.gaussian_kernel(p, p).mean()
         q_kernel = self.gaussian_kernel(q, q).mean()
-        pq_kernel = self.gaussian_kernel(z, q).mean()
+        pq_kernel = self.gaussian_kernel(p, q).mean()
         return p_kernel + q_kernel - 2 * pq_kernel
 
 
@@ -82,13 +79,8 @@ class VAE(BaseVAE):
         mean, logvar = self.encode(x)
         z = self.reparameterize(mean, logvar)
         x_rec = self.decode(z)
-        loss = self.loss(x, x_rec, mean, logvar)
+        loss = self.kl_div(mean, logvar)
         return x_rec, loss
 
-    def loss(self, x, x_rec, mean, logvar):
-        kl_term = self.kl(mean, logvar)
-        rec_term = F.mse_loss(x_rec, x)
-        return kl_term + rec_term
-
-    def kl(self, mu, sigma):
+    def kl_div(self, mu, sigma):
         return -0.5 * torch.sum(1 + sigma - mu.pow(2) - sigma.exp())
