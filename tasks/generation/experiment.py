@@ -100,7 +100,7 @@ def run(args):
     
 def run_sampling(output_dir, dataset_name, config_path, epoch=None, num_samples=30000, temp=1.0):
     output_dir = Path(output_dir)
-    ckpt_dir = output_dir / "generation" / "checkpoints"
+    ckpt_dir = output_dir / "generation"
     
     all_samples = []
     pattern = "" if epoch is None else f"{epoch}"
