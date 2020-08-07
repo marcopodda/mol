@@ -24,7 +24,6 @@ class Sampler:
         num_trials = 0
         
         while len(samples) < num_samples and num_trials < max_trials:
-            z = vae.decode()
             sample = self.generate_one(embedder, vae, decoder)
             
             if len(sample) >= 2:
@@ -35,7 +34,7 @@ class Sampler:
         return samples
 
     def generate_one(self, embedder, vae, decoder, temp=2.0):
-        h = vae.decoder()
+        h = vae.decode()
         x = torch.LongTensor([[Tokens.SOS.value]])
         
         sample, eos_found = [], False
