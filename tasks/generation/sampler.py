@@ -44,7 +44,7 @@ class Sampler:
             x_emb = embedder(x)
             logits, h = decoder.forward(x_emb, h)
 
-            # logits = self.top_k(out)
+            logits = self.top_k(logits)
             probs = F.softmax(logits / temp, dim=-1)
             token = torch.multinomial(probs, 1).item()
 
@@ -61,7 +61,7 @@ class Sampler:
         
         return sample if eos_found else []
 
-    def top_k(self, logits, k=10):
+    def top_k(self, logits, k=30):
         logits = logits.view(-1)
         indices_to_remove = logits < torch.topk(logits, k)[0][..., -1, None]
         logits[indices_to_remove] = -float('Inf')
