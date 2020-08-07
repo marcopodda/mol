@@ -98,7 +98,7 @@ def run(args):
     trainer.fit(train_model)
     
     
-def run_sampling(output_dir, dataset_name, config_path, epoch=None):
+def run_sampling(output_dir, dataset_name, config_path, epoch=None, num_samples=30000, temp=1.0):
     output_dir = Path(output_dir)
     ckpt_dir = output_dir / "generation" / "checkpoints"
     
@@ -114,7 +114,7 @@ def run_sampling(output_dir, dataset_name, config_path, epoch=None):
             hparams = Namespace(**load_yaml(config_path))
             plw = PLWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
             sampler = Sampler(plw.model, plw.dataset.vocab)
-            samples = sampler.run()
+            samples = sampler.run(num_samples=num_samples, temp=temp)
             save_yaml(samples, sample_path)
         
         

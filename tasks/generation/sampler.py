@@ -11,7 +11,7 @@ class Sampler:
         self.vocab = vocab
         self.max_length = 13
         
-    def run(self, num_samples=30000):
+    def run(self, num_samples=30000, temp=1.0):
         model = self.model.to("cpu")
         model.eval()
         
@@ -24,7 +24,7 @@ class Sampler:
         num_trials = 0
         
         while len(samples) < num_samples and num_trials < max_trials:
-            sample = self.generate_one(embedder, vae, decoder)
+            sample = self.generate_one(embedder, vae, decoder, temp=temp)
             
             if len(sample) >= 2:
                 samples.append(sample)
@@ -34,7 +34,7 @@ class Sampler:
             
         return samples
 
-    def generate_one(self, embedder, vae, decoder, temp=2.0):
+    def generate_one(self, embedder, vae, decoder, temp):
         h = vae.decode()
         x = torch.LongTensor([[Tokens.SOS.value]])
         
