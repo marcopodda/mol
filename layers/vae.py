@@ -46,9 +46,7 @@ class MMDVAE(BaseVAE):
         return x_rec, loss
 
     def loss(self, x, x_rec, mean):
-        mmd_term = self.mmd(mean)
-        # rec_term = F.mse_loss(x_rec, x)
-        return mmd_term # + rec_term
+        return self.mmd(mean)
 
     def gaussian_kernel(self, x, y, sigma_sqr=2.):
         diff = x[:, None, :] - y[None, :, :]

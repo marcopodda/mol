@@ -76,8 +76,8 @@ class PLWrapper(pl.LightningModule):
         return {"log": logs, "progress_bar": logs}
 
     def loss(self, outputs, targets, vae_loss):
-        loss = F.cross_entropy(outputs, targets, ignore_index=Tokens.PAD.value)
-        return loss + vae_loss
+        rec_loss = F.cross_entropy(outputs, targets, ignore_index=Tokens.PAD.value)
+        return rec_loss + vae_loss
 
 
 def run(args):
