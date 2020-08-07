@@ -33,26 +33,27 @@ class BaseVAE(nn.Module):
         self.bn_dec = nn.BatchNorm1d(dim_hidden)
         self.fc_out = nn.Linear(dim_hidden, self.rnn_num_layers * dim_input)
 
-    def decoder(self, z=None):
-        if z is None:
-            device = next(self.parameters()).device
-            z = torch.randn((1, self.fc_mean.out_features), device=device)
-            
+    def decode(self, z=None):
+        z = z or self.sample_prior()    
         z = F.relu(self.bn_dec(self.fc_dec(z)))
         z = self.fc_out(z)
         return z.view(self.rnn_num_layers, -1, self.dim_input)
+    
+    def sample_prior(self):
+        device = next(self.parameters()).device
+        return torch.randn((1, self.fc_mean.out_features), device=device)
 
 
 class MMDVAE(BaseVAE):
-    def encoder(self, x):
+    def encode(self, x):
         x = x.view(-1, x.size(0) * x.size(2))
         x = F.relu(self.bn_enc(self.fc_enc(x)))
         mean = self.fc_mean(x)
         return mean
 
     def forward(self, x):
-        mean = self.encoder(x)
-        x_rec = self.decoder(mean)
+        mean = self.encode(x)
+        x_rec = self.decode(mean)
         loss = self.loss(x, x_rec, mean)
         return x_rec, loss
 
@@ -74,7 +75,7 @@ class VAE(BaseVAE):
         super().__init__(hparams, dim_input, dim_hidden, dim_latent)
         self.fc_std = nn.Linear(dim_hidden, dim_latent)
 
-    def encoder(self, x):
+    def encode(self, x):
         x = x.view(-1, x.size(0) * x.size(2))
         x = F.relu(self.bn_enc(self.fc_enc(x)))
         mean = self.fc_mean(x)
@@ -88,9 +89,9 @@ class VAE(BaseVAE):
 
     def forward(self, x):
         device = next(self.parameters()).device
-        mean, logvar = self.encoder(x)
+        mean, logvar = self.encode(x)
         z = self.reparameterize(mean, logvar)
-        x_rec = self.decoder(z)
+        x_rec = self.decode(z)
         loss = self.loss(x, x_rec, mean, logvar)
         return x_rec, loss
 
