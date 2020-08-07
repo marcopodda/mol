@@ -24,7 +24,7 @@ class Sampler:
         num_trials = 0
         
         while len(samples) < num_samples and num_trials < max_trials:
-            z = vae.decoder()
+            z = vae.decode()
             sample = self.generate_one(embedder, vae, decoder)
             
             if len(sample) >= 2:
