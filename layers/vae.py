@@ -39,7 +39,8 @@ class BaseVAE(nn.Module):
         self.fc_out = nn.Linear(dim_hidden, self.rnn_num_layers * dim_input)
 
     def decode(self, z=None):
-        z = z or self.sample_prior()    
+        if z is None:
+            z = self.sample_prior()    
         z = F.relu(self.bn_dec(self.fc_dec(z)))
         z = self.fc_out(z)
         return z.view(self.rnn_num_layers, -1, self.dim_input)
