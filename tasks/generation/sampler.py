@@ -28,6 +28,7 @@ class Sampler:
             
             if len(sample) >= 2:
                 samples.append(sample)
+                print(f"Sampled {len(samples)} compunds.")
             
             num_trials += 1
             
