@@ -20,8 +20,8 @@ class Sampler:
         embedder = model.embedder
         
         samples = []
-        max_trials = 1000000
         num_trials = 0
+        max_trials = 1000000
         
         while len(samples) < num_samples and num_trials < max_trials:
             sample = self.generate_one(embedder, vae, decoder, temp=temp)
@@ -40,7 +40,6 @@ class Sampler:
         
         sample, eos_found = [], False
         while len(sample) < self.max_length:
-            
             x_emb = embedder(x)
             logits, h = decoder.forward(x_emb, h)
 

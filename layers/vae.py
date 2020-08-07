@@ -4,15 +4,20 @@ from torch import nn
 from torch.nn import functional as F
 
 
-def gaussian_kernel(a, b):
-    dim1_1, dim1_2 = a.size(0), b.size(0)
-    depth = a.size(1)
-    a = a.view(dim1_1, 1, depth)
-    b = b.view(1, dim1_2, depth)
-    a_core = a.expand(dim1_1, dim1_2, depth)
-    b_core = b.expand(dim1_1, dim1_2, depth)
-    numerator = (a_core - b_core).pow(2).mean(2)/depth
-    return torch.exp(-numerator)
+# def gaussian_kernel(a, b):
+#     dim_a, dim_b, sigma = a.size(0), b.size(0), a.size(1)
+#     a = a.view(dim_a, 1, sigma)
+#     b = b.view(1, dim_b, sigma)
+#     a_core = a.expand(dim_a, dim_b, sigma)
+#     b_core = b.expand(dim_a, dim_b, sigma)
+#     numerator = (a_core - b_core).pow(2).mean(2) / sigma
+#     return torch.exp(-numerator)
+
+
+def gaussian_kernel(x, y, sigma_sqr=2.):
+    diff = x[:, None, :] - y[None, :, :]
+    pairwise_dist = torch.sum(diff ** 2, dim=-1)
+    return torch.exp(-pairwise_dist / sigma_sqr)
 
 
 class BaseVAE(nn.Module):
@@ -52,9 +57,9 @@ class MMDVAE(BaseVAE):
         return mean
 
     def forward(self, x):
-        mean = self.encode(x)
-        x_rec = self.decode(mean)
-        loss = self.loss(x, x_rec, mean)
+        z = self.encode(x)
+        x_rec = self.decode(z)
+        loss = self.loss(x, x_rec, z)
         return x_rec, loss
 
     def loss(self, x, x_rec, mean):
@@ -62,12 +67,12 @@ class MMDVAE(BaseVAE):
         rec_term = F.mse_loss(x_rec, x)
         return mmd_term + rec_term
 
-    def mmd(self, mu):
-        z = torch.randn(100, mu.size(1), device=mu.device)
-        mu2 = gaussian_kernel(mu, mu).mean()
-        z2 = gaussian_kernel(z, z).mean()
-        mu_z = gaussian_kernel(z, mu).mean()
-        return mu2 + z2 - 2 * mu_z
+    def mmd(self, z):
+        q = torch.randn_like(z)
+        p_kernel = gaussian_kernel(z, z).mean()
+        q_kernel = gaussian_kernel(q, q).mean()
+        pq_kernel = gaussian_kernel(z, q).mean()
+        return p_kernel + q_kernel - 2 * pq_kernel
 
 
 class VAE(BaseVAE):
@@ -88,7 +93,6 @@ class VAE(BaseVAE):
         return mean + eps * std
 
     def forward(self, x):
-        device = next(self.parameters()).device
         mean, logvar = self.encode(x)
         z = self.reparameterize(mean, logvar)
         x_rec = self.decode(z)
