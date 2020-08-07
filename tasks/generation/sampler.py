@@ -28,7 +28,8 @@ class Sampler:
             
             if len(sample) >= 2:
                 samples.append(sample)
-                print(f"Sampled {len(samples)} compunds.")
+                if len(samples) % 1000 == 0:
+                    print(f"Sampled {len(samples)} compunds.")
             
             num_trials += 1
             
