@@ -98,14 +98,16 @@ def run(args):
     trainer.fit(train_model)
     
     
-def run_sampling(output_dir, dataset_name, config_path):
+def run_sampling(output_dir, dataset_name, config_path, epoch=None):
     output_dir = Path(output_dir)
     ckpt_dir = output_dir / "generation" / "checkpoints"
     
     all_samples = []
+    pattern = "" if epoch is None else f"{epoch}"
     
-    for i, checkpoint_name in enumerate(ckpt_dir.glob("*.ckpt")):
-        sample_path = Path(f"samples_{i}.yml")
+    for i, checkpoint_name in enumerate(ckpt_dir.glob(f"*{pattern}.ckpt")):
+        index = epoch or i
+        sample_path = Path(f"samples_{index}.yml")
         
         if not sample_path.exists():
             print(f"processing {sample_path}...")

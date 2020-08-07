@@ -20,10 +20,10 @@ class Sampler:
         embedder = model.embedder
         
         samples = []
-        max_trials = 100000
+        max_trials = 1000000
         num_trials = 0
         
-        while num_trials < max_trials and len(samples) < num_samples:
+        while len(samples) < num_samples and num_trials < max_trials:
             z = vae.decoder()
             sample = self.generate_one(embedder, vae, decoder)
             
@@ -34,20 +34,18 @@ class Sampler:
             
         return samples
 
-    def generate_one(self, embedder, vae, decoder):
+    def generate_one(self, embedder, vae, decoder, temp=2.0):
         h = vae.decoder()
         x = torch.LongTensor([[Tokens.SOS.value]])
-        ctx = torch.zeros_like(x, device=x.device)
         
-        sample = []
-        eos_found = False
+        sample, eos_found = [], False
         while len(sample) < self.max_length:
             
-            x = embedder(x)
-            out, h = decoder.forward(x, h)
+            x_emb = embedder(x)
+            logits, h = decoder.forward(x_emb, h)
 
-            logits = self.top_k(out)
-            probs = F.softmax(logits, dim=-1)
+            # logits = self.top_k(out)
+            probs = F.softmax(logits / temp, dim=-1)
             token = torch.multinomial(probs, 1).item()
 
             # probs = F.log_softmax(logits, dim=1)
