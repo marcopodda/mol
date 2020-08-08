@@ -1,6 +1,7 @@
 import numpy as np
 from argparse import Namespace
 
+import torch
 from torch.utils import data
 
 from core.datasets.preprocess import get_data
@@ -23,9 +24,10 @@ class MolecularDataset(data.Dataset):
 
     def __getitem__(self, index):
         data = self.data.iloc[index]
+        seq_len = data.length
         data = to_data(data, self.vocab, self.max_length)
-        prob_vec = np.zeros(seq_len)
-        prob_vec[1:] = np.random.rand(seq_len-1)
-        data.inseq[:, probs > 0.5] = Tokens.MASK.value
+        probs = torch.zeros_like(data.inseq)
+        probs[:, 1:seq_len] = torch.rand(seq_len - 1)
+        data.inseq[probs > 0.5] = Tokens.MASK.value
         return data
         
