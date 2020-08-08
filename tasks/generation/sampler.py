@@ -43,7 +43,7 @@ class Sampler:
         while len(sample) < self.max_length:
             x_emb = embedder(x)
             logits, h = decoder.forward(x_emb, h)
-            logits = self.clean_logits(logits, sample)
+            logits = self.clean_logits(logits)
 
             # logits = self.top_k(logits)
             probs = F.softmax(logits / temp, dim=-1)
@@ -62,11 +62,9 @@ class Sampler:
         
         return sample if eos_found else []
 
-    def clean_logits(self, logits, sample):
+    def clean_logits(self, logits):
         logits = logits.view(-1)
-        logits[Tokens.SOS.value] = -float('Inf')
-        logits[Tokens.MASK.value] = -float('Inf')
-        logits[Tokens.PAD.value] = -float('Inf')
+        logits[[Tokens.PAD.value, Tokens.SOS.value, Tokens.MASK.value]] = -float('Inf')
         return logits.view(1, -1)
 
     def top_k(self, logits, k=30):
