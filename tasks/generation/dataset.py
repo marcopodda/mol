@@ -23,10 +23,11 @@ class MolecularDataset(data.Dataset):
 
     def __getitem__(self, index):
         data = self.data.iloc[index]
-        seq_len = data.length
-        data = to_data(data, self.vocab, self.max_length)
-        num_to_mask = np.random.choice(range(1, seq_len))
-        mask_idx = np.random.choice(range(1, seq_len + 1), num_to_mask)
-        data.inseq[:, mask_idx] = Tokens.MASK.value
-        return data
+        return to_data(data, self.vocab, self.max_length)
+        # seq_len = data.length
+        # data = to_data(data, self.vocab, self.max_length)
+        # num_to_mask = np.random.choice(range(1, seq_len))
+        # mask_idx = np.random.choice(range(1, seq_len + 1), num_to_mask)
+        # data.inseq[:, mask_idx] = Tokens.MASK.value
+        # return data
         
