@@ -99,14 +99,16 @@ def run(args):
     trainer.fit(train_model)
     
     
-def run_sampling(output_dir, dataset_name, config_path, epoch=None, num_samples=30000, temp=1.0):
+def run_sampling(output_dir, dataset_name, epoch=None, num_samples=30000, temp=1.0):
     assert epoch >= 1
     output_dir = Path(output_dir)
-    ckpt_dir = output_dir / "generation" / "checkpoints"
-    samples_dir = get_or_create_dir(output_dir / "generation" / "samples")
+    task_dir = output_dir / "generation"
+    ckpt_dir = task_dir / "checkpoints"
+    samples_dir = get_or_create_dir(task_dir / "samples")
     
     all_samples = []
     epoch = (epoch - 1) or "*"
+    # hparams = Namespace(**load_yaml(task_dir / "hparams.yml"))
     
     for i, checkpoint_name in enumerate(ckpt_dir.glob(f"epoch={epoch}.ckpt")):
         index = (i + 1) if epoch == "*" else (epoch + 1)
@@ -114,7 +116,6 @@ def run_sampling(output_dir, dataset_name, config_path, epoch=None, num_samples=
         
         if not sample_path.exists():
             print(f"processing {sample_path}...")
-            hparams = Namespace(**load_yaml(config_path))
             plw = PLWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
             sampler = Sampler(plw.model, plw.dataset.vocab)
             samples = sampler.run(num_samples=num_samples, temp=temp)
