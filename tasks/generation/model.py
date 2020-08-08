@@ -51,7 +51,7 @@ class Model(nn.Module):
         self.mlp_dim_hidden = hparams.mlp_dim_hidden if "mlp_dim_hidden" in hparams else self.mlp_dim_input // 2
         self.mlp_dim_output = hparams.mlp_dim_output if "mlp_dim_output" in hparams else 1
 
-        self.embedder = nn.Embedding.from_pretrained(embeddings, freeze=False)
+        self.embedder = nn.Embedding.from_pretrained(embeddings, freeze=True)
 
         self.encoder = Encoder(
             hparams=hparams,
