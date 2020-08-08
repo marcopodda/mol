@@ -18,10 +18,15 @@ def get_vae_class(name):
 class Model(nn.Module):
     def __init__(self, hparams, output_dir, max_length):
         super().__init__()
-        embeddings = torch.load(output_dir / "embeddings" / f"{hparams.embedding_type}.pt")
-        num_embeddings = embeddings.size(0)
-
+        
+        if isinstance(hparams, dict):
+            hparams = Namespace(**hparams)
+        
         self.hparams = hparams
+        
+        embeddings_filename = f"{hparams.embedding_type}_{hparams.gnn_dim_embed}.pt"
+        embeddings = torch.load(output_dir / "embeddings" / embeddings_filename)
+        num_embeddings = embeddings.size(0)
 
         self.max_length = max_length
         self.gnn_num_layers = hparams.gnn_num_layers
