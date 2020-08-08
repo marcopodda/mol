@@ -30,7 +30,7 @@ class GNNLayer(nn.Module):
 
     def forward(self, x, edge_index, edge_attr):
         outputs = self.conv(x, edge_index, edge_attr)
-        return self.bn(F.relu(outputs))
+        return outputs  # self.bn(F.relu(outputs))
 
 
 class GNN(nn.Module):
@@ -61,4 +61,4 @@ class GNN(nn.Module):
             outputs.append(global_add_pool(x, batch))
 
         outputs = torch.cat(outputs, dim=1)
-        return self.lin(outputs)
+        return self.lin(F.relu(outputs))

@@ -95,16 +95,16 @@ def run(args):
     dataset = PretrainDataset(hparams, output_dir, dataset_name)
     pretrain_model = Pretrainer(hparams, output_dir, dataset_name)
 
-    if not (embeddings_dir / "untrained.pt").exists():
+    if not (embeddings_dir / f"untrained_{hparams.gnn_dim_embedding}.pt").exists():
         print("untrained embeddings...")
         save_embeddings(
             hparams=hparams,
             model=pretrain_model.model,
             vocab=dataset.vocab,
-            filename=embeddings_dir / "untrained.pt",
+            filename=embeddings_dir / f"untrained_{hparams.gnn_dim_embedding}.pt",
             device=f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu",)
 
-    if not (embeddings_dir / "skipgram.pt").exists():
+    if not (embeddings_dir / f"skipgram_{hparams.gnn_dim_embedding}.pt").exists():
         print("skipgram embeddings...")
         gpu = args.gpu if torch.cuda.is_available() else None
         logger = TensorBoardLogger(save_dir=output_dir / args.task, name="", version="logs")
@@ -121,10 +121,10 @@ def run(args):
             hparams=hparams,
             model=pretrain_model.model,
             vocab=dataset.vocab,
-            filename=embeddings_dir / "skipgram.pt",
+            filename=embeddings_dir / f"skipgram_{hparams.gnn_dim_embedding}.pt",
             device=next(pretrain_model.parameters()).device)
 
-    if not (embeddings_dir / "random.pt").exists():
+    if not (embeddings_dir / f"random_{hparams.gnn_dim_embedding}.pt").exists():
         print("random embeddings...")
         num_tokens = len(Tokens)
         embed_dim = hparams.gnn_dim_embed
@@ -133,4 +133,4 @@ def run(args):
         embeddings = [torch.randn(1, embed_dim) for _ in range(len(dataset.vocab))]
         embeddings = torch.cat(pad + tokens + embeddings, dim=0)
         embeddings = F.normalize(embeddings, p=2, dim=1)
-        torch.save(embeddings, embeddings_dir / "random.pt")
+        torch.save(embeddings, embeddings_dir / f"random_{hparams.gnn_dim_embedding}.pt")
