@@ -26,7 +26,8 @@ class Model(nn.Module):
         
         self.hparams = hparams
         
-        embeddings = torch.load(output_dir / "embeddings" / f"{hparams.embedding_type}.pt")
+        embeddings_filename = f"{hparams.embedding_type}_{hparams.gnn_dim_embed}.pt"
+        embeddings = torch.load(output_dir / "embeddings" / embeddings_filename)
         num_embeddings = embeddings.size(0)
 
         self.max_length = max_length
