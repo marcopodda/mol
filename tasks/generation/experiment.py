@@ -100,15 +100,16 @@ def run(args):
     
     
 def run_sampling(output_dir, dataset_name, config_path, epoch=None, num_samples=30000, temp=1.0):
+    assert epoch >= 1
     output_dir = Path(output_dir)
     ckpt_dir = output_dir / "generation" / "checkpoints"
     samples_dir = get_or_create_dir(output_dir / "generation" / "samples")
     
     all_samples = []
-    epoch = epoch or "*"
+    epoch = (epoch - 1) or "*"
     
     for i, checkpoint_name in enumerate(ckpt_dir.glob(f"epoch={epoch}.ckpt")):
-        index = epoch or i
+        index = (i + 1) if epoch == "*" else (epoch + 1)
         sample_path = samples_dir / f"samples_{index}.yml"
         
         if not sample_path.exists():
