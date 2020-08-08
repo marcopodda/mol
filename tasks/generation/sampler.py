@@ -45,7 +45,7 @@ class Sampler:
             logits, h = decoder.forward(x_emb, h)
             logits = self.clean_logits(logits)
 
-            # logits = self.top_k(logits)
+            logits = self.top_k(logits)
             probs = F.softmax(logits / temp, dim=-1)
             token = torch.multinomial(probs, 1).item()
 
@@ -67,7 +67,7 @@ class Sampler:
         logits[[Tokens.PAD.value, Tokens.SOS.value, Tokens.MASK.value]] = -float('Inf')
         return logits.view(1, -1)
 
-    def top_k(self, logits, k=30):
+    def top_k(self, logits, k=100):
         logits = logits.view(-1)
         indices_to_remove = logits < torch.topk(logits, k)[0][..., -1, None]
         logits[indices_to_remove] = -float('Inf')
