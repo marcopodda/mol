@@ -105,9 +105,9 @@ def run_sampling(output_dir, dataset_name, config_path, epoch=None, num_samples=
     samples_dir = get_or_create_dir(output_dir / "generation" / "samples")
     
     all_samples = []
-    pattern = "" if epoch is None else f"{epoch}"
+    epoch = epoch or "*"
     
-    for i, checkpoint_name in enumerate(ckpt_dir.glob(f"*{pattern}.ckpt")):
+    for i, checkpoint_name in enumerate(ckpt_dir.glob(f"epoch={epoch}.ckpt")):
         index = epoch or i
         sample_path = samples_dir / f"samples_{index}.yml"
         
