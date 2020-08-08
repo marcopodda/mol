@@ -104,14 +104,14 @@ class Model(nn.Module):
 
     def _forward_att(self, batch):
         x = self.embedder(batch.outseq)
-        x = F.dropout(x, p=self.embedding_dropout, training=self.training)
+        # x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
         enc_outputs, h = self.encoder(x)
 
         h, vae_loss = self.vae(h)
 
         x = self.embedder(batch.inseq)
-        x = F.dropout(x, p=self.embedding_dropout, training=self.training)
+        # x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
         batch_size, seq_length, dim_embed = x.size()
         outputs = []
