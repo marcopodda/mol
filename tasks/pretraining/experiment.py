@@ -107,8 +107,8 @@ def run(args):
     if not (embeddings_dir / "skipgram.pt").exists():
         print("skipgram embeddings...")
         gpu = args.gpu if torch.cuda.is_available() else None
-        logger = TensorBoardLogger(save_dir=output_dir.parent, name=output_dir.stem, version=args.task)
-        ckpt_callback = ModelCheckpoint(monitor="train_loss", save_last=True)
+        logger = TensorBoardLogger(save_dir=output_dir / args.task, name="", version="logs")
+        ckpt_callback = ModelCheckpoint(filepath=get_or_create_dir(output_dir / args.task / "checkpoints"), monitor="train_loss", save_last=True)
         trainer = pl.Trainer(
             max_epochs=hparams.pretrain_epochs,
             checkpoint_callback=ckpt_callback,

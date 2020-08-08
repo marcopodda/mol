@@ -5,7 +5,7 @@ from moses import get_all_metrics
 
 from core.mols.split import join_fragments
 from core.utils.vocab import Vocab
-from core.utils.serialization import load_yaml
+from core.utils.serialization import load_yaml, save_yaml
 
 
 def score(output_dir, epoch, n_jobs=40):
@@ -26,6 +26,11 @@ def score(output_dir, epoch, n_jobs=40):
                 pass
         
         smis = [Chem.MolToSmiles(m) for m in mols]
-        print(f"number of correct SMILES samples: {len(smis)}")
         
-        return get_all_metrics(smis, n_jobs=n_jobs)
+        metrics = get_all_metrics(smis, n_jobs=n_jobs)
+        metrics["num_samples"] = len(smis)
+        
+        path = samples_path.parent / f"{samples_path.stem}_results.yml"
+        save_yaml(metrics, path)
+        return metrics
+        
