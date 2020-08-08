@@ -17,6 +17,7 @@ from core.utils.serialization import load_yaml
 from core.utils.vocab import Tokens
 from core.utils.scores import accuracy
 from core.utils.serialization import save_yaml
+from core.utils.os import get_or_create_dir
 from tasks.generation.dataset import MolecularDataset
 from tasks.generation.loader import MolecularDataLoader
 from .model import Model
@@ -101,13 +102,14 @@ def run(args):
 def run_sampling(output_dir, dataset_name, config_path, epoch=None, num_samples=30000, temp=1.0):
     output_dir = Path(output_dir)
     ckpt_dir = output_dir / "generation"
+    samples_dir = get_or_create_dir(output_dir / "generation" / "samples")
     
     all_samples = []
     pattern = "" if epoch is None else f"{epoch}"
     
     for i, checkpoint_name in enumerate(ckpt_dir.glob(f"*{pattern}.ckpt")):
         index = epoch or i
-        sample_path = Path(f"samples_{index}.yml")
+        sample_path = samples_dir / f"samples_{index}.yml"
         
         if not sample_path.exists():
             print(f"processing {sample_path}...")
