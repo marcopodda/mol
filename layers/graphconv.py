@@ -26,11 +26,11 @@ class GNNLayer(nn.Module):
             )
         )
 
-        self.bn = BatchNorm(self.dim_output)
+        self.bn = BatchNorm(self.dim_output, track_running_stats=False)
 
     def forward(self, x, edge_index, edge_attr):
         outputs = self.conv(x, edge_index, edge_attr)
-        return F.relu(outputs)
+        return self.bn(F.relu(outputs))
 
 
 class GNN(nn.Module):
