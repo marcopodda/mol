@@ -8,6 +8,12 @@ from core.utils.vocab import Vocab
 from core.utils.serialization import load_yaml, save_yaml
 
 
+def convert_metrics_dict(metrics_dict):
+    for k in metrics_dict.keys():
+        metrics_dict[k] = float(metrics_dict[k])
+    return metrics_dict
+
+
 def score(output_dir, epoch, n_jobs=40):
     assert epoch >= 1
     output_dir = Path(output_dir)
@@ -29,6 +35,7 @@ def score(output_dir, epoch, n_jobs=40):
         smis = [Chem.MolToSmiles(m) for m in mols]
         
         metrics = get_all_metrics(smis, n_jobs=n_jobs)
+        metrics = convert_metrics_dict(metrics)
         metrics["num_samples"] = len(smis)
         
         path = samples_path.parent / f"{samples_path.stem}_results.yml"
