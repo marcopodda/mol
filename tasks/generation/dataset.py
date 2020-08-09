@@ -27,6 +27,7 @@ class MolecularDataset(data.Dataset):
         seq_len = data.length
         data = to_data(data, self.vocab, self.max_length)
         probs = torch.zeros_like(data.inseq)
-        data.inseq[:, 1:seq_len] = Tokens.MASK.value
+        probs[:, 1:seq_len] = torch.rand(seq_len - 1)
+        data.inseq[probs > 0.5] = Tokens.MASK.value
         return data
         
