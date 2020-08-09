@@ -14,8 +14,8 @@ class SkipGram(nn.Module):
 
     def forward(self, target, context, negatives):
         emb_target = self.gnn_in(target)
-        emb_context = self.gnn_out(context)
-        emb_negatives = self.gnn_out(negatives)
+        emb_context = self.gnn_in(context)
+        emb_negatives = self.gnn_in(negatives)
 
         pos_score = torch.mul(emb_target, emb_context).squeeze()
         pos_score = torch.sum(pos_score, dim=1)
