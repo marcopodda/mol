@@ -15,8 +15,8 @@ class GNN(nn.Module):
         self.hparams = hparams
         
         self.dim_input = ATOM_FDIM
-        self.dim_hidden = hparams.gnn_dim_hidden
         self.dim_hidden_edge = hparams.gnn_dim_hidden_edge
+        self.dim_hidden = hparams.gnn_dim_hidden
         self.dim_embed = hparams.gnn_dim_embed
         
         self.num_layers = hparams.gnn_num_layers
@@ -24,16 +24,22 @@ class GNN(nn.Module):
         self.convs = nn.ModuleList([])
         self.bns = nn.ModuleList([])
         
-        self.edge_net = MLP(
-            dim_input=BOND_FDIM,
-            dim_hidden=self.dim_hidden_edge,
-            dim_output=BOND_FDIM * self.dim_hidden
-        )
-        
         for i in range(self.num_layers):
             dim_input = self.dim_input if i == 0 else self.dim_hidden
             
-            conv = NNConv(in_channels=dim_input, out_channels=self.dim_hidden, nn=self.edge_net)
+            edge_net = MLP(
+                dim_input=BOND_FDIM,
+                dim_hidden=self.dim_hidden_edge,
+                dim_output=dim_input * self.dim_hidden,
+            )
+            
+            conv = NNConv(
+                in_channels=dim_input, 
+                out_channels=self.dim_hidden, 
+                nn=edge_net,
+                root_weight=False,
+                bias=False)
+            
             self.convs.append(conv)
             
             bn = nn.BatchNorm1d(self.dim_hidden, track_running_stats=False)
