@@ -31,26 +31,19 @@ class Model(nn.Module):
         num_embeddings = embeddings.size(0)
 
         self.max_length = max_length
-        self.gnn_num_layers = hparams.gnn_num_layers
-        self.gnn_dim_input = ATOM_FDIM
-        self.gnn_dim_hidden = hparams.gnn_dim_hidden
-        self.gnn_dim_embed = hparams.gnn_dim_embed
-
-        self.vae_dim_input = self.gnn_dim_embed
+        self.dim_embed = embeddings.size(1)
+        
+        self.vae_dim_input = self.dim_embed
         self.vae_dim_hidden = hparams.vae_dim_hidden
         self.vae_dim_latent = hparams.vae_dim_latent
 
         self.embedding_dropout = hparams.embedding_dropout
         self.rnn_dropout = hparams.rnn_dropout
         self.rnn_num_layers = hparams.rnn_num_layers
-        self.rnn_dim_input = self.gnn_dim_embed
-        self.rnn_dim_hidden = self.gnn_dim_embed
+        self.rnn_dim_input = self.dim_embed
+        self.rnn_dim_hidden = self.dim_embed
         self.rnn_dim_output = num_embeddings
-
-        self.mlp_dim_input = self.gnn_dim_embed
-        self.mlp_dim_hidden = hparams.mlp_dim_hidden if "mlp_dim_hidden" in hparams else self.mlp_dim_input // 2
-        self.mlp_dim_output = hparams.mlp_dim_output if "mlp_dim_output" in hparams else 1
-
+        
         self.embedder = nn.Embedding.from_pretrained(embeddings, freeze=True)
 
         self.encoder = Encoder(
@@ -81,12 +74,6 @@ class Model(nn.Module):
 
         if self.hparams.tie_weights:
             self.decoder.tie_weights(self.embedder)
-
-        self.mlp = MLP(
-            dim_input=self.mlp_dim_input,
-            dim_hidden=self.mlp_dim_hidden,
-            dim_output=self.mlp_dim_output
-        )
 
     def _forward(self, batch):
         x = self.embedder(batch.outseq)

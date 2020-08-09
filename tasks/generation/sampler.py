@@ -29,7 +29,7 @@ class Sampler:
             if len(sample) >= 2:
                 samples.append(sample)
                 if len(samples) % 1000 == 0:
-                    print(f"Sampled {len(samples)} compunds.")
+                    print(f"Sampled {len(samples)} fragment sequences.")
             
             num_trials += 1
             
@@ -45,7 +45,7 @@ class Sampler:
             logits, h = decoder.forward(x_emb, h)
             logits = self.clean_logits(logits)
 
-            logits = self.top_k(logits)
+            # logits = self.top_k(logits)
             probs = F.softmax(logits / temp, dim=-1)
             token = torch.multinomial(probs, 1).item()
 
