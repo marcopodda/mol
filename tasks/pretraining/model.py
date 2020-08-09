@@ -19,7 +19,7 @@ class SkipGram(nn.Module):
 
         pos_score = torch.mul(emb_target, emb_context).squeeze()
         pos_score = torch.sum(pos_score, dim=1)
-
+        
         num_negatives, dim_embed = self.hparams.num_negatives, self.hparams.gnn_dim_embed
         emb_negatives = emb_negatives.view(-1, num_negatives, dim_embed)
         neg_score = torch.bmm(emb_negatives, emb_target.unsqueeze(2)).squeeze()
