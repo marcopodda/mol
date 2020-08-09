@@ -7,7 +7,9 @@ import torch
 from torch.nn import functional as F
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
-from torch_geometric.data import DataLoader
+from torch.utils.data import DataLoader
+
+from torch_geometric.data import Batch
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -18,9 +20,9 @@ from core.utils.os import get_or_create_dir
 from core.utils.serialization import load_yaml
 from core.utils.vocab import Tokens, Vocab
 
-from tasks.pretraining.dataset import PretrainDataset, VocabDataset
+from tasks.pretraining.dataset import PretrainDataset
 from tasks.pretraining.loader import PretrainDataLoader
-from tasks.pretraining.model import SkipGram
+from tasks.pretraining.model import PretrainModel
 
 
 class Pretrainer(pl.LightningModule):
@@ -31,15 +33,14 @@ class Pretrainer(pl.LightningModule):
         self.output_dir = output_dir
         self.name = name
 
-        self.model = SkipGram(hparams)
-
-    def prepare_data(self):
-        self.dataset = PretrainDataset(self.hparams, self.output_dir, self.name)
+        self.dataset = PretrainDataset(hparams, output_dir, name)
+        self.vocab = self.dataset.vocab
+        
+        self.model = PretrainModel(hparams, len(self.vocab), self.dataset.max_length)
 
     def forward(self, batch):
-        target, context, negatives = batch
-        pos_score, neg_score = self.model(target, context, negatives)
-        return pos_score, neg_score
+        outputs = self.model(batch)
+        return outputs
 
     def configure_optimizers(self):
         optimizer = Adam(self.parameters(), lr=self.hparams.lr)
@@ -47,42 +48,27 @@ class Pretrainer(pl.LightningModule):
         return [optimizer], [scheduler]
 
     def train_dataloader(self):
-        return PretrainDataLoader(
+        return DataLoader(
             dataset=self.dataset,
-            batch_size=self.hparams.pretrain_batch_size,
-            num_workers=self.hparams.num_workers,
+            collate_fn=lambda dl: Batch.from_data_list(dl),
+            batch_size=self.hparams.batch_size,
             shuffle=True,
-            pin_memory=True)
+            pin_memory=True,
+            num_workers=self.hparams.num_workers)
 
     def training_step(self, batch, batch_idx):
-        pos_score, neg_score = self.forward(batch)
-        loss = self.model.loss(pos_score, neg_score)
-        return {'loss': loss, "log": {"train_loss": loss}}
+        outputs = self.forward(batch)
+        loss = F.cross_entropy(outputs, batch.outseq.view(-1))
+        return {"loss": loss}
+
+    def training_epoch_end(self, outputs):
+        train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
+        logs = {"train_loss": train_loss_mean}
+        return {"log": logs, "progress_bar": logs}
 
 
-def save_embeddings(hparams, model, vocab, filename, device="cpu"):
-    num_tokens = len(Tokens)
-    dataset = VocabDataset(vocab)
-    loader = DataLoader(
-        dataset=dataset,
-        batch_size=hparams.pretrain_batch_size,
-        num_workers=hparams.num_workers,
-        shuffle=False,
-        pin_memory=True)
-
-    embeddings = []
-    model = model.to(device)
-
-    for batch in loader:
-        batch.to(device)
-        embedding = model.gnn_in(batch).detach().cpu()
-        embeddings.append(embedding)
-
-    embed_dim = hparams.gnn_dim_embed
-    pad = [torch.zeros(1, embed_dim)]
-    tokens = [torch.randn(1, embed_dim) for _ in range(num_tokens - 1)]
-    embeddings = torch.cat(pad + tokens + embeddings, dim=0)
-    # embeddings = F.normalize(embeddings, p=2, dim=1)
+def save_embeddings(model, vocab, filename):
+    embeddings = model.embedder.weight.data.detach().cpu()
     torch.save(embeddings, filename)
 
 
@@ -93,19 +79,11 @@ def run(args):
     hparams = Namespace(**load_yaml(args.config_file))
 
     dataset = PretrainDataset(hparams, output_dir, dataset_name)
-    pretrain_model = Pretrainer(hparams, output_dir, dataset_name)
+    pretrainer = Pretrainer(hparams, output_dir, dataset_name)
 
-    if not (embeddings_dir / f"untrained_{hparams.gnn_dim_embed}.pt").exists():
-        print("untrained embeddings...")
-        save_embeddings(
-            hparams=hparams,
-            model=pretrain_model.model,
-            vocab=dataset.vocab,
-            filename=embeddings_dir / f"untrained_{hparams.gnn_dim_embed}.pt",
-            device=f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu",)
-
-    if not (embeddings_dir / f"skipgram_{hparams.gnn_dim_embed}.pt").exists():
-        print("skipgram embeddings...")
+    embeddings_filename = f"emb_{hparams.gnn_dim_embed}.pt"
+    if not (embeddings_dir / embeddings_filename).exists():
+        print("learning embeddings...")
         gpu = args.gpu if torch.cuda.is_available() else None
         logger = TensorBoardLogger(save_dir=output_dir / args.task, name="", version="logs")
         ckpt_callback = ModelCheckpoint(filepath=get_or_create_dir(output_dir / args.task / "checkpoints"), monitor="train_loss", save_last=True)
@@ -115,16 +93,15 @@ def run(args):
             fast_dev_run=args.debug,
             logger=logger,
             gpus=gpu)
-        trainer.fit(pretrain_model)
+        trainer.fit(pretrainer)
 
         save_embeddings(
-            hparams=hparams,
-            model=pretrain_model.model,
+            model=pretrainer.model,
             vocab=dataset.vocab,
-            filename=embeddings_dir / f"skipgram_{hparams.gnn_dim_embed}.pt",
-            device=next(pretrain_model.parameters()).device)
+            filename=embeddings_dir / embeddings_filename)
 
-    if not (embeddings_dir / f"random_{hparams.gnn_dim_embed}.pt").exists():
+    embeddings_filename = f"random_{hparams.gnn_dim_embed}.pt"
+    if not (embeddings_dir / embeddings_filename).exists():
         print("random embeddings...")
         num_tokens = len(Tokens)
         embed_dim = hparams.gnn_dim_embed
@@ -132,5 +109,4 @@ def run(args):
         tokens = [torch.randn(1, embed_dim) for _ in range(num_tokens - 1)]
         embeddings = [torch.randn(1, embed_dim) for _ in range(len(dataset.vocab))]
         embeddings = torch.cat(pad + tokens + embeddings, dim=0)
-        # embeddings = F.normalize(embeddings, p=2, dim=1)
-        torch.save(embeddings, embeddings_dir / f"random_{hparams.gnn_dim_embed}.pt")
+        torch.save(embeddings, embeddings_dir / embeddings_filename)
