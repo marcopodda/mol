@@ -82,7 +82,7 @@ def save_embeddings(hparams, model, vocab, filename, device="cpu"):
     pad = [torch.zeros(1, embed_dim)]
     tokens = [torch.randn(1, embed_dim) for _ in range(num_tokens - 1)]
     embeddings = torch.cat(pad + tokens + embeddings, dim=0)
-    embeddings = F.normalize(embeddings, p=2, dim=1)
+    # embeddings = F.normalize(embeddings, p=2, dim=1)
     torch.save(embeddings, filename)
 
 
@@ -132,5 +132,5 @@ def run(args):
         tokens = [torch.randn(1, embed_dim) for _ in range(num_tokens - 1)]
         embeddings = [torch.randn(1, embed_dim) for _ in range(len(dataset.vocab))]
         embeddings = torch.cat(pad + tokens + embeddings, dim=0)
-        embeddings = F.normalize(embeddings, p=2, dim=1)
+        # embeddings = F.normalize(embeddings, p=2, dim=1)
         torch.save(embeddings, embeddings_dir / f"random_{hparams.gnn_dim_embed}.pt")
