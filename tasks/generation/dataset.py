@@ -30,6 +30,6 @@ class MolecularDataset(data.Dataset):
         probs[:, 1:seq_len] = torch.rand(seq_len - 1)
         num_to_change = int((probs > 0.5).sum())
         noise = np.random.choice(range(len(Tokens), len(self.vocab)), num_to_change)
-        data.inseq[probs > 0.5] = noise.tolist()  # Tokens.MASK.value
+        data.inseq[probs > 0.5] = torch.LongTensor(noise)
         return data
         
