@@ -86,4 +86,3 @@ class Decoder(nn.Module):
 
     def tie_weights(self, embedder):
         self.out.weight = embedder.weight
-        self.out.bias = False
