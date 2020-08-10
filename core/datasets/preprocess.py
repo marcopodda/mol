@@ -149,6 +149,9 @@ def get_vocab(df, path):
     for _, frags in df.frags.iteritems():
         [new_vocab.update(f) for f in frags]
     
+    new_vocab.most_similar_1 = [None] * len(new_vocab)
+    new_vocab.most_similar_2 = [None] * len(new_vocab)
+    
     for frag, idx in new_vocab._frag2idx.items():
         ms1 = vocab.most_similar_1[vocab._frag2idx[frag]]
         new_vocab.most_similar_1[idx] = ms1
