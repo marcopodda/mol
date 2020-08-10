@@ -81,13 +81,13 @@ class Model(nn.Module):
 
         enc_outputs, h = self.encoder(x)
 
-        h, vae_loss = self.vae(h)
+        hidden_enc, vae_loss = self.vae(h)
 
         x = self.embedder(batch.inseq)
         x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
-        output, hidden = self.decoder(x, h)
-        return output, vae_loss
+        output, hidden_dec = self.decoder(x, hidden_end)
+        return output, vae_loss, hidden_enc, hidden_dec
 
     def _forward_att(self, batch):
         x = self.embedder(batch.outseq)
