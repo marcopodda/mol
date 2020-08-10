@@ -4,7 +4,7 @@ from rdkit import DataStructs, Chem
 from rdkit.Chem import Crippen, QED, AllChem
 
 from core.mols import drd2_scorer
-from core.mols.utils import mol_from_smiles
+from core.mols.utils import mol_from_smiles, mols_from_smiles
 from core.mols.sascorer.sascorer import calculateScore
 
 
@@ -93,7 +93,7 @@ def bulk_tanimoto(mol, mols):
         mol = mol_from_smiles(mol)
 
     if isinstance(mols[0], str):
-        mols = [mol_from_smiles(m) for m in mols] 
+        mols = mols_from_smiles(mols)
 
     fp = get_fingerprint(mol)
     fps = [get_fingerprint(m) for m in mols]
