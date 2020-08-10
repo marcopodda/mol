@@ -18,18 +18,15 @@ class VocabDataset(data.Dataset):
             
         _, self.vocab = get_data(output_dir, name, hparams.num_samples)
         self.num_frags = len(self.vocab)
-        self.num_samples = 1000 # int(0.9 * self.num_frags)
      
     def __getitem__(self, index):
-        smiles = self.vocab[index]
-        samples = np.random.choice(self.num_frags, self.num_samples).tolist()
-        if index in samples:
-            samples.remove(index)
-        smiles_samples = [self.vocab[i] for i in samples]
-        td = bulk_tanimoto(smiles, smiles_samples)
-        
-        positive_idx, negative_idx = (-np.array(td)).argsort()[:2]
-        return to_data(smiles), to_data(smiles_samples[positive_idx]), to_data(smiles_samples[negative_idx])
+        anchor_smiles = self.vocab[index]
+        positive_smiles = np.random.choice(self.vocab.most_similar_1[index])
+        negative_smiles = np.random.choice(self.vocab.most_similar_2[index])
+        return (
+            to_data(anchor_smiles), 
+            to_data(positive_smiles), 
+            to_data(negative_smiles))
 
     def __len__(self):
         return self.num_frags
