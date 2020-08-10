@@ -20,8 +20,8 @@ from core.utils.os import get_or_create_dir
 from core.utils.serialization import load_yaml
 from core.utils.vocab import Tokens, Vocab
 
-from tasks.pretraining.dataset import PretrainDataset
-from tasks.pretraining.loader import PretrainDataLoader
+from tasks.pretraining.dataset import PretrainDataset, VocabDataset
+from tasks.pretraining.loader import PretrainDataLoader, VocabLoader
 from tasks.pretraining.model import PretrainModel
 
 
@@ -33,10 +33,11 @@ class Pretrainer(pl.LightningModule):
         self.output_dir = output_dir
         self.name = name
 
-        self.dataset = PretrainDataset(hparams, output_dir, name)
+        self.dataset = VocabDataset(hparams, output_dir, name)
         self.vocab = self.dataset.vocab
         
-        self.model = PretrainModel(hparams, len(self.vocab), self.dataset.max_length)
+        self.model = PretrainModel(hparams)
+        self.loader = VocabLoader(hparams, self.dataset)
 
     def forward(self, batch):
         outputs = self.model(batch)
@@ -48,27 +49,38 @@ class Pretrainer(pl.LightningModule):
         return [optimizer], [scheduler]
 
     def train_dataloader(self):
-        return DataLoader(
-            dataset=self.dataset,
-            collate_fn=lambda dl: Batch.from_data_list(dl),
-            batch_size=self.hparams.batch_size,
-            shuffle=True,
-            pin_memory=True,
-            num_workers=self.hparams.num_workers)
+        return self.loader.get()
 
     def training_step(self, batch, batch_idx):
-        outputs = self.forward(batch)
-        loss = F.cross_entropy(outputs, batch.outseq.view(-1))
+        anc, pos, neg = self.forward(batch)
+        loss = F.triplet_margin_loss(anc, pos, neg)
         return {"loss": loss}
 
     def training_epoch_end(self, outputs):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
         logs = {"train_loss": train_loss_mean}
         return {"log": logs, "progress_bar": logs}
+    
+    def on_fit_end(self):
+        pass
 
 
-def save_embeddings(model, vocab, filename):
-    embeddings = model.embedder.weight.data.detach().cpu()
+def save_embeddings(hparams, model, dataset, vocab, filename, device="cpu"):
+    num_tokens = len(Tokens)
+    loader = VocabLoader(hparams, dataset)
+
+    embeddings = []
+    model = model.to(device)
+
+    for batch in loader.get(shuffle=False):
+        embedding, _, _ = model(batch)
+        embeddings.append(embedding)
+
+    embed_dim = hparams.gnn_dim_embed
+    pad = [torch.zeros(1, embed_dim)]
+    tokens = [torch.randn(1, embed_dim) for _ in range(num_tokens - 1)]
+    embeddings = torch.cat(pad + tokens + embeddings, dim=0)
+    # embeddings = F.normalize(embeddings, p=2, dim=1)
     torch.save(embeddings, filename)
 
 
@@ -78,7 +90,7 @@ def run(args):
     dataset_name = args.dataset_name
     hparams = Namespace(**load_yaml(args.config_file))
 
-    dataset = PretrainDataset(hparams, output_dir, dataset_name)
+    dataset = VocabDataset(hparams, output_dir, dataset_name)
     pretrainer = Pretrainer(hparams, output_dir, dataset_name)
 
     embeddings_filename = f"emb_{hparams.gnn_dim_embed}.pt"
@@ -96,9 +108,12 @@ def run(args):
         trainer.fit(pretrainer)
 
         save_embeddings(
+            hparams=pretrainer.hparams,
             model=pretrainer.model,
+            dataset=dataset,
             vocab=dataset.vocab,
-            filename=embeddings_dir / embeddings_filename)
+            filename=embeddings_dir / embeddings_filename,
+            device=next(pretrainer.parameters()).device)
 
     embeddings_filename = f"random_{hparams.gnn_dim_embed}.pt"
     if not (embeddings_dir / embeddings_filename).exists():

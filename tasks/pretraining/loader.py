@@ -5,6 +5,26 @@ from torch_geometric.data import Batch
 from sklearn.model_selection import train_test_split
 
 
+class VocabLoader:
+    def __init__(self, hparams, dataset):
+        self.hparams = hparams
+        self.num_samples = len(dataset)
+        self.dataset = dataset
+
+    def collate(self, data_list):
+        anc, pos, neg = zip(*data_list)
+        return Batch.from_data_list(anc), Batch.from_data_list(pos), Batch.from_data_list(neg),
+
+    def get(self, shuffle=True):
+        return DataLoader(
+            dataset=self.dataset,
+            collate_fn=lambda b: self.collate(b),
+            batch_size=self.hparams.batch_size,
+            shuffle=shuffle,
+            pin_memory=True,
+            num_workers=self.hparams.num_workers)
+
+
 class PretrainDataLoader:
     r"""Data loader which merges data objects from a
     :class:`torch_geometric.data.dataset` to a mini-batch.

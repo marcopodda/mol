@@ -93,7 +93,7 @@ def bulk_tanimoto(mol, mols):
         mol = mol_from_smiles(mol)
 
     if isinstance(mols[0], str):
-        mols = mol_from_smiles(mols)
+        mols = [mol_from_smiles(m) for m in mols] 
 
     fp = get_fingerprint(mol)
     fps = [get_fingerprint(m) for m in mols]
