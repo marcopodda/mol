@@ -74,7 +74,7 @@ class Model(nn.Module):
         )
 
         if self.hparams.tie_weights:
-            self.decoder.tie_weights(self.embedder)
+            self.decoder.tie_weights(self.dec_embedder)
 
     def _forward(self, batch):
         x = self.enc_embedder(batch.outseq)
@@ -91,14 +91,14 @@ class Model(nn.Module):
         return output, vae_loss, hidden_enc, hidden_dec
 
     def _forward_att(self, batch):
-        x = self.embedder(batch.outseq)
+        x = self.enc_embedder(batch.outseq)
         # x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
         enc_outputs, h = self.encoder(x)
 
         h, vae_loss = self.vae(h)
 
-        x = self.embedder(batch.inseq)
+        x = self.dec_embedder(batch.inseq)
         # x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
         batch_size, seq_length, dim_embed = x.size()
