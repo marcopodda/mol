@@ -12,7 +12,7 @@ from molvs import standardize_smiles
 from core.datasets.download import fetch_dataset
 from core.datasets.utils import load_csv_data
 from core.datasets.features import ATOM_FEATURES
-from core.utils.vocab import Vocab
+from core.utils.vocab import Vocab, compute_most_similar
 from core.mols.props import get_props_data
 from core.mols.fragmentation import fragment
 from core.mols.split import split_molecule
@@ -33,7 +33,7 @@ def get_dataset_info(name):
 
 def clean_ZINC(raw_data):
     raw_data = raw_data.replace(r'\n', '', regex=True)
-    return raw_data
+    return raw_data[:500]
 
 def postprocess_ZINC(cleaned_data, raw_data):
     return cleaned_data
@@ -120,10 +120,24 @@ def process_data(smiles, n_jobs):
     return pd.DataFrame(data).dropna()
 
 
-def populate_vocab(df):
+def populate_vocab(df, n_jobs):
+    print("Create vocab...", end=" ")
     vocab = Vocab()
     for _, frags in df.frags.iteritems():
         [vocab.update(f) for f in frags]
+    print("Done.")
+    
+    print("Computing similarities...")
+    vocab.most_similar_1 = [None] * len(vocab)
+    vocab.most_similar_2 = [None] * len(vocab)
+    
+    P = Parallel(n_jobs=n_jobs, verbose=1)
+    results = P(delayed(compute_most_similar)(vocab, f) for f in vocab._frag2idx)
+    for frag, ms1, ms2 in results:
+        vocab.most_similar_1[vocab._frag2idx[frag]] = ms1
+        vocab.most_similar_2[vocab._frag2idx[frag]] = ms2
+    print("Done.")
+    
     return vocab
 
 
@@ -148,7 +162,7 @@ def run_preprocess(dataset_name):
         cleaned_data = postprocess_fn(cleaned_data, data)
         cleaned_data = cleaned_data.dropna()
         cleaned_data.to_csv(processed_data_path)
-        vocab = populate_vocab(cleaned_data)
+        vocab = populate_vocab(cleaned_data, n_jobs)
         vocab.save(processed_vocab_path)
 
 
@@ -171,6 +185,7 @@ def get_data(dest_dir, dataset_name, num_samples=None):
     dest_data_path = dest_dir / "data.csv"
     dest_vocab_path = dest_dir / "vocab.csv"
 
+    n_jobs = get_n_jobs()
     sample_args = {"n": num_samples} if num_samples is not None else {"frac": 1.0}
 
     if dest_data_path.exists():
@@ -181,13 +196,13 @@ def get_data(dest_dir, dataset_name, num_samples=None):
             data = data.sample(**sample_args)
             data = data.reset_index(drop=True)
             data.to_csv(dest_data_path)
-            vocab = populate_vocab(data)
+            vocab = populate_vocab(data, n_jobs)
             vocab.save(dest_vocab_path)
     else:
         data = load_csv_data(processed_data_path, convert=["frags"], cast={"length": int})
         data = data.sample(**sample_args).reset_index(drop=True)
         data.to_csv(dest_data_path)
-        vocab = populate_vocab(data)
+        vocab = populate_vocab(data, n_jobs)
         vocab.save(dest_vocab_path)
 
     data = load_csv_data(dest_data_path, convert=["frags"], cast={"length": int})
