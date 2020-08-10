@@ -18,7 +18,7 @@ class VocabDataset(data.Dataset):
             
         _, self.vocab = get_data(output_dir, name, hparams.num_samples)
         self.num_frags = len(self.vocab)
-        self.num_samples = int(0.9 * self.num_frags)
+        self.num_samples = 1000 # int(0.9 * self.num_frags)
      
     def __getitem__(self, index):
         smiles = self.vocab[index]

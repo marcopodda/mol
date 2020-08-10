@@ -60,9 +60,6 @@ class Pretrainer(pl.LightningModule):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
         logs = {"train_loss": train_loss_mean}
         return {"log": logs, "progress_bar": logs}
-    
-    def on_fit_end(self):
-        pass
 
 
 def save_embeddings(hparams, model, dataset, vocab, filename, device="cpu"):
