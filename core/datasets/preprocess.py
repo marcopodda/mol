@@ -131,9 +131,9 @@ def populate_vocab(df, n_jobs):
     vocab.most_similar_1 = [None] * len(vocab)
     vocab.most_similar_2 = [None] * len(vocab)
     
-    P = Parallel(n_jobs=n_jobs, verbose=1)
+    P = Parallel(n_jobs=-1, verbose=1)
     frags = list(vocab._frag2idx.keys())
-    results = P(delayed(compute_most_similar)(f, frags) for f in frags)
+    results = P(delayed(compute_most_similar)(f, frags) for f in vocab._frag2idx)
     for frag, ms1, ms2 in results:
         vocab.most_similar_1[vocab._frag2idx[frag]] = ms1
         vocab.most_similar_2[vocab._frag2idx[frag]] = ms2
