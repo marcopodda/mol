@@ -15,8 +15,7 @@ class Tokens(Enum):
     MASK = 3
 
 
-def compute_most_similar(vocab, frag):
-    other_frags = list(vocab._frag2idx.keys())
+def compute_most_similar(frag, other_frags):
     other_frags.remove(frag)
     sim = np.array(bulk_tanimoto(frag, other_frags))
     second_best, best = np.unique(sorted(sim)).tolist()[-2:]
