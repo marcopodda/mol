@@ -142,6 +142,22 @@ def populate_vocab(df, n_jobs):
     return vocab
 
 
+def get_vocab(df, path):
+    vocab = Vocab.from_file(path)
+    new_vocab = Vocab()
+    
+    for _, frags in df.frags.iteritems():
+        [new_vocab.update(f) for f in frags]
+    
+    for idx, frag in new_vocab.iteritems():
+        ms1 = vocab.most_similar_1[vocab._frag2idx[frag]]
+        new_vocab.most_similar_1[new_vocab._frag2idx[frag]] = ms1
+        ms2 = vocab.most_similar_2[vocab._frag2idx[frag]]
+        new_vocab.most_similar_2[new_vocab._frag2idx[frag]] = ms2
+    
+    return new_vocab
+    
+
 def run_preprocess(dataset_name):
     info = get_dataset_info(dataset_name)
     raw_dir = get_or_create_dir(DATA_DIR / dataset_name / "RAW")
@@ -198,14 +214,14 @@ def get_data(dest_dir, dataset_name, num_samples=None):
             data = data.reset_index(drop=True)
             data.to_csv(dest_data_path)
             
-            vocab = populate_vocab(data, n_jobs)
+            vocab = get_vocab(data, processed_vocab_path)
             vocab.save(dest_vocab_path)
     else:
         data = load_csv_data(processed_data_path, convert=["frags"], cast={"length": int})
         data = data.sample(**sample_args).reset_index(drop=True)
         data.to_csv(dest_data_path)
         
-        vocab = populate_vocab(data, n_jobs)
+        vocab = get_vocab(data, processed_vocab_path)
         vocab.save(dest_vocab_path)
 
     data = load_csv_data(dest_data_path, convert=["frags"], cast={"length": int})
