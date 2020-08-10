@@ -162,8 +162,9 @@ def run_preprocess(dataset_name):
         cleaned_data = postprocess_fn(cleaned_data, data)
         cleaned_data = cleaned_data.dropna()
         cleaned_data.to_csv(processed_data_path)
-        vocab = populate_vocab(cleaned_data, n_jobs)
-        vocab.save(processed_vocab_path)
+        if not processed_vocab_path.exists():
+            vocab = populate_vocab(cleaned_data, n_jobs)
+            vocab.save(processed_vocab_path)
 
 
 def get_data(dest_dir, dataset_name, num_samples=None):
@@ -196,14 +197,16 @@ def get_data(dest_dir, dataset_name, num_samples=None):
             data = data.sample(**sample_args)
             data = data.reset_index(drop=True)
             data.to_csv(dest_data_path)
-            vocab = populate_vocab(data, n_jobs)
-            vocab.save(dest_vocab_path)
+            if not dest_vocab_path.exists():
+                vocab = populate_vocab(data, n_jobs)
+                vocab.save(dest_vocab_path)
     else:
         data = load_csv_data(processed_data_path, convert=["frags"], cast={"length": int})
         data = data.sample(**sample_args).reset_index(drop=True)
         data.to_csv(dest_data_path)
-        vocab = populate_vocab(data, n_jobs)
-        vocab.save(dest_vocab_path)
+        if not dest_vocab_path.exists():
+            vocab = populate_vocab(data, n_jobs)
+            vocab.save(dest_vocab_path)
 
     data = load_csv_data(dest_data_path, convert=["frags"], cast={"length": int})
     vocab = Vocab.from_file(dest_vocab_path)
