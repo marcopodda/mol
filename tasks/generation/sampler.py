@@ -46,11 +46,11 @@ class Sampler:
             logits = self.clean_logits(logits)
 
             # logits = self.top_k(logits)
-            # probs = F.softmax(logits / temp, dim=-1)
-            # token = torch.multinomial(probs, 1).item()
+            probs = F.softmax(logits / temp, dim=-1)
+            token = torch.multinomial(probs, 1).item()
 
-            probs = F.log_softmax(logits, dim=1)
-            token = torch.argmax(probs).item()
+            # probs = F.log_softmax(logits, dim=1)
+            # token = torch.argmax(probs).item()
 
             if token == Tokens.EOS.value:
                 eos_found = True
