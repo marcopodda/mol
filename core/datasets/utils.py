@@ -20,9 +20,9 @@ def pad(vec, length, pad_symbol=Tokens.PAD.value):
 
 
 def to_data(row, vocab=None, max_length=None):
-    try:
+    if isinstance(row, pd.Series):
         mol = Chem.MolFromSmiles(row.smiles)
-    except AttributeError:
+    else:
         mol = Chem.MolFromSmiles(row)
 
     edge_index, x, edge_attr = get_features(mol)
@@ -36,9 +36,10 @@ def to_data(row, vocab=None, max_length=None):
         data["outseq"] = pad(seq + [Tokens.EOS.value], max_length)
     except Exception as e:
         pass
-
-    props = torch.Tensor([row.qed, row.sas, row.mr, row.logp, row.mw])
-    data['props'] = props
+    
+    if isinstance(row, pd.Series):
+        props = torch.Tensor([row.qed, row.sas, row.mr, row.logp, row.mw])
+        data['props'] = props
 
     return data
 
