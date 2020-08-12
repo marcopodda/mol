@@ -33,7 +33,7 @@ def sas(mol):
     return calculateScore(mol) if mol else None
 
 
-def penalized_logp(mol):
+def penalized_logp(mol, logP=None, SAS=None):
     if isinstance(mol, str):
         mol = mol_from_smiles(mol)
 
@@ -47,27 +47,40 @@ def penalized_logp(mol):
     cycle_mean = -0.0485696876403053
     cycle_std = 0.2860212110245455
 
-    log_p = Chem.Crippen.MolLogP(mol)
-    SA = -calculateScore(mol)
+    if not logP:
+        logP = Chem.Crippen.MolLogP(mol)
+    if not SAS:
+        SAS = calculateScore(mol)
 
     cycle_score = _num_long_cycles(mol)
 
-    normalized_log_p = (log_p - logP_mean) / logP_std
-    normalized_SA = (SA - SA_mean) / SA_std
+    normalized_logp = (logP - logP_mean) / logP_std
+    normalized_SA = ((-SAS) - SA_mean) / SA_std
     normalized_cycle = (cycle_score - cycle_mean) / cycle_std
-    return normalized_log_p + normalized_SA + normalized_cycle
+    return normalized_logp + normalized_SA + normalized_cycle
+
+
+def logp(mol):
+    if isinstance(mol, str):
+        mol = mol_from_smiles(mol)
+    return Chem.Crippen.MolLogP(mol) if mol else None
 
 
 def drd2(mol):
     if isinstance(mol, str):
         mol = mol_from_smiles(mol)
-    return drd2_scorer.get_score(mol)
+    return drd2_scorer.get_score(mol) if mol else None
 
 
 def mr(mol):
     if isinstance(mol, str):
         mol = mol_from_smiles(mol)
     return Crippen.MolMR(mol) if mol else None
+
+def mw(mol):
+    if isinstance(mol, str):
+        mol = mol_from_smiles(mol)
+    return Chem.Descriptors.MolWt(mol) if mol else None
 
 
 def qed(mol):
@@ -101,15 +114,13 @@ def bulk_tanimoto(mol, mols):
 
 
 def get_props_data(mol):
+    logP = logp(mol)
+    SAS = sas(mol)
     return {
         "qed": qed(mol),
-        "plogp": penalized_logp(mol),
-        # "mr": mr(mol),
-        # "fp": get_fingerprint(mol)
+        "logP": logP,
+        "SAS": SAS,
+        "plogP": penalized_logp(mol, logP=logP, SAS=SAS),
+        "mw": mw(mol),
+        "mr": mr(mol)
     }
-
-
-def compare(smi1, smi2):
-    props1 = get_props_data(smi1)
-    props2 = get_props_data(smi2)
-    return similarity(smi1, smi2)
