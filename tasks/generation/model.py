@@ -44,8 +44,8 @@ class Model(nn.Module):
         self.rnn_dim_hidden = self.dim_embed
         self.rnn_dim_output = num_embeddings
         
-        self.enc_embedder = nn.Embedding.from_pretrained(embeddings, freeze=True)
-        self.dec_embedder = nn.Embedding(*embeddings.size())
+        self.enc_embedder = nn.Embedding(*embeddings.size())
+        self.dec_embedder = nn.Embedding.from_pretrained(embeddings, freeze=True)
 
         self.encoder = Encoder(
             hparams=hparams,
