@@ -1,6 +1,9 @@
 import torch
 from torch.nn import functional as F
 
+from rdkit import Chem
+
+from core.mols.split import join_fragments
 from core.utils.vocab import Tokens
 
 
@@ -27,9 +30,17 @@ class Sampler:
             sample = self.generate_one(embedder, vae, decoder, temp=temp)
             
             if len(sample) >= 2:
-                samples.append(sample)
+                frags = [self.vocab[t] for t in sample]
+                frags = [Chem.MolFromSmiles(f) for f in frags]
+                
+                try:
+                    mol = join_fragments(frags)
+                    samples.append(Chem.MolToSmiles(mol))
+                except:
+                    pass
+
                 if len(samples) % 1000 == 0:
-                    print(f"Sampled {len(samples)} fragment sequences.")
+                    print(f"Sampled {len(samples)} molecules.")
             
             num_trials += 1
             

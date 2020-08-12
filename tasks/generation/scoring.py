@@ -22,21 +22,11 @@ def score(output_dir, epoch, n_jobs=40):
     samples_path = samples_dir / f"samples_{epoch}.yml"
     
     if samples_path.exists():
-        tokens_list = load_yaml(samples_path)
+        smiles = load_yaml(samples_path)
         
-        mols = []
-        for tokens in tokens_list:
-            frags = [Chem.MolFromSmiles(vocab[t]) for t in tokens]
-            try:
-                mols.append(join_fragments(frags))
-            except:
-                pass
-        
-        smis = [Chem.MolToSmiles(m) for m in mols]
-        
-        metrics = get_all_metrics(smis, n_jobs=n_jobs)
+        metrics = get_all_metrics(smiles, n_jobs=n_jobs)
         metrics = convert_metrics_dict(metrics)
-        metrics["num_samples"] = len(smis)
+        metrics["NumSamples"] = len(smiles)
         
         path = samples_path.parent / f"{samples_path.stem}_results.yml"
         save_yaml(metrics, path)
