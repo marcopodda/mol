@@ -114,8 +114,7 @@ def bulk_tanimoto(mol, mols):
 
 
 def get_props_data(mol):
-    logP = logp(mol)
-    SAS = sas(mol)
+    logP, SAS = logp(mol), sas(mol)
     return {
         "qed": qed(mol),
         "logP": logP,
