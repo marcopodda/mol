@@ -1,7 +1,7 @@
 import networkx as nx
 
 from rdkit import DataStructs, Chem
-from rdkit.Chem import Crippen, QED, AllChem
+from rdkit.Chem import Crippen, QED, AllChem, Descriptors
 
 from core.mols import drd2_scorer
 from core.mols.utils import mol_from_smiles, mols_from_smiles
@@ -63,7 +63,7 @@ def penalized_logp(mol, logP=None, SAS=None):
 def logp(mol):
     if isinstance(mol, str):
         mol = mol_from_smiles(mol)
-    return Chem.Crippen.MolLogP(mol) if mol else None
+    return Crippen.MolLogP(mol) if mol else None
 
 
 def drd2(mol):
@@ -80,7 +80,7 @@ def mr(mol):
 def mw(mol):
     if isinstance(mol, str):
         mol = mol_from_smiles(mol)
-    return Chem.Descriptors.MolWt(mol) if mol else None
+    return Descriptors.MolWt(mol) if mol else None
 
 
 def qed(mol):
