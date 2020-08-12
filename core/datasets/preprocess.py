@@ -86,13 +86,7 @@ def filter_mol(mol, max_heavy_atoms=50, min_heavy_atoms=10):
 
 
 def clean_molecule(smi):
-    datadict = {
-        "smiles": None,
-        "frags": None,
-        "length": None,
-        "qed": None,
-        "plogp": None
-    }
+    datadict = {}
 
     try:
         smi = standardize_smiles(smi)
