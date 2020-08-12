@@ -37,15 +37,8 @@ def to_data(row, vocab=None, max_length=None):
     except Exception as e:
         pass
 
-    try:
-        data['qed'] = torch.FloatTensor([[row.qed]])
-    except AttributeError:
-        pass
-
-    try:
-        data['plogp'] = torch.FloatTensor([[row.plogp]])
-    except AttributeError:
-        pass
+    props = torch.Tensor([row.qed, row.sas, row.mr, row.logp, row.mw])
+    data['props'] = props
 
     return data
 

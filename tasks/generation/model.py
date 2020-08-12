@@ -75,6 +75,11 @@ class Model(nn.Module):
 
         if self.hparams.tie_weights:
             self.decoder.tie_weights(self.dec_embedder)
+        
+        self.mlp = MLP(
+            dim_input=self.dim_embed, 
+            dim_hidden=self.dim_embed // 2, 
+            dim_output=5)
 
     def _forward(self, batch):
         x = self.enc_embedder(batch.outseq)
@@ -88,7 +93,9 @@ class Model(nn.Module):
         x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
         output, hidden_dec = self.decoder(x, hidden_enc)
-        return output, vae_loss, hidden_enc, hidden_dec
+        props = self.mlp(hidden_enc)
+        
+        return output, vae_loss, hidden_enc, hidden_dec, props
 
     def _forward_att(self, batch):
         x = self.enc_embedder(batch.outseq)
