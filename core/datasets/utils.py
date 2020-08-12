@@ -38,7 +38,7 @@ def to_data(row, vocab=None, max_length=None):
         pass
     
     if isinstance(row, pd.Series):
-        props = torch.Tensor([row.qed, row.sas, row.mr, row.logp, row.mw])
+        props = torch.Tensor([row.qed, row.SAS, row.logP, row.mr, row.mw])
         data['props'] = props
 
     return data

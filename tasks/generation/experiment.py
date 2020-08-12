@@ -58,7 +58,7 @@ class PLWrapper(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         outputs, vae_loss, he, ho, props = self.model(batch)
-        mse_loss = F.mse_loss(props, batch.props)
+        mse_loss = F.mse_loss(props.view(-1), batch.props)
         loss = mse_loss + self.loss(outputs, batch.outseq.view(-1), vae_loss)
         return {"loss": loss}
     
@@ -69,7 +69,7 @@ class PLWrapper(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         outputs, vae_loss, he, ho, props = self.model(batch)
-        mse_loss = F.mse_loss(props, batch.props)
+        mse_loss = F.mse_loss(props.view(-1), batch.props)
         loss = mse_loss + self.loss(outputs, batch.outseq.view(-1), vae_loss)
         return {"val_loss": loss}
 
