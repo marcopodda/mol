@@ -101,7 +101,6 @@ def clean_molecule(smi):
         if filter_mol(mol):
             frags = split_molecule(mol)
             length = len(frags)
-            # frags, length = fragment(mol)
 
             if length > 1:
                 datadict.update(smiles=smi)
@@ -182,8 +181,9 @@ def run_preprocess(dataset_name):
         cleaned_data = postprocess_fn(cleaned_data, data)
         cleaned_data = cleaned_data.dropna()
         cleaned_data.to_csv(processed_data_path)
-        vocab = populate_vocab(cleaned_data, n_jobs)
-        vocab.save(processed_vocab_path)
+        if not processed_vocab_path.exists():
+            vocab = populate_vocab(cleaned_data, n_jobs)
+            vocab.save(processed_vocab_path)
 
 
 def get_data(dest_dir, dataset_name, num_samples=None):
