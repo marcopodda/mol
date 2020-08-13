@@ -27,7 +27,7 @@ class BaseVAE(nn.Module):
         z = self.fc_out(z)
         return z.view(self.rnn_num_layers, -1, self.dim_input)
     
-    def sample_prior(self, like=None):
+    def sample_prior(self, like):
         return torch.randn_like(like)
 
 
