@@ -27,9 +27,8 @@ class BaseVAE(nn.Module):
         z = self.fc_out(z)
         return z.view(self.rnn_num_layers, -1, self.dim_input)
     
-    def sample_prior(self):
-        device = next(self.parameters()).device
-        return torch.randn((1, self.fc_mean.out_features), device=device)
+    def sample_prior(self, like=None):
+        return torch.randn_like(like)
 
 
 class MMDVAE(BaseVAE):
@@ -51,7 +50,7 @@ class MMDVAE(BaseVAE):
         return torch.exp(-pairwise_dist / sigma_sqr)
 
     def mmd(self, p):
-        q = torch.randn_like(p)
+        q = self.sample_prior(like=p)
         p_kernel = self.gaussian_kernel(p, p).mean()
         q_kernel = self.gaussian_kernel(q, q).mean()
         pq_kernel = self.gaussian_kernel(p, q).mean()
@@ -61,26 +60,26 @@ class MMDVAE(BaseVAE):
 class VAE(BaseVAE):
     def __init__(self, hparams, dim_input, dim_hidden, dim_latent):
         super().__init__(hparams, dim_input, dim_hidden, dim_latent)
-        self.fc_std = nn.Linear(dim_hidden, dim_latent)
+        self.fc_logv = nn.Linear(dim_hidden, dim_latent)
 
     def encode(self, x):
         x = x.view(-1, x.size(0) * x.size(2))
         x = F.relu(self.fc_enc(x))
         mean = self.fc_mean(x)
-        logvar = self.fc_std(x)
-        return mean, logvar
+        logv = self.fc_logv(x)
+        return mean, logv
 
-    def reparameterize(self, mean, logvar):
-        std = torch.exp(0.5 * logvar)
-        eps = torch.randn_like(std)
+    def reparameterize(self, mean, logv):
+        std = torch.exp(0.5 * logv)
+        eps = self.sample_prior(like=std)
         return mean + eps * std
 
     def forward(self, x):
-        mean, logvar = self.encode(x)
-        z = self.reparameterize(mean, logvar)
+        mean, logv = self.encode(x)
+        z = self.reparameterize(mean, logv)
         x_rec = self.decode(z)
-        loss = self.kl_div(mean, logvar)
+        loss = self.kl_div(mean, logv)
         return x_rec, loss
 
-    def kl_div(self, mu, sigma):
-        return -0.5 * torch.sum(1 + sigma - mu.pow(2) - sigma.exp())
+    def kl_div(self, mean, logv):
+        return -0.5 * torch.sum(1 + logv - mean.pow(2) - logv.exp())
