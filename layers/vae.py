@@ -44,16 +44,16 @@ class MMDVAE(BaseVAE):
         loss = self.mmd(z)
         return x_rec, loss
 
-    def gaussian_kernel(self, x, y, sigma_sqr=2.):
+    def rbf_kernel(self, x, y):
         diff = x[:, None, :] - y[None, :, :]
-        pairwise_dist = torch.sum(diff ** 2, dim=-1)
-        return torch.exp(-pairwise_dist / sigma_sqr)
+        dist = torch.sum(diff ** 2, dim=-1)
+        return torch.exp(-dist)
 
     def mmd(self, p):
         q = self.sample_prior(like=p)
-        p_kernel = self.gaussian_kernel(p, p).mean()
-        q_kernel = self.gaussian_kernel(q, q).mean()
-        pq_kernel = self.gaussian_kernel(p, q).mean()
+        p_kernel = self.rbf_kernel(p, p).mean()
+        q_kernel = self.rbf_kernel(q, q).mean()
+        pq_kernel = self.rbf_kernel(p, q).mean()
         return p_kernel + q_kernel - 2 * pq_kernel
 
 
