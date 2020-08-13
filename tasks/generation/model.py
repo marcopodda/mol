@@ -98,6 +98,7 @@ class Model(nn.Module):
 
         output, hidden_dec = self.decoder(x, hidden_enc)
         h = hidden_enc.view(-1, self.rnn_dim_input * self.rnn_num_layers)
+        props = None
         # props = self.mlp(h)
         
-        return output, vae_loss, hidden_enc, hidden_dec, None # props
+        return output, vae_loss, hidden_enc, hidden_dec, props
