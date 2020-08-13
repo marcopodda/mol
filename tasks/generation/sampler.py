@@ -1,5 +1,6 @@
 import torch
 from torch.nn import functional as F
+from torch.distributions import Categorical
 
 from rdkit import Chem
 
@@ -57,8 +58,8 @@ class Sampler:
             logits = self.clean_logits(logits)
 
             # logits = self.top_k(logits)
-            probs = F.softmax(logits / temp, dim=-1)
-            token = torch.multinomial(probs, 1).item()
+            probs = torch.softmax(logits / temp, dim=-1)
+            token = Categorical(logits).sample().item()  # torch.multinomial(probs, 1).item()
 
             # probs = F.log_softmax(logits, dim=1)
             # token = torch.argmax(probs).item()
