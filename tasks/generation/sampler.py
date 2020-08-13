@@ -55,7 +55,6 @@ class Sampler:
         while len(sample) < self.max_length:
             x_emb = embedder(x)
             logits, h = decoder.forward(x_emb, h)
-            logits = self.clean_logits(logits)
 
             # logits = self.top_k(logits)
             probs = torch.softmax(logits / temp, dim=-1)
@@ -63,6 +62,10 @@ class Sampler:
 
             # probs = F.log_softmax(logits, dim=1)
             # token = torch.argmax(probs).item()
+
+            if token in [Tokens.PAD.value, Tokens.SOS.value, Tokens.MASK.value]:
+                sample = []
+                break
 
             if token == Tokens.EOS.value:
                 eos_found = True
@@ -73,11 +76,6 @@ class Sampler:
             x = torch.LongTensor([[token]])
         
         return sample if eos_found else []
-
-    def clean_logits(self, logits):
-        logits = logits.view(-1)
-        logits[[Tokens.PAD.value, Tokens.SOS.value, Tokens.MASK.value]] = -float('Inf')
-        return logits.view(1, -1)
 
     def top_k(self, logits, k=100):
         logits = logits.view(-1)
