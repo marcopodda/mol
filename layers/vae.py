@@ -27,7 +27,7 @@ class BaseVAE(nn.Module):
         z = self.fc_out(z)
         return z.view(self.rnn_num_layers, -1, self.dim_input)
     
-    def sample_prior(self, z=None):
+    def sample_prior(self,  z=None):
         if z is None:
             device = next(self.parameters()).device
             return torch.randn((1, self.fc_mean.out_features), device=device)
