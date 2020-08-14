@@ -58,7 +58,7 @@ class Sampler:
 
             # logits = self.top_k(logits)
             probs = torch.softmax(logits / temp, dim=-1)
-            token = Categorical(logits).sample().item()  # torch.multinomial(probs, 1).item()
+            token = torch.multinomial(probs, 1).item()
 
             # probs = F.log_softmax(logits, dim=1)
             # token = torch.argmax(probs).item()
