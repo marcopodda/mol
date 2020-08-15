@@ -44,8 +44,8 @@ class Model(nn.Module):
         self.rnn_dim_hidden = self.dim_embed
         self.rnn_dim_output = num_embeddings
         
-        # self.embedder = nn.Embedding(*embeddings.size())
-        self.embedder = nn.Embedding.from_pretrained(embeddings, freeze=True)
+        self.enc_embedder = nn.Embedding.from_pretrained(embeddings, freeze=True)
+        self.dec_embedder = nn.Embedding(*embeddings.size())
 
         self.encoder = Encoder(  
             hparams=hparams,
@@ -74,7 +74,7 @@ class Model(nn.Module):
         )
 
         if self.hparams.tie_weights:
-            self.decoder.tie_weights(self.embedder)
+            self.decoder.tie_weights(self.enc_embedder)
         
         self.mlp_dim_input = self.rnn_num_layers * self.dim_embed
         self.mlp_dim_hidden = self.mlp_dim_input // 2
@@ -86,14 +86,14 @@ class Model(nn.Module):
             dim_output=self.mlp_dim_output)
 
     def forward(self, batch):
-        x = self.embedder(batch.outseq)
+        x = self.enc_embedder(batch.outseq)
         x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
         enc_outputs, h = self.encoder(x)
 
         hidden_enc, vae_loss = self.vae(h)
 
-        x = self.embedder(batch.inseq)
+        x = self.dec_embedder(batch.inseq)
         x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
         output, hidden_dec = self.decoder(x, hidden_enc)
