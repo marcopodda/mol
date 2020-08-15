@@ -21,7 +21,7 @@ class Sampler:
         
         vae = model.vae
         decoder = model.decoder
-        embedder = model.embedder
+        embedder = model.dec_embedder
         
         samples = []
         num_trials = 0
