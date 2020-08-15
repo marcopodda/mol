@@ -74,7 +74,7 @@ class Model(nn.Module):
         )
 
         if self.hparams.tie_weights:
-            self.decoder.tie_weights(self.enc_embedder)
+            self.decoder.tie_weights(self.dec_embedder)
         
         self.mlp_dim_input = self.rnn_num_layers * self.dim_embed
         self.mlp_dim_hidden = self.mlp_dim_input // 2
