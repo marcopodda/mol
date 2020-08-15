@@ -53,7 +53,7 @@ class MMDVAE(BaseVAE):
         return torch.exp(-dist)
 
     def mmd(self, p):
-        q = self.sample_prior(like=p)
+        q = self.sample_prior(z=p)
         p_kernel = self.rbf_kernel(p, p).mean()
         q_kernel = self.rbf_kernel(q, q).mean()
         pq_kernel = self.rbf_kernel(p, q).mean()
@@ -74,7 +74,7 @@ class VAE(BaseVAE):
 
     def reparameterize(self, mean, logv):
         std = torch.exp(0.5 * logv)
-        eps = self.sample_prior(like=std)
+        eps = self.sample_prior(z=std)
         return mean + eps * std
 
     def forward(self, x):
