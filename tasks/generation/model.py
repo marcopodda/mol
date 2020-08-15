@@ -7,14 +7,20 @@ from torch.nn import functional as F
 from core.datasets.features import ATOM_FDIM
 from core.utils.vocab import Tokens
 from layers.graphconv import GNN
-from layers.vae import VAE, MMDVAE
+from layers.vae import VAE, MMDVAE, InfoVAE
 from layers.mlp import MLP
 from layers.encoder import Encoder
 from layers.decoder import Decoder
 
 
 def get_vae_class(name):
-    return VAE if name == "VAE" else MMDVAE
+    if name == "VAE":
+        return VAE
+    if name == "InfoVAE":
+        return InfoVAE
+    if name == "MMDVAE":
+        return MMDVAE
+    raise ValueError("Unknown VAE class")
 
 
 class Model(nn.Module):

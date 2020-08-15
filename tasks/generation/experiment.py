@@ -36,6 +36,7 @@ class PLWrapper(pl.LightningModule):
         self.max_length = self.dataset.max_length
 
         self.model = Model(hparams, output_dir, self.max_length)
+        self.beta = 5.0
 
     def prepare_data(self):
         loader = MolecularDataLoader(self.hparams, self.dataset)
@@ -58,8 +59,8 @@ class PLWrapper(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         outputs, vae_loss, he, ho, props = self.model(batch)
-        mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
-        loss = mse_loss + self.loss(outputs, batch.outseq.view(-1), vae_loss)
+        # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
+        # loss = mse_loss + self.loss(outputs, batch.outseq.view(-1), vae_loss)
         return {"loss": loss}
     
     def training_epoch_end(self, outputs):
@@ -80,7 +81,7 @@ class PLWrapper(pl.LightningModule):
 
     def loss(self, outputs, targets, vae_loss):
         rec_loss = F.cross_entropy(outputs, targets, ignore_index=Tokens.PAD.value)
-        return rec_loss + vae_loss
+        return self.beta * rec_loss + vae_loss
 
 
 def run(args):
