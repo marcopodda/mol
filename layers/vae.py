@@ -91,10 +91,10 @@ class VAE(BaseVAE):
         return x_rec, loss
 
     def kl_div(self, mean, logv):
-        return -0.5 * torch.sum(1 + logv - mean.pow(2) - logv.exp())
+        return torch.mean(-0.5 * torch.sum(1 + logv - mean ** 2 - logv.exp(), dim=1), dim=0)
 
 
-class InfoVAE(BaseVAE):
+class InfoVAE(VAE):
     def __init__(self, hparams, dim_input, dim_hidden, dim_latent):
         super().__init__(hparams, dim_input, dim_hidden, dim_latent)
         
@@ -184,7 +184,7 @@ class InfoVAE(BaseVAE):
         bias_corr = batch_size *  (batch_size - 1)
 
         mmd_loss = self.compute_mmd(z)
-        kld_loss = torch.mean(-0.5 * torch.sum(1 + logv - mean ** 2 - logv.exp(), dim=1), dim=0)
+        kld_loss = self.kl_div(mean, logv)
 
         loss = (1. - self.alpha) * kld_loss + (self.alpha + self.reg_weight - 1.)/bias_corr * mmd_loss
         return loss
