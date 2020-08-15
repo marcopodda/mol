@@ -180,8 +180,8 @@ class InfoVAE(VAE):
         return mmd
     
     def loss_function(self, z, mean, logv):
-        batch_size = input.size(0)
-        bias_corr = batch_size *  (batch_size - 1)
+        batch_size = z.size(0)
+        bias_corr = batch_size * (batch_size - 1)
 
         mmd_loss = self.compute_mmd(z)
         kld_loss = self.kl_div(mean, logv)
