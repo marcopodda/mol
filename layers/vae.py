@@ -103,7 +103,7 @@ class InfoVAE(BaseVAE):
         self.kernel_type = "imq"
         self.z_var = 2.0
         
-    def forward(self, x, targes):
+    def forward(self, x):
         mean, logv = self.encode(x)
         z = self.reparameterize(mean, logv)
         x_rec = self.decode(z)
