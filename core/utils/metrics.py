@@ -8,7 +8,7 @@ from scipy.stats import wasserstein_distance
 from moses.dataset import get_dataset, get_statistics
 from moses.utils import mapper
 from moses.utils import disable_rdkit_log, enable_rdkit_log
-from .utils import compute_fragments, average_agg_tanimoto, \
+from moses.metrics.utils import compute_fragments, average_agg_tanimoto, \
     compute_scaffolds, fingerprints, \
     get_mol, canonic_smiles, mol_passes_filters, \
     logP, QED, SA, weight
