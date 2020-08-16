@@ -35,7 +35,7 @@ class PLWrapper(pl.LightningModule):
         self.dataset = MolecularDataset(hparams, output_dir, name)
         self.max_length = self.dataset.max_length
 
-        self.model = Model(hparams, output_dir, self.max_length)
+        self.model = Model(hparams, output_dir, len(dataset.vocab), self.max_length)
         self.beta = 5.0 if hparams.vae_class == "InfoVAE" else 1.0
 
     def prepare_data(self):

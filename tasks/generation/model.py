@@ -24,7 +24,7 @@ def get_vae_class(name):
 
 
 class Model(nn.Module):
-    def __init__(self, hparams, output_dir, max_length):
+    def __init__(self, hparams, output_dir, vocab_size, max_length):
         super().__init__()
         
         if isinstance(hparams, dict):
@@ -32,12 +32,9 @@ class Model(nn.Module):
         
         self.hparams = hparams
         
-        embeddings_filename = f"{hparams.embedding_type}_{hparams.gnn_dim_embed}.pt"
-        embeddings = torch.load(output_dir / "embeddings" / embeddings_filename)
-        num_embeddings = embeddings.size(0)
-
         self.max_length = max_length
-        self.dim_embed = embeddings.size(1)
+        self.dim_embed = hparams.gnn_dim_embed
+        self.num_embeddings = vocab_size
         
         self.vae_dim_input = self.dim_embed
         self.vae_dim_hidden = hparams.vae_dim_hidden
@@ -48,10 +45,16 @@ class Model(nn.Module):
         self.rnn_num_layers = hparams.rnn_num_layers
         self.rnn_dim_input = self.dim_embed
         self.rnn_dim_hidden = self.dim_embed
-        self.rnn_dim_output = num_embeddings
+        self.rnn_dim_output = self.num_embeddings
         
-        self.enc_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False)
-        self.dec_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False)
+        if hparams.embedding_type == "random":
+            self.enc_embedder = nn.Embedding(self.num_embeddings, self.dim_embed)
+            self.dec_embedder = nn.Embedding(self.num_embeddings, self.dim_embed)
+        else:
+            embeddings_filename = f"{hparams.embedding_type}_{self.dim_embed}.pt"
+            embeddings = torch.load(output_dir / "embeddings" / embeddings_filename)
+            self.enc_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False)
+            self.dec_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False)
 
         self.encoder = Encoder(  
             hparams=hparams,
