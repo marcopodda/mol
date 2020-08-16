@@ -1,11 +1,11 @@
 from pathlib import Path
 
 from rdkit import Chem
-from moses import get_all_metrics
 
 from core.mols.split import join_fragments
-from core.utils.vocab import Vocab
+from core.utils.metrics import get_all_metrics
 from core.utils.serialization import load_yaml, save_yaml
+from core.utils.vocab import Vocab
 
 
 def convert_metrics_dict(metrics_dict):

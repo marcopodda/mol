@@ -100,8 +100,8 @@ def run(args):
         gpus=gpu)
     train_model = PLWrapper(hparams, output_dir, args.dataset_name)
     trainer.fit(train_model)
-    
-    
+
+
 def run_sampling(output_dir, dataset_name, epoch=None, num_samples=30000, temp=1.0):
     assert epoch >= 1
     output_dir = Path(output_dir)
@@ -111,7 +111,6 @@ def run_sampling(output_dir, dataset_name, epoch=None, num_samples=30000, temp=1
     
     all_samples = []
     epoch = (epoch - 1) or "*"
-    # hparams = Namespace(**load_yaml(task_dir / "hparams.yml"))
     
     for i, checkpoint_name in enumerate(ckpt_dir.glob(f"epoch={epoch}.ckpt")):
         index = (i + 1) if epoch == "*" else (epoch + 1)
