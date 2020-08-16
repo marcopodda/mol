@@ -87,6 +87,7 @@ def get_all_metrics(gen, k=None, n_jobs=1,
             close_pool = True
         else:
             pool = 1
+    print(f"Calculating valid...")
     metrics['valid'] = fraction_valid(gen, n_jobs=pool)
     gen = remove_invalid(gen, canonize=True)
     if not isinstance(k, (list, tuple)):
