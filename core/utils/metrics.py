@@ -105,10 +105,8 @@ def get_all_metrics(gen, k=None, n_jobs=1,
             device=device, batch_size=batch_size,
             pool=pool
         )
-    gen_novel = []
-    for g in gen:
-        if g not in train:
-            gen_novel.append(g)
+        
+    gen_novel = [g for g in gen in g not in Train]
     
     mols = mapper(pool)(get_mol, gen)
     mols_novel = mapper(pool)(get_mol, gen_novel)
