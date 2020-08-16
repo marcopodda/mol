@@ -106,7 +106,7 @@ def get_all_metrics(gen, k=None, n_jobs=1,
             pool=pool
         )
         
-    gen_novel = [g for g in gen in g not in Train]
+    gen_novel = [g for g in gen in g not in train]
     
     mols = mapper(pool)(get_mol, gen)
     mols_novel = mapper(pool)(get_mol, gen_novel)
