@@ -92,6 +92,7 @@ def get_all_metrics(gen, k=None, n_jobs=1,
     if not isinstance(k, (list, tuple)):
         k = [k]
     for _k in k:
+        print(f"Calculating unique@{_k}...")
         metrics['unique@{}'.format(_k)] = fraction_unique(gen, _k, pool)
 
     if ptest is None:
@@ -106,43 +107,57 @@ def get_all_metrics(gen, k=None, n_jobs=1,
             pool=pool
         )
         
-    gen_novel = [g for g in gen if g not in train]
+    gen_novel = get_novel(gen, train)
     
     mols = mapper(pool)(get_mol, gen)
     mols_novel = mapper(pool)(get_mol, gen_novel)
             
     kwargs = {'n_jobs': pool, 'device': device, 'batch_size': batch_size}
     kwargs_fcd = {'n_jobs': n_jobs, 'device': device, 'batch_size': batch_size}
+    print(f"Calculating FCD/Test...")
     metrics['FCD/Test'] = FCDMetric(**kwargs_fcd)(gen=gen_novel, pref=ptest['FCD'])
+    print(f"Calculating SNN/Test...")
     metrics['SNN/Test'] = SNNMetric(**kwargs)(gen=mols_novel, pref=ptest['SNN'])
+    print(f"Calculating Frag/Test...")
     metrics['Frag/Test'] = FragMetric(**kwargs)(gen=mols_novel, pref=ptest['Frag'])
+    print(f"Calculating Scaf/Test...")
     metrics['Scaf/Test'] = ScafMetric(**kwargs)(gen=mols_novel, pref=ptest['Scaf'])
     if ptest_scaffolds is not None:
+        print(f"Calculating FCD/TestSF...")
         metrics['FCD/TestSF'] = FCDMetric(**kwargs_fcd)(
             gen=gen_novel, pref=ptest_scaffolds['FCD']
         )
+        print(f"Calculating SNN/TestSF...")
         metrics['SNN/TestSF'] = SNNMetric(**kwargs)(
             gen=mols_novel, pref=ptest_scaffolds['SNN']
         )
+        print(f"Calculating Frag/TestSF...")
         metrics['Frag/TestSF'] = FragMetric(**kwargs)(
             gen=mols_novel, pref=ptest_scaffolds['Frag']
         )
+        print(f"Calculating Scaf/TestSF...")
         metrics['Scaf/TestSF'] = ScafMetric(**kwargs)(
             gen=mols_novel, pref=ptest_scaffolds['Scaf']
         )
 
+    print(f"Calculating IntDiv...")
     metrics['IntDiv'] = internal_diversity(mols, pool, device=device)
+    print(f"Calculating IntDiv2...")
     metrics['IntDiv2'] = internal_diversity(mols, pool, device=device, p=2)
+    print(f"Calculating Filters...")
     metrics['Filters'] = fraction_passes_filters(mols, pool)
 
     # Properties
+    
     for name, func in [('logP', logP), ('SA', SA),
                        ('QED', QED),
                        ('weight', weight)]:
+        print(f"Calculating {name}...")
         metrics[name] = WassersteinMetric(func, **kwargs)(
             gen=mols_novel, pref=ptest[name])
 
     if train is not None:
+        print(f"Calculating Novelty...")
         metrics['Novelty'] = novelty(mols, train, pool)
     enable_rdkit_log()
     if close_pool:
@@ -237,6 +252,12 @@ def fraction_valid(gen, n_jobs=1):
     """
     gen = mapper(n_jobs)(get_mol, gen)
     return 1 - gen.count(None) / len(gen)
+
+
+def get_novel(gen, train):
+    gen_set = set(gen)
+    train_set = set(train)
+    return list(gen_set - train_set)
 
 
 def novelty(gen, train, n_jobs=1):
