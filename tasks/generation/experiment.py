@@ -28,6 +28,9 @@ class PLWrapper(pl.LightningModule):
     def __init__(self, hparams, output_dir, name):
         super().__init__()
 
+        if isinstance(hparams, dict):
+            hparams = Namespace(**hparams)
+            
         self.hparams = hparams
         self.output_dir = output_dir
         self.name = name
