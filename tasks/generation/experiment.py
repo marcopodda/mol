@@ -36,10 +36,12 @@ class PLWrapper(pl.LightningModule):
         self.max_length = self.dataset.max_length
 
         self.model = Model(hparams, output_dir, self.max_length)
-        self.beta = 5.0
+        self.beta = 5.0 if hparams.vae_class == "InfoVAE" else 1.0
 
     def prepare_data(self):
         loader = MolecularDataLoader(self.hparams, self.dataset)
+        indices_path = get_or_create_dir(self.output_dir / "generation" / "logs")
+        save_yaml(loader.val_indices, indices_path / "val_indices.yml")
         self.training_loader = loader.get_train()
         self.validation_loader = loader.get_val()
 

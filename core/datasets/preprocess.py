@@ -200,22 +200,24 @@ def get_data(dest_dir, dataset_name, num_samples=None):
     dest_vocab_path = dest_dir / "vocab.csv"
 
     n_jobs = get_n_jobs()
-    sample_args = {"n": num_samples} if num_samples is not None else {"frac": 1.0}
 
     if dest_data_path.exists():
         data = load_csv_data(dest_data_path, convert=["frags"], cast={"length": int})
         vocab = Vocab.from_file(dest_vocab_path)
         if num_samples is not None and num_samples != data.shape[0]:
             warnings.warn(f"Got num samples: {num_samples} != data size: {data.shape[0]}. Overriding.")
-            data = data.sample(**sample_args)
-            data = data.reset_index(drop=True)
+            if num_samples is not None:
+                data = data.sample(n=num_samples)
+                data = data.reset_index(drop=True)
             data.to_csv(dest_data_path)
             
             vocab = get_vocab(data, processed_vocab_path)
             vocab.save(dest_vocab_path)
     else:
         data = load_csv_data(processed_data_path, convert=["frags"], cast={"length": int})
-        data = data.sample(**sample_args).reset_index(drop=True)
+        if num_samples is not None:
+            data = data.sample(n=num_samples)
+            data = data.reset_index(drop=True)
         data.to_csv(dest_data_path)
         
         vocab = get_vocab(data, processed_vocab_path)

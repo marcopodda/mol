@@ -22,7 +22,7 @@ class MolecularDataLoader:
         self.hparams = hparams
         self.num_samples = len(dataset)
         self.dataset = dataset
-        self.train_indices, self.val_indices = train_test_split(range(self.num_samples), test_size=0.05)
+        self.train_indices, self.val_indices = train_test_split(range(self.num_samples), test_size=0.1)
 
     def collate(self, data_list):
         return Batch.from_data_list(data_list)
