@@ -34,7 +34,7 @@ class Model(nn.Module):
         
         self.max_length = max_length
         self.dim_embed = hparams.gnn_dim_embed
-        self.num_embeddings = vocab_size
+        self.num_embeddings = vocab_size + len(Tokens)
         
         self.vae_dim_input = self.dim_embed
         self.vae_dim_hidden = hparams.vae_dim_hidden
@@ -48,13 +48,13 @@ class Model(nn.Module):
         self.rnn_dim_output = self.num_embeddings
         
         if hparams.embedding_type == "random":
-            self.enc_embedder = nn.Embedding(self.num_embeddings, self.dim_embed)
-            self.dec_embedder = nn.Embedding(self.num_embeddings, self.dim_embed)
+            self.enc_embedder = nn.Embedding(self.num_embeddings, self.dim_embed, padding_idx=Tokens.PAD.value)
+            self.dec_embedder = nn.Embedding(self.num_embeddings, self.dim_embed, padding_idx=Tokens.PAD.value)
         else:
             embeddings_filename = f"{hparams.embedding_type}_{self.dim_embed}.pt"
             embeddings = torch.load(output_dir / "embeddings" / embeddings_filename)
-            self.enc_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False)
-            self.dec_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False)
+            self.enc_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
+            self.dec_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
 
         self.encoder = Encoder(  
             hparams=hparams,
