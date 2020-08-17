@@ -65,7 +65,7 @@ class SkipgramLoader:
         return DataLoader(
             dataset=self.dataset,
             collate_fn=lambda b: self.collate(b),
-            batch_size=self.hparams.batch_size,
+            batch_size=self.hparams.pretrain_batch_size,
             shuffle=shuffle,
             pin_memory=True,
             num_workers=self.hparams.num_workers)
