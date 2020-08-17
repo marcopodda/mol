@@ -75,9 +75,8 @@ class Pretrainer(pl.LightningModule):
         
         num_tokens = len(Tokens)
         embed_dim = self.hparams.gnn_dim_embed
-        pad = [torch.zeros(1, embed_dim)]
-        tokens = [torch.randn(1, embed_dim) for _ in range(num_tokens - 1)]
-        embeddings = torch.cat(pad + tokens + embeddings, dim=0)
+        tokens = [torch.randn(1, embed_dim) for _ in range(num_tokens)]
+        embeddings = torch.cat(tokens + embeddings, dim=0)
         torch.save(embeddings, filename)
 
 
