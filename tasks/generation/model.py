@@ -43,8 +43,7 @@ class Model(nn.Module):
                 rnn_dropout=hparams.rnn_dropout,
                 num_layers = hparams.rnn_num_layers,
                 dim_input=hparams.frag_dim_embed,
-                dim_hidden=hparams.rnn_dim_state
-            )
+                dim_hidden=hparams.rnn_dim_state)
         else:
             raise ValueError("Unknown encoder type!")
 
@@ -52,8 +51,7 @@ class Model(nn.Module):
             hparams=hparams,
             dim_input=hparams.rnn_dim_state,
             dim_latent=hparams.rnn_dim_state // 2,
-            dim_output=hparams.rnn_dim_state
-        )
+            dim_output=hparams.rnn_dim_state)
 
         self.decoder = Decoder(
             hparams=hparams,
@@ -62,8 +60,7 @@ class Model(nn.Module):
             num_layers = hparams.rnn_num_layers,
             dim_input=hparams.frag_dim_embed,
             dim_hidden=hparams.rnn_dim_state,
-            dim_output=vocab_size + len(Tokens)
-        )
+            dim_output=vocab_size + len(Tokens))
         
         self.mlp_dim_input = hparams.rnn_num_layers * hparams.rnn_dim_state
         self.mlp_dim_hidden = self.mlp_dim_input // 2
