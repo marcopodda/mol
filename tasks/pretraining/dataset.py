@@ -111,7 +111,7 @@ class SkipgramDataset(data.Dataset):
         for negative_idx in negative_idxs:
             negative = to_data(self.vocab[negative_idx])
             negatives.append(negative)
-
+        
         return target, context, negatives
 
     def __len__(self):

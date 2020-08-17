@@ -79,22 +79,23 @@ def get_features(mol):
 
     for idx in range(A.shape[0]):
         atom = mol.GetAtomWithIdx(idx)
-        if atom.GetSymbol() in ATOMS:
-            atom_features = get_atom_features(atom)
-            node_features.append(atom_features)
+        # if atom.GetSymbol() in ATOMS:
+        atom_features = get_atom_features(atom)
+        node_features.append(atom_features)
 
     for bond in mol.GetBonds():
         bond_features = get_bond_features(bond)
         start, end = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
         atom1, atom2 = mol.GetAtomWithIdx(start), mol.GetAtomWithIdx(end)
-        if atom1.GetSymbol() in ATOMS and atom2.GetSymbol() in ATOMS:
-            edge_index.append([start, end])
-            edge_index.append([end, start])
-            edge_features.append(bond_features)
-            edge_features.append(bond_features)  # add for reverse edge
+        # if atom1.GetSymbol() in ATOMS and atom2.GetSymbol() in ATOMS:
+        edge_index.append([start, end])
+        edge_index.append([end, start])
+        edge_features.append(bond_features)
+        edge_features.append(bond_features)  # add for reverse edge
 
-    edge_index = torch.LongTensor(edge_index).t()
-    edge_index = edge_index - edge_index.min()
     node_features = torch.Tensor(node_features)
     edge_features = torch.Tensor(edge_features)
+    edge_index = torch.LongTensor(edge_index).t()
+    edge_index -= edge_index.min()
+    
     return edge_index, node_features, edge_features
