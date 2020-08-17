@@ -45,7 +45,10 @@ class GNN(nn.Module):
             bn = nn.BatchNorm1d(self.dim_hidden, track_running_stats=False)
             self.bns.append(bn)
 
-        self.readout = nn.Linear(self.dim_hidden, self.dim_embed)
+        if self.dim_embed != self.dim_hidden:
+            self.readout = nn.Linear(self.dim_hidden, self.dim_embed)
+        else:
+            self.readout = None
 
         for p in self.parameters():
             if p.dim() > 1 and p.requires_grad:
@@ -60,4 +63,5 @@ class GNN(nn.Module):
             x = F.relu(bn(x))
         
         output = global_add_pool(x, batch)
-        return self.readout(output)
+        return self.readout(output) if self.dim_embed != self.dim_hidden else output
+        
