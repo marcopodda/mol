@@ -7,7 +7,6 @@ from torch.nn import functional as F
 from core.datasets.features import ATOM_FDIM
 from core.utils.vocab import Tokens
 from layers.graphconv import GNN
-from layers.vae import VAE, MMDVAE
 from layers.mlp import MLP
 from layers.encoder import Encoder
 from layers.decoder import Decoder
@@ -22,7 +21,12 @@ class TripletModel(nn.Module):
         
         self.hparams = hparams
 
-        self.gnn = GNN(hparams)
+        self.gnn = GNN(
+            hparams=hparams,
+            num_layers=hparams.gnn_num_layers,
+            dim_edge_embed=hparams.gnn_dim_edge_embed, 
+            dim_hidden=hparams.gnn_dim_hidden, 
+            dim_output=hparams.frag_dim_embed)
 
     def forward(self, batch):
         anc, pos, neg = batch
@@ -43,8 +47,20 @@ class SkipgramModel(nn.Module):
     def __init__(self, hparams):
         super().__init__()
         self.hparams = hparams
-        self.gnn_in = GNN(hparams)
-        self.gnn_out = GNN(hparams)
+        
+        self.gnn_in = GNN(
+            hparams=hparams,
+            num_layers=hparams.gnn_num_layers,
+            dim_edge_embed=hparams.gnn_dim_edge_embed, 
+            dim_hidden=hparams.gnn_dim_hidden, 
+            dim_output=hparams.frag_dim_embed)
+        
+        self.gnn_out = GNN(
+            hparams=hparams,
+            num_layers=hparams.gnn_num_layers,
+            dim_edge_embed=hparams.gnn_dim_edge_embed, 
+            dim_hidden=hparams.gnn_dim_hidden, 
+            dim_output=hparams.frag_dim_embed)
 
     def forward(self, batch):
         target, context, negatives = batch
@@ -55,7 +71,7 @@ class SkipgramModel(nn.Module):
         pos_score = torch.mul(emb_target, emb_context).squeeze()
         pos_score = torch.sum(pos_score, dim=1)
 
-        num_negatives, dim_embed = self.hparams.num_negatives, self.hparams.gnn_dim_embed
+        num_negatives, dim_embed = self.hparams.num_negatives, self.hparams.frag_dim_embed
         emb_negatives = emb_negatives.view(-1, num_negatives, dim_embed)
         neg_score = torch.bmm(emb_negatives, emb_target.unsqueeze(2)).squeeze()
         return pos_score, neg_score

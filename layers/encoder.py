@@ -5,12 +5,11 @@ from layers.graphconv import GNN
 
 
 class Encoder(nn.Module):
-    def __init__(self, hparams, rnn_dropout, num_layers, dim_input, dim_hidden, dim_output):
+    def __init__(self, hparams, rnn_dropout, num_layers, dim_input, dim_hidden):
         super().__init__()
         self.hparams = hparams
         self.dim_input = dim_input
         self.dim_hidden = dim_hidden
-        self.dim_output = dim_output
         self.num_layers = num_layers
         self.rnn_dropout = rnn_dropout
 

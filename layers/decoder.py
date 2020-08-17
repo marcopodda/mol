@@ -48,15 +48,13 @@ class Decoder(nn.Module):
         self.num_layers = num_layers
         self.rnn_dropout = rnn_dropout
 
-        self.gru = WeightDropGRU(input_size=dim_input,
-                                 hidden_size=dim_hidden,
-                                 num_layers=num_layers,
-                                 batch_first=True,
-                                 weight_dropout=rnn_dropout,
-                                 dropout=rnn_dropout)
-
-        self.attention = Attention(dim_hidden=dim_hidden, max_length=max_length)
-        self.proj = nn.Linear(dim_hidden * 2, dim_hidden)
+        self.gru = nn.GRU(input_size=dim_input,
+                          hidden_size=dim_hidden,
+                          num_layers=num_layers,
+                          batch_first=True,
+                          # weight_dropout=rnn_dropout,
+                          dropout=rnn_dropout)
+        print("dim_hidden", dim_hidden)
         self.out = nn.Linear(dim_hidden, dim_output)
 
     def forward(self, x, hidden):
@@ -64,25 +62,3 @@ class Decoder(nn.Module):
         output = rnn_output.reshape(-1, rnn_output.size(2))
         logits = self.out(output).squeeze(1)
         return logits, hidden
-
-    def forward_att(self, x, hidden, prev_context, enc_outputs):
-        # Note: we run this one step at a time
-
-        # Combine embedded input word and last context, run through RNN
-        rnn_input = torch.cat([x, prev_context], dim=-1)
-        rnn_output, hidden = self.gru(x, hidden)
-
-        # Calculate attention from current RNN state and all encoder outputs; apply to encoder outputs
-        attn_weights = self.attention(rnn_output, enc_outputs)
-        context = attn_weights.bmm(enc_outputs) # B x 1 x N
-
-        # Final output layer (next word prediction) using the RNN hidden state and context vector
-        output = self.proj(torch.cat([rnn_output, context], dim=-1))
-        output = rnn_output.reshape(-1, rnn_output.size(2))
-        logits = self.out(output).squeeze(1)
-
-        # Return final output, hidden state, and attention weights (for visualization)
-        return logits, hidden, context, attn_weights
-
-    def tie_weights(self, embedder):
-        self.out.weight = embedder.weight

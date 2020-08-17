@@ -5,14 +5,10 @@ from torch.nn import functional as F
 from core.datasets.features import ATOM_FDIM
 from core.utils.vocab import Tokens
 from layers.graphconv import GNN
-from layers.vae import VAE, MMDVAE
+from layers.vae import VAE
 from layers.mlp import MLP
 from layers.encoder import Encoder
 from layers.decoder import Decoder
-
-
-def get_vae_class(name):
-    return VAE if name == "VAE" else MMDVAE
 
 
 class Model(nn.Module):
@@ -60,7 +56,7 @@ class Model(nn.Module):
             dim_output=self.rnn_dim_output
         )
 
-        self.vae = get_vae_class(hparams.vae_class)(
+        self.vae = VAE(hparams.vae_class)(
             hparams=hparams,
             dim_input=self.vae_dim_input,
             dim_hidden=self.vae_dim_hidden,

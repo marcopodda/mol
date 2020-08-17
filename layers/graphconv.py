@@ -10,16 +10,16 @@ from layers.mlp import MLP
 
 
 class GNN(nn.Module):
-    def __init__(self, hparams):
+    def __init__(self, hparams, num_layers, dim_edge_embed, dim_hidden, dim_output):
         super().__init__()
         self.hparams = hparams
         
         self.dim_input = ATOM_FDIM
-        self.dim_hidden_edge = hparams.gnn_dim_hidden_edge
-        self.dim_hidden = hparams.gnn_dim_hidden
-        self.dim_embed = hparams.gnn_dim_embed
+        self.dim_edge_embed = dim_edge_embed
+        self.dim_hidden = dim_hidden
+        self.dim_output = dim_output
         
-        self.num_layers = hparams.gnn_num_layers
+        self.num_layers = num_layers
 
         self.convs = nn.ModuleList([])
         self.bns = nn.ModuleList([])
@@ -29,7 +29,7 @@ class GNN(nn.Module):
             
             edge_net = MLP(
                 dim_input=BOND_FDIM,
-                dim_hidden=self.dim_hidden_edge,
+                dim_hidden=self.dim_edge_embed,
                 dim_output=dim_input * self.dim_hidden,
             )
             
@@ -45,8 +45,8 @@ class GNN(nn.Module):
             bn = nn.BatchNorm1d(self.dim_hidden, track_running_stats=False)
             self.bns.append(bn)
 
-        if self.dim_embed != self.dim_hidden:
-            self.readout = nn.Linear(self.dim_hidden, self.dim_embed)
+        if self.dim_output != self.dim_hidden:
+            self.readout = nn.Linear(self.dim_hidden, self.dim_output)
         else:
             self.readout = None
 
@@ -60,8 +60,8 @@ class GNN(nn.Module):
         outputs = []
         for conv, bn in zip(self.convs, self.bns):
             x = conv(x, edge_index, edge_attr=edge_attr)
-            x = F.relu(bn(x))
+            x = bn(F.relu(bn(x)))
         
         output = global_add_pool(x, batch)
-        return self.readout(output) if self.dim_embed != self.dim_hidden else output
+        return self.readout(output) if self.dim_output != self.dim_hidden else output
         

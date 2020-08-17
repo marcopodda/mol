@@ -74,7 +74,7 @@ class Pretrainer(pl.LightningModule):
             embeddings.append(embedding.detach())
         
         num_tokens = len(Tokens)
-        embed_dim = self.hparams.gnn_dim_embed
+        embed_dim = self.hparams.frag_dim_embed
         tokens = [torch.randn(1, embed_dim) for _ in range(num_tokens)]
         embeddings = torch.cat(tokens + embeddings, dim=0)
         torch.save(embeddings, filename)
@@ -101,7 +101,7 @@ def run(args):
     
     pretrainer = Pretrainer(hparams, model, dataset, loader)
 
-    embeddings_filename = f"{hparams.embedding_type}_{hparams.gnn_dim_embed}.pt"
+    embeddings_filename = f"{hparams.embedding_type}_{hparams.frag_dim_embed}.pt"
     if not (embeddings_dir / embeddings_filename).exists():
         print("learning embeddings...")
         gpu = args.gpu if torch.cuda.is_available() else None

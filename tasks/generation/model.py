@@ -7,20 +7,10 @@ from torch.nn import functional as F
 from core.datasets.features import ATOM_FDIM
 from core.utils.vocab import Tokens
 from layers.graphconv import GNN
-from layers.vae import VAE, MMDVAE, InfoVAE
+from layers.vae import VAE
 from layers.mlp import MLP
 from layers.encoder import Encoder
 from layers.decoder import Decoder
-
-
-def get_vae_class(name):
-    if name == "VAE":
-        return VAE
-    if name == "InfoVAE":
-        return InfoVAE
-    if name == "MMDVAE":
-        return MMDVAE
-    raise ValueError("Unknown VAE class")
 
 
 class Model(nn.Module):        
@@ -32,65 +22,50 @@ class Model(nn.Module):
         
         self.hparams = hparams
         self.output_dir = output_dir
-        
-        self.max_length = max_length
-        self.dim_embed = hparams.gnn_dim_embed
-        self.num_embeddings = vocab_size + len(Tokens)
-        
-        self.vae_dim_input = self.dim_embed
-        self.vae_dim_hidden = hparams.vae_dim_hidden
-        self.vae_dim_latent = hparams.vae_dim_latent
-
         self.embedding_dropout = hparams.embedding_dropout
-        self.rnn_dropout = hparams.rnn_dropout
-        self.rnn_num_layers = hparams.rnn_num_layers
-        self.rnn_dim_input = self.dim_embed
-        self.rnn_dim_hidden = self.dim_embed
-        self.rnn_dim_output = self.num_embeddings
                     
         embeddings = self.load_embeddings()
-        
         self.enc_embedder = None
-        if self.hparams.encoder_type == "rnn":
+        if hparams.encoder_type == "rnn":
             self.enc_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
-        
         self.dec_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
 
-        if self.hparams.encoder_type == "gnn":
-            self.encoder = GNN(hparams)
-        elif self.hparams.encoder_type == "rnn":
+        if hparams.encoder_type == "gnn":
+            self.encoder = GNN(
+                hparams=hparams,
+                num_layers=hparams.gnn_num_layers,
+                dim_edge_embed=hparams.gnn_dim_edge_embed,
+                dim_hidden=hparams.gnn_dim_hidden,
+                dim_output=hparams.rnn_dim_state)
+        elif hparams.encoder_type == "rnn":
             self.encoder = Encoder(  
                 hparams=hparams,
-                rnn_dropout=self.rnn_dropout,
-                num_layers = self.rnn_num_layers,
-                dim_input=self.rnn_dim_input,
-                dim_hidden=self.rnn_dim_hidden,
-                dim_output=self.rnn_dim_output
+                rnn_dropout=hparams.rnn_dropout,
+                num_layers = hparams.rnn_num_layers,
+                dim_input=hparams.frag_dim_embed,
+                dim_hidden=hparams.rnn_dim_state
             )
         else:
             raise ValueError("Unknown encoder type!")
 
-        self.vae = get_vae_class(hparams.vae_class)(
+        self.vae = VAE(
             hparams=hparams,
-            dim_input=self.vae_dim_input,
-            dim_hidden=self.vae_dim_hidden,
-            dim_latent=self.vae_dim_latent
+            dim_input=hparams.rnn_dim_state,
+            dim_latent=hparams.rnn_dim_state // 2,
+            dim_output=hparams.rnn_dim_state
         )
 
         self.decoder = Decoder(
             hparams=hparams,
-            max_length=self.max_length,
-            rnn_dropout=self.rnn_dropout,
-            num_layers = self.rnn_num_layers,
-            dim_input=self.rnn_dim_input,
-            dim_hidden=self.rnn_dim_hidden,
-            dim_output=self.rnn_dim_output
+            max_length=max_length,
+            rnn_dropout=hparams.rnn_dropout,
+            num_layers = hparams.rnn_num_layers,
+            dim_input=hparams.frag_dim_embed,
+            dim_hidden=hparams.rnn_dim_state,
+            dim_output=vocab_size + len(Tokens)
         )
-
-        if self.hparams.tie_weights:
-            self.decoder.tie_weights(self.dec_embedder)
         
-        self.mlp_dim_input = self.rnn_num_layers * self.dim_embed
+        self.mlp_dim_input = hparams.rnn_num_layers * hparams.rnn_dim_state
         self.mlp_dim_hidden = self.mlp_dim_input // 2
         self.mlp_dim_output = 5
         
@@ -100,7 +75,7 @@ class Model(nn.Module):
             dim_output=self.mlp_dim_output)
 
     def load_embeddings(self):
-        embeddings_filename = f"{self.hparams.embedding_type}_{self.dim_embed}.pt"
+        embeddings_filename = f"{self.hparams.embedding_type}_{self.hparams.frag_dim_embed}.pt"
         embeddings_path = self.output_dir / "embeddings" / embeddings_filename
         
         if not embeddings_path.exists():
@@ -125,7 +100,7 @@ class Model(nn.Module):
         x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
         output, hidden_dec = self.decoder(x, hidden_enc)
-        h = hidden_enc.view(-1, self.rnn_dim_input * self.rnn_num_layers)
+        h = hidden_enc.view(-1, self.hparams.rnn_dim_state * self.hparams.rnn_num_layers)
         props = None
         # props = self.mlp(h)
         
