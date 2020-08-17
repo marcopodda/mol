@@ -70,7 +70,8 @@ class Pretrainer(pl.LightningModule):
         embeddings = []
         for batch in loader.get(shuffle=False):
             batch = batch.to(device)
-            embeddings.append(self.model.predict(batch))
+            embedding = self.model.predict(batch)
+            embeddings.append(embedding.detach())
         
         num_tokens = len(Tokens)
         embed_dim = self.hparams.gnn_dim_embed
