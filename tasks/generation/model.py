@@ -23,7 +23,7 @@ def get_vae_class(name):
     raise ValueError("Unknown VAE class")
 
 
-class Model(nn.Module):
+class Model(nn.Module):        
     def __init__(self, hparams, output_dir, vocab_size, max_length):
         super().__init__()
         
@@ -31,6 +31,7 @@ class Model(nn.Module):
             hparams = Namespace(**hparams)
         
         self.hparams = hparams
+        self.output_dir = output_dir
         
         self.max_length = max_length
         self.dim_embed = hparams.gnn_dim_embed
@@ -46,15 +47,10 @@ class Model(nn.Module):
         self.rnn_dim_input = self.dim_embed
         self.rnn_dim_hidden = self.dim_embed
         self.rnn_dim_output = self.num_embeddings
-        
-        if hparams.embedding_type == "random":
-            self.enc_embedder = nn.Embedding(self.num_embeddings, self.dim_embed, padding_idx=Tokens.PAD.value)
-            self.dec_embedder = nn.Embedding(self.num_embeddings, self.dim_embed, padding_idx=Tokens.PAD.value)
-        else:
-            embeddings_filename = f"{hparams.embedding_type}_{self.dim_embed}.pt"
-            embeddings = torch.load(output_dir / "embeddings" / embeddings_filename)
-            self.enc_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
-            self.dec_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
+                    
+        embeddings = self.load_embeddings()
+        self.enc_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
+        self.dec_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
 
         self.encoder = Encoder(  
             hparams=hparams,
@@ -93,6 +89,16 @@ class Model(nn.Module):
             dim_input=self.mlp_dim_input, 
             dim_hidden=self.mlp_dim_hidden, 
             dim_output=self.mlp_dim_output)
+
+    def load_embeddings(self):
+        embeddings_filename = f"{self.hparams.embedding_type}_{self.dim_embed}.pt"
+        embeddings_path = self.output_dir / "embeddings" / embeddings_filename
+        
+        if not embeddings_path.exists():
+            print(f"Embeddings {embeddings_filename} don't exist!")
+            exit(1)
+            
+        return torch.load(embeddings_path)
 
     def forward(self, batch):
         x = self.enc_embedder(batch.outseq)
