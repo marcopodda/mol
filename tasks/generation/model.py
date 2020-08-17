@@ -49,17 +49,25 @@ class Model(nn.Module):
         self.rnn_dim_output = self.num_embeddings
                     
         embeddings = self.load_embeddings()
-        self.enc_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
+        
+        if self.hparams.encoder_type == "rnn":
+            self.enc_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
+        
         self.dec_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
 
-        self.encoder = Encoder(  
-            hparams=hparams,
-            rnn_dropout=self.rnn_dropout,
-            num_layers = self.rnn_num_layers,
-            dim_input=self.rnn_dim_input,
-            dim_hidden=self.rnn_dim_hidden,
-            dim_output=self.rnn_dim_output
-        )
+        if self.hparams.encoder_type == "gnn":
+            self.encoder = GNN(hparams)
+        elif self.hparams.encoder_type == "rnn":
+            self.encoder = Encoder(  
+                hparams=hparams,
+                rnn_dropout=self.rnn_dropout,
+                num_layers = self.rnn_num_layers,
+                dim_input=self.rnn_dim_input,
+                dim_hidden=self.rnn_dim_hidden,
+                dim_output=self.rnn_dim_output
+            )
+        else:
+            raise ValueError("Unknown encoder type!")
 
         self.vae = get_vae_class(hparams.vae_class)(
             hparams=hparams,
@@ -101,10 +109,14 @@ class Model(nn.Module):
         return torch.load(embeddings_path)
 
     def forward(self, batch):
-        x = self.enc_embedder(batch.outseq)
-        x = F.dropout(x, p=self.embedding_dropout, training=self.training)
-
-        enc_outputs, h = self.encoder(x)
+        if self.hparams.encoder_type == "rnn":
+            x = self.enc_embedder(batch.outseq)
+            x = F.dropout(x, p=self.embedding_dropout, training=self.training)
+            _, h = self.encoder(x)
+        elif self.hparams.encoder_type == "gnn":
+            h = self.encoder(batch)
+        else:
+            raise ValueError("Unknown encoder type!")
 
         hidden_enc, vae_loss = self.vae(h)
 

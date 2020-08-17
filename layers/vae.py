@@ -13,13 +13,16 @@ class BaseVAE(nn.Module):
         self.dim_hidden = dim_hidden
         self.dim_latent = dim_latent
         self.rnn_num_layers = hparams.rnn_num_layers
-
-        self.fc_enc = nn.Linear(self.rnn_num_layers * dim_input, dim_hidden)
+        
+        if self.hparams.encoder_type == "rnn":
+            dim_input *= self.rnn_num_layers
+        
+        self.fc_enc = nn.Linear(dim_input, dim_hidden)
         self.fc_mean = nn.Linear(dim_hidden, dim_latent)
         self.fc_logv = nn.Linear(dim_hidden, dim_latent)
 
         self.fc_dec = nn.Linear(dim_latent, dim_hidden)
-        self.fc_out = nn.Linear(dim_hidden, self.rnn_num_layers * dim_input)
+        self.fc_out = nn.Linear(dim_hidden, self.rnn_num_layers * self.dim_input)
 
     def decode(self, z=None):
         if z is None:
@@ -37,7 +40,8 @@ class BaseVAE(nn.Module):
 
 class MMDVAE(BaseVAE):
     def encode(self, x):
-        x = x.view(-1, x.size(0) * x.size(2))
+        if x.ndim > 2:
+            x = x.view(-1, x.size(0) * x.size(2))
         x = F.relu(self.fc_enc(x))
         mean = self.fc_mean(x)
         return mean
@@ -72,7 +76,8 @@ class VAE(BaseVAE):
         
 
     def encode(self, x):
-        x = x.view(-1, x.size(0) * x.size(2))
+        if x.ndim > 2:
+            x = x.view(-1, x.size(0) * x.size(2))
         x = F.relu(self.fc_enc(x))
         mean = self.fc_mean(x)
         logv = self.fc_logv(x)
