@@ -68,7 +68,8 @@ class Pretrainer(pl.LightningModule):
         device = next(self.model.parameters()).device
         
         embeddings = []
-        for batch in loader.get(shuffle=False):
+        batch_size = self.hparams.pretrain_batch_size
+        for batch in loader.get(shuffle=False, batch_size=batch_size):
             batch = batch.to(device)
             embeddings.append(self.model.predict(batch))
         
