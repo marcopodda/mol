@@ -54,7 +54,7 @@ class Model(nn.Module):
         if self.hparams.encoder_type == "rnn":
             self.enc_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
         
-        self.dec_embedder = nn.Embedding.from_pretrained(embeddings, freeze=True, padding_idx=Tokens.PAD.value)
+        self.dec_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
 
         if self.hparams.encoder_type == "gnn":
             self.encoder = GNN(hparams)
