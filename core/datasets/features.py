@@ -96,6 +96,5 @@ def get_features(mol):
     node_features = torch.Tensor(node_features)
     edge_features = torch.Tensor(edge_features)
     edge_index = torch.LongTensor(edge_index).t()
-    edge_index -= edge_index.min()
     
     return edge_index, node_features, edge_features
