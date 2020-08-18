@@ -53,4 +53,4 @@ class VAE(nn.Module):
         return x_rec, loss
 
     def loss_function(self, mean, logv):
-        return torch.mean(-0.5 * torch.sum(1 + logv - mean ** 2 - logv.exp(), dim=1), dim=0)
+        return -0.5 * torch.sum(1 + logv - mean ** 2 - logv.exp())
