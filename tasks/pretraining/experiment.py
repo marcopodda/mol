@@ -64,8 +64,12 @@ class Pretrainer(pl.LightningModule):
     
     def create_embeddings(self, filename):
         if isinstance(self.model, EncoderDecoderModel):
+            embeddings = self.model.dec_embedder.weight.data.detach()
+            torch.save(embeddings, filename)
+            filaname = filename.split(".")[0]
+            filename = f"{filename}_out.pt"
             embeddings = self.model.decoder.out.weight.data.detach()
-            
+            torch.save(embeddings, filename)
         else:
             dataset = VocabDataset(self.vocab)
             loader = VocabLoader(self.hparams, dataset)
@@ -81,8 +85,8 @@ class Pretrainer(pl.LightningModule):
             embed_dim = self.hparams.frag_dim_embed
             tokens = [torch.randn(1, embed_dim) for _ in range(num_tokens)]
             embeddings = torch.cat(tokens + embeddings, dim=0)
+            torch.save(embeddings, filename)
         print("embeddings size:", embeddings.size())
-        torch.save(embeddings, filename)
 
 
 def run(args):
