@@ -5,13 +5,14 @@ from torch.nn import functional as F
 
 
 class VAE(nn.Module):
-    def __init__(self, hparams, dim_input, dim_latent, dim_output):
+    def __init__(self, hparams, vocab_size, dim_input, dim_latent, dim_output):
         super().__init__()
         self.hparams = hparams
 
         self.dim_latent = dim_latent
         self.dim_output = dim_output
         self.rnn_num_layers = hparams.rnn_num_layers
+        self.vocab_size = vocab_size
         
         if self.hparams.encoder_type == "rnn":
             dim_input *= self.rnn_num_layers
@@ -53,4 +54,5 @@ class VAE(nn.Module):
         return x, loss
 
     def loss_function(self, mean, logv):
-        return -0.5 * torch.sum(1 + logv - mean ** 2 - logv.exp())
+        kl_div = -0.5 * torch.sum(1 + logv - mean ** 2 - logv.exp())
+        return kl_div / (self.hparams.batch_size * self.vocab_size)
