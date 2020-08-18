@@ -48,9 +48,9 @@ class VAE(nn.Module):
     def forward(self, x):
         mean, logv = self.encode(x)
         z = self.reparameterize(mean, logv)
-        x_rec = self.decode(z)
+        x = self.decode(z)
         loss = self.loss_function(mean, logv)
-        return x_rec, loss
+        return x, loss
 
     def loss_function(self, mean, logv):
         return -0.5 * torch.sum(1 + logv - mean ** 2 - logv.exp())
