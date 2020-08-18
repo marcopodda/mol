@@ -65,7 +65,7 @@ class PLWrapper(pl.LightningModule):
         outputs, vae_loss, he, ho, props = self.model(batch)
         mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
         loss = mse_loss + self.loss(outputs, batch.outseq.view(-1), vae_loss)
-        return {"loss": loss}
+        return {"loss": loss, "KD_loss": vae_loss}
     
     def training_epoch_end(self, outputs):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
@@ -97,7 +97,7 @@ def run(args):
     trainer = pl.Trainer(
         max_epochs=hparams.max_epochs,
         checkpoint_callback=ckpt_callback,
-        progress_bar_refresh_rate=30,
+        progress_bar_refresh_rate=10,
         gradient_clip_val=hparams.clip_norm,
         fast_dev_run=args.debug,
         logger=logger,
