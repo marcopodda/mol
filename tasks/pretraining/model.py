@@ -121,7 +121,7 @@ class EncoderDecoderModel(nn.Module):
         x = self.dec_embedder(batch.inseq)
         x = F.dropout(x, p=self.embedding_dropout, training=self.training)
         
-        h = h[None, :, :].repeat(self.rnn_num_layers, 1, 1)
+        h = h[None, :, :].repeat(self.hparams.rnn_num_layers, 1, 1)
         outputs, _ = self.decoder(x, h)
         return outputs
 
