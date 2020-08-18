@@ -62,10 +62,10 @@ class PLWrapper(pl.LightningModule):
         return self.validation_loader
 
     def training_step(self, batch, batch_idx):
-        outputs, vae_loss, he, ho, props = self.model(batch)
-        mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
-        loss = mse_loss + self.loss(outputs, batch.outseq.view(-1), vae_loss)
-        return {"loss": loss, "KD_loss": vae_loss}
+        outputs, kd_loss, he, ho, props = self.model(batch)
+        # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
+        ce_loss = self.loss(outputs, batch.outseq.view(-1), vae_loss)
+        return {"loss": ce_loss + kd_loss, "CE_loss": ce_loss, "KD_loss": kd_loss}
     
     def training_epoch_end(self, outputs):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
@@ -73,19 +73,19 @@ class PLWrapper(pl.LightningModule):
         return {"log": logs, "progress_bar": logs}
 
     def validation_step(self, batch, batch_idx):
-        outputs, vae_loss, he, ho, props = self.model(batch)
-        mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
-        loss = mse_loss + self.loss(outputs, batch.outseq.view(-1), vae_loss)
-        return {"val_loss": loss}
+        outputs, kd_loss, he, ho, props = self.model(batch)
+        # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
+        ce_loss = self.loss(outputs, batch.outseq.view(-1), vae_loss)
+        return {"val_loss": kd_loss + ce_loss}
 
     def validation_epoch_end(self, outputs):
         val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
         logs = {"val_loss": val_loss_mean}
         return {"log": logs, "progress_bar": logs}
 
-    def loss(self, outputs, targets, vae_loss):
+    def loss(self, outputs, targets):
         rec_loss = F.cross_entropy(outputs, targets, ignore_index=Tokens.PAD.value)
-        return rec_loss + vae_loss
+        return rec_loss
 
 
 def run(args):
