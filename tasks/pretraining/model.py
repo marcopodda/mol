@@ -35,12 +35,13 @@ class TripletModel(nn.Module):
         neg_h = self.gnn(neg)
         return anc_h, pos_h, neg_h
     
-    def loss(self, outputs):
+    def loss(self, outputs, batch):
         anc, pos, neg = outputs
         return F.triplet_margin_loss(anc, pos, neg)
     
     def predict(self, batch):
-        return self.gnn(batch)
+        with torch.no_grad():
+            return self.gnn(batch)
 
 
 class SkipgramModel(nn.Module):
@@ -76,11 +77,55 @@ class SkipgramModel(nn.Module):
         neg_score = torch.bmm(emb_negatives, emb_target.unsqueeze(2)).squeeze()
         return pos_score, neg_score
 
-    def loss(self, outputs): 
+    def loss(self, outputs, batch): 
         pos_score, neg_score = outputs
         pos_score = F.logsigmoid(pos_score)
         neg_score = F.logsigmoid(-neg_score)
         return -(torch.sum(pos_score) + torch.sum(neg_score))
 
     def predict(self, batch):
-        return self.gnn_in(batch)
+        with torch.no_grad():
+            return self.gnn(batch)
+        
+
+class EncoderDecoderModel(nn.Module):
+    def __init__(self, hparams, vocab_size, max_length):
+        super().__init__()
+        
+        if isinstance(hparams, dict):
+            hparams = Namespace(**hparams)
+        
+        self.hparams = hparams
+        self.num_embeddings = vocab_size + len(Tokens)
+        self.embedding_dropout = hparams.embedding_dropout
+        self.dec_embedder = nn.Embedding(self.num_embeddings, hparams.frag_dim_embed, padding_idx=Tokens.PAD.value)
+
+        self.encoder = GNN(
+            hparams=hparams,
+            num_layers=hparams.gnn_num_layers,
+            dim_edge_embed=hparams.gnn_dim_edge_embed,
+            dim_hidden=hparams.gnn_dim_hidden,
+            dim_output=hparams.frag_dim_embed)
+
+        self.decoder = Decoder(
+            hparams=hparams,
+            max_length=max_length,
+            rnn_dropout=hparams.rnn_dropout,
+            num_layers = hparams.rnn_num_layers,
+            dim_input=hparams.frag_dim_embed,
+            dim_hidden=hparams.frag_dim_embed,
+            dim_output=self.num_embeddings)
+
+    def forward(self, batch):
+        h = self.encoder(batch)
+        x = self.dec_embedder(batch.inseq)
+        x = F.dropout(x, p=self.embedding_dropout, training=self.training)
+        
+        h = h[None, :, :].repeat(2, 1, 1)
+        outputs, _ = self.decoder(x, h)
+        return outputs
+
+    def loss(self, outputs, batch):
+        # outputs = outputs.view(-1)
+        targets = batch.outseq.view(-1)
+        return F.cross_entropy(outputs, targets)

@@ -20,9 +20,9 @@ from core.utils.os import get_or_create_dir
 from core.utils.serialization import load_yaml
 from core.utils.vocab import Tokens, Vocab
 
-from tasks.pretraining.dataset import SkipgramDataset, TripletDataset, VocabDataset
-from tasks.pretraining.loader import VocabLoader, TripletLoader, SkipgramLoader
-from tasks.pretraining.model import TripletModel, SkipgramModel
+from tasks.pretraining.dataset import SkipgramDataset, TripletDataset, VocabDataset, EncoderDecoderDataset
+from tasks.pretraining.loader import VocabLoader, TripletLoader, SkipgramLoader, EncoderDecoderLoader
+from tasks.pretraining.model import TripletModel, SkipgramModel, EncoderDecoderModel
 
 
 class Pretrainer(pl.LightningModule):
@@ -54,7 +54,7 @@ class Pretrainer(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         outputs = self.forward(batch)
-        loss = self.model.loss(outputs)
+        loss = self.model.loss(outputs, batch)
         return {"loss": loss}
 
     def training_epoch_end(self, outputs):
@@ -63,20 +63,25 @@ class Pretrainer(pl.LightningModule):
         return {"log": logs, "progress_bar": logs}
     
     def create_embeddings(self, filename):
-        dataset = VocabDataset(self.vocab)
-        loader = VocabLoader(self.hparams, dataset)
-        device = next(self.model.parameters()).device
-        
-        embeddings = []
-        for batch in loader.get(shuffle=False):
-            batch = batch.to(device)
-            embedding = self.model.predict(batch)
-            embeddings.append(embedding.detach())
-        
-        num_tokens = len(Tokens)
-        embed_dim = self.hparams.frag_dim_embed
-        tokens = [torch.randn(1, embed_dim) for _ in range(num_tokens)]
-        embeddings = torch.cat(tokens + embeddings, dim=0)
+        if isinstance(self.model, EncoderDecoderModel):
+            embeddings = self.model.decoder.out.weight.data.detach()
+            
+        else:
+            dataset = VocabDataset(self.vocab)
+            loader = VocabLoader(self.hparams, dataset)
+            device = next(self.model.parameters()).device
+            
+            embeddings = []
+            for batch in loader.get(shuffle=False):
+                batch = batch.to(device)
+                embedding = self.model.predict(batch)
+                embeddings.append(embedding.detach())
+            
+            num_tokens = len(Tokens)
+            embed_dim = self.hparams.frag_dim_embed
+            tokens = [torch.randn(1, embed_dim) for _ in range(num_tokens)]
+            embeddings = torch.cat(tokens + embeddings, dim=0)
+        print("embeddings size:", embeddings.size())
         torch.save(embeddings, filename)
 
 
@@ -87,13 +92,17 @@ def run(args):
     hparams = Namespace(**load_yaml(args.config_file))
 
     if hparams.embedding_type == "skipgram":
-        model = SkipgramModel(hparams)
         dataset = SkipgramDataset(hparams, output_dir, dataset_name)
         loader = SkipgramLoader(hparams, dataset)
+        model = SkipgramModel(hparams)
     elif hparams.embedding_type == "triplet":
-        model = TripletModel(hparams)
         dataset = TripletDataset(hparams, output_dir, dataset_name)
         loader = TripletLoader(hparams, dataset)
+        model = TripletModel(hparams)
+    elif hparams.embedding_type == "encdec":
+        dataset = EncoderDecoderDataset(hparams, output_dir, dataset_name)
+        loader = EncoderDecoderLoader(hparams, dataset)
+        model = EncoderDecoderModel(hparams, len(dataset.vocab), dataset.max_length)
     elif hparams.embedding_type == "random":
         return
     else:

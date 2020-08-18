@@ -69,3 +69,21 @@ class SkipgramLoader:
             shuffle=shuffle,
             pin_memory=True,
             num_workers=self.hparams.num_workers)
+        
+
+class EncoderDecoderLoader:
+    def __init__(self, hparams, dataset):
+        self.hparams = hparams
+        self.dataset = dataset
+
+    def collate(self, data_list):
+        return Batch.from_data_list(data_list)
+
+    def get(self, shuffle=True):
+        return DataLoader(
+            dataset=self.dataset,
+            collate_fn=lambda b: self.collate(b),
+            batch_size=self.hparams.batch_size,
+            shuffle=shuffle,
+            pin_memory=True,
+            num_workers=self.hparams.num_workers)

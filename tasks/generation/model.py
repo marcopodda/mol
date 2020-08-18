@@ -97,7 +97,7 @@ class Model(nn.Module):
         x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
         output, hidden_dec = self.decoder(x, hidden_enc)
-        h = hidden_enc.view(-1, self.hparams.rnn_dim_state * self.hparams.rnn_num_layers)
+        # h = hidden_enc.view(-1, self.hparams.rnn_dim_state * self.hparams.rnn_num_layers)
         props = None
         # props = self.mlp(h)
         
