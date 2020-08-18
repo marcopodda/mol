@@ -49,6 +49,7 @@ class Model(nn.Module):
 
         self.vae = VAE(
             hparams=hparams,
+            vocab_size=vocab_size,
             dim_input=hparams.rnn_dim_state,
             dim_latent=hparams.rnn_dim_state // 2,
             dim_output=hparams.rnn_dim_state)
