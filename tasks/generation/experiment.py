@@ -65,7 +65,8 @@ class PLWrapper(pl.LightningModule):
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
         ce_loss = self.loss(outputs, batch.outseq.view(-1))
-        return {"loss": ce_loss + kd_loss, "CE_loss": ce_loss, "KD_loss": kd_loss}
+        logs = {"CE_loss": ce_loss, "KD_loss": kd_loss}
+        return {"loss": ce_loss + kd_loss, "logs": logs}
     
     def training_epoch_end(self, outputs):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
