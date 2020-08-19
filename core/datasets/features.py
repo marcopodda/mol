@@ -44,10 +44,7 @@ def onek_encoding_unk(value, choices):
     return encoding
 
 
-def get_atom_features(atom):
-    if atom.GetSymbol() not in ATOMS:
-        return [0] * ATOM_FDIM
-    
+def get_atom_features(atom):   
     features = onek_encoding_unk(atom.GetAtomicNum(), ATOM_FEATURES['atomic_num'])
     features += onek_encoding_unk(atom.GetTotalDegree(), ATOM_FEATURES['degree'])
     features += onek_encoding_unk(atom.GetFormalCharge(), ATOM_FEATURES['formal_charge'])
@@ -55,7 +52,6 @@ def get_atom_features(atom):
     features += onek_encoding_unk(int(atom.GetTotalNumHs()), ATOM_FEATURES['num_Hs'])
     features += onek_encoding_unk(int(atom.GetHybridization()), ATOM_FEATURES['hybridization'])
     features += [1 if atom.GetIsAromatic() else 0]
-    # features += [atom.GetMass() * 0.01]  # scaled to about the same range as other features
     return features
 
 
@@ -79,17 +75,14 @@ def get_features(mol):
 
     for idx in range(A.shape[0]):
         atom = mol.GetAtomWithIdx(idx)
-        # if atom.GetSymbol() in ATOMS:
         atom_features = get_atom_features(atom)
         node_features.append(atom_features)
 
     for bond in mol.GetBonds():
         bond_features = get_bond_features(bond)
         start, end = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
-        atom1, atom2 = mol.GetAtomWithIdx(start), mol.GetAtomWithIdx(end)
-        # if atom1.GetSymbol() in ATOMS and atom2.GetSymbol() in ATOMS:
         edge_index.append([start, end])
-        edge_index.append([end, start])
+        edge_index.append([end, start]) # add for reverse edge
         edge_features.append(bond_features)
         edge_features.append(bond_features)  # add for reverse edge
 

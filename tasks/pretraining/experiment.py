@@ -37,8 +37,8 @@ class Pretrainer(pl.LightningModule):
         self.dataset = dataset
         self.vocab = self.dataset.vocab
         
-        self.model = model  # TripletModel(hparams)
-        self.loader = loader  # TripletLoader(hparams, self.dataset)
+        self.model = model  
+        self.loader = loader
 
     def forward(self, batch):
         outputs = self.model(batch)
@@ -66,8 +66,7 @@ class Pretrainer(pl.LightningModule):
         if isinstance(self.model, EncoderDecoderModel):
             embeddings = self.model.dec_embedder.weight.data.detach()
             torch.save(embeddings, filename)
-            filaname = filename.split(".")[0]
-            filename = f"{filename}_out.pt"
+            filename = filename.parent / f"{filename.stem}_out.pt"
             embeddings = self.model.decoder.out.weight.data.detach()
             torch.save(embeddings, filename)
         else:

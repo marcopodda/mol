@@ -126,6 +126,5 @@ class EncoderDecoderModel(nn.Module):
         return outputs
 
     def loss(self, outputs, batch):
-        # outputs = outputs.view(-1)
         targets = batch.outseq.view(-1)
         return F.cross_entropy(outputs, targets, ignore_index=Tokens.PAD.value)
