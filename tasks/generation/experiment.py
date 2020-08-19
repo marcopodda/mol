@@ -64,7 +64,7 @@ class PLWrapper(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
-        ce_loss = self.loss(outputs, batch.outseq.view(-1), kd_loss)
+        ce_loss = self.loss(outputs, batch.outseq.view(-1))
         return {"loss": ce_loss + kd_loss, "CE_loss": ce_loss, "KD_loss": kd_loss}
     
     def training_epoch_end(self, outputs):
@@ -75,7 +75,7 @@ class PLWrapper(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
-        ce_loss = self.loss(outputs, batch.outseq.view(-1), kd_loss)
+        ce_loss = self.loss(outputs, batch.outseq.view(-1))
         return {"val_loss": kd_loss + ce_loss}
 
     def validation_epoch_end(self, outputs):
