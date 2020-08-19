@@ -66,7 +66,8 @@ class Pretrainer(pl.LightningModule):
         if isinstance(self.model, EncoderDecoderModel):
             embeddings = self.model.dec_embedder.weight.data.detach()
             torch.save(embeddings, filename)
-            filename = filename.parent / f"{filename.stem}_out.pt"
+            name, dim = filename.stem.split("_")
+            filename = filename.parent / f"{name}out_{dim}.pt"
             embeddings = self.model.decoder.out.weight.data.detach()
             torch.save(embeddings, filename)
         else:
