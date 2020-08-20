@@ -53,7 +53,7 @@ class PLWrapper(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = Adam(self.parameters(), lr=self.hparams.lr)
         scheduler = ReduceLROnPlateau(optimizer, factor=0.5, min_lr=1e-6, patience=2)
-        return optimizer  # [optimizer], [scheduler]
+        return optimizer
 
     def train_dataloader(self):
         return self.training_loader
