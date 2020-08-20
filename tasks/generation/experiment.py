@@ -18,11 +18,19 @@ from core.utils.serialization import load_yaml
 from core.utils.vocab import Tokens
 from core.utils.serialization import save_yaml
 from core.utils.os import get_or_create_dir
-from layers.maskedce import MaskedSoftmaxCELoss
+from layers.maskedce import MaskedSoftmaxCELoss, sequence_mask
 from tasks.generation.dataset import MolecularDataset
 from tasks.generation.loader import MolecularDataLoader
 from .model import Model
 from .sampler import Sampler
+
+
+def calc_accuracy(outputs, targets, valid_len):
+    weights = torch.ones_like(targets, device=targets.device)
+    weights = sequence_mask(weights, valid_len, device=targets.device).view(-1)
+    outputs = torch.argmax(F.log_softmax(outputs, dim=-1), dim=-1).view(-1)
+    outputs = (outputs * weights).int()
+    return accuracy(outputs, targets.view(-1))
 
 
 class PLWrapper(pl.LightningModule):
@@ -67,7 +75,7 @@ class PLWrapper(pl.LightningModule):
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
         ce_loss = self.ce(outputs, batch.outseq, batch.length)
-        acc = accuracy(outputs, batch.outseq)
+        acc = calc_accuracy(outputs, batch.outseq, batch.length)
         logs = {"CE_loss": ce_loss, "KD_loss": kd_loss, "train_acc": acc}
         return {"loss": ce_loss + kd_loss, "logs": logs, "progress_bar": logs}
     
@@ -81,7 +89,7 @@ class PLWrapper(pl.LightningModule):
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
         ce_loss = self.ce(outputs, batch.outseq, batch.length)
-        acc = accuracy(outputs, batch.outseq)
+        acc = calc_accuracy(outputs, batch.outseq, batch.length)
         return {"val_loss": kd_loss + ce_loss, "val_acc": acc}
 
     def validation_epoch_end(self, outputs):
