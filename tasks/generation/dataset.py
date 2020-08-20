@@ -25,9 +25,10 @@ class MolecularDataset(data.Dataset):
     def __getitem__(self, index):
         data = self.data.iloc[index]
         seq_len = data.length
-        data = to_data(data, self.vocab, self.max_length)
-        probs = torch.zeros_like(data.inseq)
-        probs[:, 1:seq_len] = torch.rand(seq_len - 1)
-        data.inseq[probs > 0.5] = Tokens.MASK.value
-        return data
+        return to_data(data, self.vocab, self.max_length)
+        # data = to_data(data, self.vocab, self.max_length)
+        # probs = torch.zeros_like(data.inseq)
+        # probs[:, 1:seq_len] = torch.rand(seq_len - 1)
+        # data.inseq[probs > 0.5] = Tokens.MASK.value
+        # return data
         
