@@ -6,6 +6,7 @@ import numpy as np
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.metrics.classification import accuracy
 
 import torch
 from torch.nn import functional as F
@@ -15,7 +16,6 @@ from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
 from core.datasets.utils import to_batch
 from core.utils.serialization import load_yaml
 from core.utils.vocab import Tokens
-from core.utils.scores import accuracy
 from core.utils.serialization import save_yaml
 from core.utils.os import get_or_create_dir
 from layers.maskedce import MaskedSoftmaxCELoss
@@ -67,23 +67,27 @@ class PLWrapper(pl.LightningModule):
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
         ce_loss = self.ce(outputs, batch.outseq, batch.length)
-        logs = {"CE_loss": ce_loss, "KD_loss": kd_loss}
+        acc = accuracy(outputs, batch.outseq)
+        logs = {"CE_loss": ce_loss, "KD_loss": kd_loss, "train_acc": acc}
         return {"loss": ce_loss + kd_loss, "logs": logs, "progress_bar": logs}
     
     def training_epoch_end(self, outputs):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
-        logs = {"train_loss": train_loss_mean}
+        acc_mean = torch.stack([x['train_acc'] for x in outputs]).mean()
+        logs = {"train_loss": train_loss_mean, "train_acc": acc_mean}
         return {"log": logs, "progress_bar": logs}
 
     def validation_step(self, batch, batch_idx):
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
         ce_loss = self.ce(outputs, batch.outseq, batch.length)
-        return {"val_loss": kd_loss + ce_loss}
+        acc = accuracy(outputs, batch.outseq)
+        return {"val_loss": kd_loss + ce_loss, "val_acc": acc}
 
     def validation_epoch_end(self, outputs):
         val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
-        logs = {"val_loss": val_loss_mean}
+        acc_mean = torch.stack([x['val_acc'] for x in outputs]).mean()
+        logs = {"train_loss": train_loss_mean, "val_acc": acc_mean}
         return {"log": logs, "progress_bar": logs}
 
 
