@@ -19,7 +19,7 @@ def pad(vec, length, pad_symbol=Tokens.PAD.value):
     return torch.LongTensor([padded])
 
 
-def to_data(row, vocab=None, max_length=None):
+def get_graph_data(row):
     if isinstance(row, pd.Series):
         mol = Chem.MolFromSmiles(row.smiles)
     else:
@@ -27,6 +27,14 @@ def to_data(row, vocab=None, max_length=None):
 
     edge_index, x, edge_attr = get_features(mol)
     data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
+    return data
+
+
+def to_data(row, vocab=None, max_length=None):
+    frags_data = [get_graph_data(row)]
+    
+    for frag in row.frags:
+        frags.append(get_graph_data(frag))
 
     try:
         assert vocab is not None
@@ -34,12 +42,9 @@ def to_data(row, vocab=None, max_length=None):
         seq = [vocab[f] + len(Tokens) for f in row.frags]
         data["inseq"] = pad([Tokens.SOS.value] + seq, max_length)
         data["outseq"] = pad(seq + [Tokens.EOS.value], max_length)
+        data["length"] = torch.LongTensor([[len(seq)]])
     except Exception as e:
         pass
-    
-    if isinstance(row, pd.Series):
-        props = torch.Tensor([row.qed, row.SAS, row.logP, row.mr, row.mw])
-        data['props'] = props
 
     return data
 
