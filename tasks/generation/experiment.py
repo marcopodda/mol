@@ -77,7 +77,7 @@ class PLWrapper(pl.LightningModule):
         ce_loss = self.ce(outputs, batch.outseq, batch.length)
         acc = calc_accuracy(outputs, batch.outseq, batch.length)
         logs = {"CE_loss": ce_loss, "KD_loss": kd_loss, "train_acc": acc}
-        return {"loss": ce_loss + kd_loss, "logs": logs, "progress_bar": logs}
+        return {"loss": ce_loss + kd_loss, "train_acc": acc, "logs": logs, "progress_bar": logs}
     
     def training_epoch_end(self, outputs):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
@@ -95,7 +95,7 @@ class PLWrapper(pl.LightningModule):
     def validation_epoch_end(self, outputs):
         val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
         acc_mean = torch.stack([x['val_acc'] for x in outputs]).mean()
-        logs = {"train_loss": train_loss_mean, "val_acc": acc_mean}
+        logs = {"val_loss": val_loss_mean, "val_acc": acc_mean}
         return {"log": logs, "progress_bar": logs}
 
 
