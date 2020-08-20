@@ -4,8 +4,8 @@ from torch import nn
 
 def sequence_mask(X, X_len, value=0, device="cpu"):
     maxlen = X.size(1)
-    rng = torch.arange(maxlen).to(device)
-    mask = (rng[None, :] < X_len).to(device)
+    rng = torch.arange(maxlen, device=device)
+    mask = rng[None, :] < X_len
     X[~mask] = value
     return X
 
@@ -21,7 +21,7 @@ class MaskedSoftmaxCELoss(nn.CrossEntropyLoss):
     
     def forward(self, pred, label, valid_length):
         # the sample weights shape should be (batch_size, seq_len)
-        weights = torch.ones_like(label, device=label.device)
+        weights = torch.ones_like(label)
         weights = sequence_mask(weights, valid_length, device=label.device).float()
         pred = pred.view(label.size(0), label.size(1), -1)
         output = super().forward(pred.transpose(1,2), label)
