@@ -55,4 +55,4 @@ class VAE(nn.Module):
 
     def loss_function(self, mean, logv):
         kl_div = -0.5 * torch.sum(1.0 + logv - mean.pow(2) - logv.exp())
-        return kl_div / (self.hparams.batch_size * self.vocab_size)
+        return kl_div # / (self.hparams.batch_size * self.vocab_size)
