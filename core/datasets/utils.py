@@ -34,6 +34,7 @@ def to_data(row, vocab=None, max_length=None):
         seq = [vocab[f] + len(Tokens) for f in row.frags]
         data["inseq"] = pad([Tokens.SOS.value] + seq, max_length)
         data["outseq"] = pad(seq + [Tokens.EOS.value], max_length)
+        data["length"] = torch.LongTensor([[len(seq) + 1]])
     except Exception as e:
         pass
     

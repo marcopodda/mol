@@ -18,6 +18,7 @@ from core.utils.vocab import Tokens
 from core.utils.scores import accuracy
 from core.utils.serialization import save_yaml
 from core.utils.os import get_or_create_dir
+from layers.maskedce import MaskedSoftmaxCELoss
 from tasks.generation.dataset import MolecularDataset
 from tasks.generation.loader import MolecularDataLoader
 from .model import Model
@@ -39,6 +40,7 @@ class PLWrapper(pl.LightningModule):
         self.max_length = self.dataset.max_length
 
         self.model = Model(hparams, output_dir, len(self.dataset.vocab), self.max_length)
+        self.ce = MaskedSoftmaxCELoss()
 
     def prepare_data(self):
         loader = MolecularDataLoader(self.hparams, self.dataset)
@@ -64,7 +66,7 @@ class PLWrapper(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
-        ce_loss = self.loss(outputs, batch.outseq.view(-1))
+        ce_loss = self.ce(outputs, batch.outseq, batch.length)
         logs = {"CE_loss": ce_loss, "KD_loss": kd_loss}
         return {"loss": ce_loss + kd_loss, "logs": logs, "progress_bar": logs}
     
@@ -76,17 +78,13 @@ class PLWrapper(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
-        ce_loss = self.loss(outputs, batch.outseq.view(-1))
+        ce_loss = self.ce(outputs, batch.outseq, batch.length)
         return {"val_loss": kd_loss + ce_loss}
 
     def validation_epoch_end(self, outputs):
         val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
         logs = {"val_loss": val_loss_mean}
         return {"log": logs, "progress_bar": logs}
-
-    def loss(self, outputs, targets):
-        rec_loss = F.cross_entropy(outputs, targets, ignore_index=Tokens.PAD.value)
-        return rec_loss
 
 
 def run(args):
