@@ -54,7 +54,6 @@ class Decoder(nn.Module):
                           batch_first=True,
                           # weight_dropout=rnn_dropout,
                           dropout=rnn_dropout)
-        print("dim_hidden", dim_hidden)
         self.out = nn.Linear(dim_hidden, dim_output)
 
     def forward(self, x, hidden):
