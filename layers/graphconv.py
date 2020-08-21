@@ -65,6 +65,6 @@ class GNN(nn.Module):
         
         output = global_add_pool(x, batch) 
         output = self.readout(output) if self.dim_output != self.dim_hidden else output
-        nodes_per_graph = scatter_add(torch.ones_like(batch), batch)
+        nodes_per_graph = scatter_add(torch.ones_like(batch), batch).view(-1, 1)
         return output / nodes_per_graph
         
