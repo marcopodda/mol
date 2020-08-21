@@ -19,7 +19,7 @@ from core.datasets.utils import to_batch
 from core.utils.os import get_or_create_dir
 from core.utils.serialization import load_yaml
 from core.utils.vocab import Tokens, Vocab
-
+from layers.maskedce import MaskedSoftmaxCELoss, sequence_mask
 from tasks.pretraining.dataset import SkipgramDataset, TripletDataset, VocabDataset, EncoderDecoderDataset
 from tasks.pretraining.loader import VocabLoader, TripletLoader, SkipgramLoader, EncoderDecoderLoader
 from tasks.pretraining.model import TripletModel, SkipgramModel, EncoderDecoderModel
@@ -39,7 +39,8 @@ class Pretrainer(pl.LightningModule):
         
         self.model = model  
         self.loader = loader
-
+        self.ce = MaskedSoftmaxCELoss()
+        
     def forward(self, batch):
         outputs = self.model(batch)
         return outputs
@@ -54,7 +55,7 @@ class Pretrainer(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         outputs = self.forward(batch)
-        loss = self.model.loss(outputs, batch)
+        loss = self.ce(outputs, batch.outseq, batch.length)
         return {"loss": loss}
 
     def training_epoch_end(self, outputs):
