@@ -60,8 +60,9 @@ class GNN(nn.Module):
         outputs = []
         for conv, bn in zip(self.convs, self.bns):
             x = conv(x, edge_index, edge_attr=edge_attr)
-            x = bn(F.relu(bn(x)))
+            x = bn(F.relu(x))
         
-        output = global_add_pool(x, batch)
-        return self.readout(output) if self.dim_output != self.dim_hidden else output
+        output = global_add_pool(x, batch) 
+        output = self.readout(output) if self.dim_output != self.dim_hidden else output
+        return output / batch.num_nodes
         
