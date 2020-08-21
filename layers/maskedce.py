@@ -22,7 +22,6 @@ class MaskedSoftmaxCELoss(nn.CrossEntropyLoss):
     def forward(self, pred, label, valid_length):
         # the sample weights shape should be (batch_size, seq_len)
         weights = torch.ones_like(label)
-        weights = sequence_mask(weights, valid_length, device=label.device).float()
-        pred = pred.view(label.size(0), label.size(1), -1)
-        output = super().forward(pred.transpose(1,2), label)
-        return (output * weights).mean(dim=1).sum()
+        weights = sequence_mask(weights, valid_length, device=label.device).float().view(-1)
+        output = super().forward(pred.view(-1), label.view(-1))
+        return (output * weights).mean()
