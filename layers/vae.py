@@ -36,14 +36,14 @@ class VAE(nn.Module):
     def encode(self, x):
         if x.ndim > 2:
             x = x.view(-1, x.size(0) * x.size(2))
-        mean = self.fc_mean(F.relu(x))
-        logv = self.fc_logv(F.relu(x))
+        mean = self.fc_mean(x)
+        logv = self.fc_logv(x)
         return mean, logv
     
     def decode(self, z=None):
         if z is None:
             z = self.sample_prior()    
-        z = self.fc_out(F.relu(z))
+        z = self.fc_out(z)
         return z.view(self.rnn_num_layers, -1, self.dim_output)
 
     def forward(self, x):
