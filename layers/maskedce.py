@@ -1,5 +1,8 @@
 import torch
 from torch import nn
+from torch.nn import functional as F
+
+from core.utils.vocab import Tokens
 
 
 def sequence_mask(X, X_len, value=0, device="cpu"):
@@ -10,10 +13,9 @@ def sequence_mask(X, X_len, value=0, device="cpu"):
     return X
 
 
-class MaskedSoftmaxCELoss(nn.CrossEntropyLoss):
-    def __init__(self, *args, **kwargs):
+class MaskedSoftmaxCELoss(nn.Module):
+    def __init__(self):
         super().__init__()
-        self.reduction = "none"
     
     # pred shape: (batch_size, seq_len, vocab_size)
     # label shape: (batch_size, seq_len)
@@ -21,7 +23,7 @@ class MaskedSoftmaxCELoss(nn.CrossEntropyLoss):
     
     def forward(self, pred, label, valid_length):
         # the sample weights shape should be (batch_size, seq_len)
-        weights = torch.ones_like(label)
-        weights = sequence_mask(weights, valid_length, device=label.device).float().view(-1)
-        output = super().forward(pred.view(-1), label.view(-1))
-        return (output * weights).mean()
+        label = label.view(-1)
+        ce_loss = F.cross_entropy(pred, label, ignore_index=Tokens.PAD.value, reduction="none")
+        num_tokens = (label != Tokens.PAD.value).sum().float()
+        return ce_loss.sum() / num_tokens
