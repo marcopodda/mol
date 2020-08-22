@@ -99,7 +99,7 @@ class PLWrapper(pl.LightningModule):
         
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
-        weight = anneal_kl('step', self.batch_count)
+        weight = 1.0 # anneal_kl('step', self.batch_count)
         ce_loss = self.ce(outputs, batch.outseq, batch.length)
         logs = {"CE": ce_loss, "KD": kd_loss, "W": weight}
         
