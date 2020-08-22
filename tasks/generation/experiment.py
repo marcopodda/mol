@@ -77,7 +77,7 @@ class PLWrapper(pl.LightningModule):
         ce_loss = self.ce(outputs, batch.outseq, batch.length)
         acc = torch.Tensor([1]) # calc_accuracy(outputs, batch.outseq, batch.length)
         logs = {"CE_loss": ce_loss, "KD_loss": kd_loss, "train_acc": acc}
-        return {"loss": ce_loss + kd_loss, "train_acc": acc, "logs": logs, "progress_bar": logs}
+        return {"loss": batch_idx / kd_loss + ce_loss, "train_acc": acc, "logs": logs, "progress_bar": logs}
     
     def training_epoch_end(self, outputs):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
@@ -90,7 +90,7 @@ class PLWrapper(pl.LightningModule):
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
         ce_loss = self.ce(outputs, batch.outseq, batch.length)
         acc = torch.Tensor([1]) # calc_accuracy(outputs, batch.outseq, batch.length)
-        return {"val_loss": kd_loss + ce_loss, "val_acc": acc}
+        return {"val_loss": batch_idx / kd_loss + ce_loss, "val_acc": acc}
 
     def validation_epoch_end(self, outputs):
         val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
