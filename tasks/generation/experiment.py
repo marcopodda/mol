@@ -33,7 +33,7 @@ def calc_accuracy(outputs, targets, valid_len):
     return accuracy(outputs, targets.view(-1))
 
 
-def anneal_kl(anneal_function, step, k1=0.0001, k2=0.0002, max_value=0.001, x0=100000):
+def anneal_kl(anneal_function, step, k1=0.001, k2=0.002, max_value=0.001, x0=100000):
     assert anneal_function in ['logistic', 'linear', 'step', 'cyclical'], 'unknown anneal_function'
     if anneal_function == 'logistic':
         return float(1 / (1 + np.exp(- k1 * (step - x0))))
