@@ -31,12 +31,24 @@ class Model(nn.Module):
         self.dec_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
 
         if hparams.encoder_type == "gnn":
-            self.encoder = GNN(
+            # self.encoder = GNN(
+            #     hparams=hparams,
+            #     num_layers=hparams.gnn_num_layers,
+            #     dim_edge_embed=hparams.gnn_dim_edge_embed,
+            #     dim_hidden=hparams.gnn_dim_hidden,
+            #     dim_output=hparams.rnn_dim_state)
+            self.gnn_mean = GNN(
                 hparams=hparams,
                 num_layers=hparams.gnn_num_layers,
                 dim_edge_embed=hparams.gnn_dim_edge_embed,
                 dim_hidden=hparams.gnn_dim_hidden,
-                dim_output=hparams.rnn_dim_state)
+                dim_output=hparams.rnn_dim_state // 2)
+            self.gnn_logv = GNN(
+                hparams=hparams,
+                num_layers=hparams.gnn_num_layers,
+                dim_edge_embed=hparams.gnn_dim_edge_embed,
+                dim_hidden=hparams.gnn_dim_hidden,
+                dim_output=hparams.rnn_dim_state // 2)
         elif hparams.encoder_type == "rnn":
             self.encoder = Encoder(  
                 hparams=hparams,
@@ -87,12 +99,14 @@ class Model(nn.Module):
             x = self.enc_embedder(batch.outseq)
             x = F.dropout(x, p=self.embedding_dropout, training=self.training)
             _, h = self.encoder(x)
+            hidden_enc, vae_loss = self.vae(h)
         elif self.hparams.encoder_type == "gnn":
-            h = self.encoder(batch)
+            # h = self.encoder(batch)
+            mean = self.gnn_mean(batch)
+            logv = self.gnn_logv(batch)
+            hidden_enc, vae_loss = self.vae(mean, logv)
         else:
             raise ValueError("Unknown encoder type!")
-
-        hidden_enc, vae_loss = self.vae(h)
 
         x = self.dec_embedder(batch.inseq)
         x = F.dropout(x, p=self.embedding_dropout, training=self.training)

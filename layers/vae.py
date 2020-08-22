@@ -17,8 +17,8 @@ class VAE(nn.Module):
         if self.hparams.encoder_type == "rnn":
             dim_input *= self.rnn_num_layers
         
-        self.fc_mean = nn.Linear(dim_input, dim_latent)
-        self.fc_logv = nn.Linear(dim_input, dim_latent)
+        # self.fc_mean = nn.Linear(dim_input, dim_latent)
+        # self.fc_logv = nn.Linear(dim_input, dim_latent)
 
         self.fc_out = nn.Linear(dim_latent, self.rnn_num_layers * self.dim_output)
     
@@ -33,12 +33,12 @@ class VAE(nn.Module):
         eps = self.sample_prior(z=std)
         return mean + eps * std
 
-    def encode(self, x):
-        if x.ndim > 2:
-            x = x.view(-1, x.size(0) * x.size(2))
-        mean = self.fc_mean(x)
-        logv = self.fc_logv(x)
-        return mean, logv
+    # def encode(self, x):
+    #     if x.ndim > 2:
+    #         x = x.view(-1, x.size(0) * x.size(2))
+    #     mean = self.fc_mean(x)
+    #     logv = self.fc_logv(x)
+    #     return mean, logv
     
     def decode(self, z=None):
         if z is None:
@@ -46,8 +46,14 @@ class VAE(nn.Module):
         z = self.fc_out(z)
         return z.view(self.rnn_num_layers, -1, self.dim_output)
 
-    def forward(self, x):
+    def forward2(self, x):
         mean, logv = self.encode(x)
+        z = self.reparameterize(mean, logv)
+        x_rec = self.decode(z)
+        loss = self.loss_function(mean, logv)
+        return x_rec, loss
+    
+    def forward(self, mean, logv):
         z = self.reparameterize(mean, logv)
         x_rec = self.decode(z)
         loss = self.loss_function(mean, logv)
