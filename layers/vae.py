@@ -25,7 +25,7 @@ class VAE(nn.Module):
     def sample_prior(self, z=None, batch_size=1):
         if z is None:
             device = next(self.parameters()).device
-            return torch.randn((batch_size, self.fc_mean.out_features), device=device)
+            return torch.randn((batch_size, self.dim_latent), device=device)
         return torch.randn_like(z)
 
     def reparameterize(self, mean, logv):
