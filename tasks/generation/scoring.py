@@ -3,9 +3,10 @@ from pathlib import Path
 from rdkit import Chem
 
 from core.mols.split import join_fragments
-from core.utils.metrics import get_all_metrics
 from core.utils.serialization import load_yaml, save_yaml
 from core.utils.vocab import Vocab
+
+from moses import get_all_metrics
 
 
 def convert_metrics_dict(metrics_dict):
