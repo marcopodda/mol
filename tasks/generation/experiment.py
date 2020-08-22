@@ -33,6 +33,29 @@ def calc_accuracy(outputs, targets, valid_len):
     return accuracy(outputs, targets.view(-1))
 
 
+def anneal_kl(anneal_function, step, k1=0.1, k2=0.2, max_value=0.1, x0=100000):
+    assert anneal_function in ['logistic', 'linear', 'step', 'cyclical'], 'unknown anneal_function'
+    if anneal_function == 'logistic':
+        return float(1 / (1 + np.exp(- k1 * (step - x0))))
+    elif anneal_function == 'step':
+        cnt = step // x0
+        step = step % x0
+        if cnt > 0:
+            max_value -= cnt * 0.1
+            max_value = max(0.1, max_value)  
+        ma = min(k2 * cnt + k2, max_value)
+        mi = 0.01 + k1 * cnt
+        return min(ma, mi + 2 * step * (max(ma - mi, 0)) / x0)
+    elif anneal_function == 'linear':
+        return min(max_value, 0.01 + step / x0)
+    elif anneal_function == 'cyclical':
+        cnt = step // x0 // 5
+        step = step % x0
+        ma = min(k2 * cnt + k2, max_value)
+        mi = k1
+        return min(ma, ma * cnt + mi + 2 * step * (ma - mi) / x0)
+
+
 class PLWrapper(pl.LightningModule):
     def __init__(self, hparams, output_dir, name):
         super().__init__()
@@ -49,6 +72,7 @@ class PLWrapper(pl.LightningModule):
 
         self.model = Model(hparams, output_dir, len(self.dataset.vocab), self.max_length)
         self.ce = MaskedSoftmaxCELoss()
+        self.batch_count = 0
 
     def prepare_data(self):
         loader = MolecularDataLoader(self.hparams, self.dataset)
@@ -72,22 +96,27 @@ class PLWrapper(pl.LightningModule):
         return self.validation_loader
 
     def training_step(self, batch, batch_idx):
+        
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
+        weight = anneal_kl('logistic', self.batch_count)
         ce_loss = self.ce(outputs, batch.outseq, batch.length)
-        logs = {"CE_loss": ce_loss, "KD_loss": 1. / ce_loss.item() * kd_loss, "weight": 1. / ce_loss.item()}
-        return {"loss": 1. / ce_loss.item() * kd_loss + ce_loss, "logs": logs, "progress_bar": logs}
+        logs = {"CE": ce_loss, "KD": kd_loss, "W": weight}
+        
+        self.batch_count += 1
+        
+        return {"loss": weight * kd_loss + ce_loss, "logs": logs, "progress_bar": logs}
     
     def training_epoch_end(self, outputs):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
-        logs = {"train_loss": train_loss_mean}
+        logs = {"tr_loss": train_loss_mean}
         return {"log": logs, "progress_bar": logs}
 
     def validation_step(self, batch, batch_idx):
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
         ce_loss = self.ce(outputs, batch.outseq, batch.length)
-        return {"val_loss": 1. / ce_loss.item() * kd_loss + ce_loss}
+        return {"val_loss": ce_loss}
 
     def validation_epoch_end(self, outputs):
         val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
