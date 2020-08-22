@@ -101,7 +101,7 @@ class PLWrapper(pl.LightningModule):
         ce_loss = self.ce(outputs, batch.outseq, batch.length)
         weight = ce_loss.item() / kd_loss.item()
         logs = {"CE": ce_loss, "KD": kd_loss, "W": weight}
-        return {"loss": ce_loss + weight * kd_loss, "logs": logs, "progress_bar": logs}
+        return {"loss": weight * ce_loss + kd_loss, "logs": logs, "progress_bar": logs}
     
     def training_epoch_end(self, outputs):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
