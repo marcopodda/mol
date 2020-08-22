@@ -72,7 +72,6 @@ class PLWrapper(pl.LightningModule):
 
         self.model = Model(hparams, output_dir, len(self.dataset.vocab), self.max_length)
         self.ce = MaskedSoftmaxCELoss()
-        self.batch_count = 0
 
     def prepare_data(self):
         loader = MolecularDataLoader(self.hparams, self.dataset)
@@ -99,13 +98,10 @@ class PLWrapper(pl.LightningModule):
         
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
-        weight = 1.0 # anneal_kl('step', self.batch_count)
         ce_loss = self.ce(outputs, batch.outseq, batch.length)
+        weight = kd_loss.item() / ce_loss.item()
         logs = {"CE": ce_loss, "KD": kd_loss, "W": weight}
-        
-        self.batch_count += 1
-        
-        return {"loss": weight * kd_loss + ce_loss, "logs": logs, "progress_bar": logs}
+        return {"loss": weight * ce_loss + kd_loss, "logs": logs, "progress_bar": logs}
     
     def training_epoch_end(self, outputs):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()

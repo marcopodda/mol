@@ -50,10 +50,9 @@ class VAE(nn.Module):
         mean, logv = self.encode(x)
         z = self.reparameterize(mean, logv)
         x_rec = self.decode(z)
-        loss = self.loss_function(mean, logv, x, x_rec)
+        loss = self.loss_function(mean, logv)
         return x_rec, loss
 
-    def loss_function(self, mean, logv, x, x_rec):
+    def loss_function(self, mean, logv):
         kl_div = -0.5 * torch.sum(1.0 + logv - mean.pow(2) - logv.exp())
-        rec_loss = F.mse_loss(x_rec, x)
-        return (rec_loss + kl_div) / logv.size(0)
+        return kl_div
