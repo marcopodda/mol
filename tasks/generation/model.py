@@ -22,13 +22,41 @@ class Model(nn.Module):
         
         self.hparams = hparams
         self.output_dir = output_dir
+        self.num_embeddings = vocab_size + len(Tokens)
         self.embedding_dropout = hparams.embedding_dropout
                     
         embeddings = self.load_embeddings()
         self.enc_embedder = None
         if hparams.encoder_type == "rnn":
-            self.enc_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
-        self.dec_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
+            if hparams.embedding_type == "random":
+                self.enc_embedder = nn.Embedding(
+                    num_embeddings=self.num_embeddings, 
+                    embedding_dim=hparams.frag_dim_embed, 
+                    padding_idx=Tokens.PAD.value,
+                    scale_grad_by_freq=True,
+                    max_norm=2.0)
+            else:
+                self.enc_embedder = nn.Embedding.from_pretrained(
+                    embeddings=embeddings, 
+                    padding_idx=Tokens.PAD.value,
+                    scale_grad_by_freq=True,
+                    freeze=False,
+                    max_norm=2.0)
+        
+        if hparams.embedding_type == "random":
+            self.dec_embedder = nn.Embedding(
+                num_embeddings=self.num_embeddings, 
+                embedding_dim=hparams.frag_dim_embed, 
+                padding_idx=Tokens.PAD.value,
+                scale_grad_by_freq=True,
+                max_norm=2.0)
+        else:
+            self.dec_embedder = nn.Embedding.from_pretrained(
+                embeddings=embeddings, 
+                padding_idx=Tokens.PAD.value,
+                scale_grad_by_freq=True,
+                freeze=False,
+                max_norm=2.0)
 
         if hparams.encoder_type == "gnn":
             # self.encoder = GNN(
