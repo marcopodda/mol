@@ -25,7 +25,7 @@ class Model(nn.Module):
         self.num_embeddings = vocab_size + len(Tokens)
         self.embedding_dropout = hparams.embedding_dropout
                     
-        embeddings = self.load_embeddings()
+        
         self.enc_embedder = None
         if hparams.encoder_type == "rnn":
             if hparams.embedding_type == "random":
@@ -36,6 +36,7 @@ class Model(nn.Module):
                     scale_grad_by_freq=True,
                     max_norm=2.0)
             else:
+                embeddings = self.load_embeddings()
                 self.enc_embedder = nn.Embedding.from_pretrained(
                     embeddings=embeddings, 
                     padding_idx=Tokens.PAD.value,
@@ -51,6 +52,7 @@ class Model(nn.Module):
                 scale_grad_by_freq=True,
                 max_norm=2.0)
         else:
+            embeddings = self.load_embeddings()
             self.dec_embedder = nn.Embedding.from_pretrained(
                 embeddings=embeddings, 
                 padding_idx=Tokens.PAD.value,
