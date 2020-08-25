@@ -143,7 +143,8 @@ class Model(nn.Module):
         
         for i, frags in enumerate(frags_batch):
             for j, frag in enumerate(frags):
-                x[i, j, :] = self.dec_embedder(frag)
+                enc = self.dec_embedder(frag)
+                x[i, j, :] = enc.to(device)
             
         # x = self.dec_embedder(batch.inseq)
         
