@@ -4,6 +4,8 @@ from argparse import Namespace
 import torch
 from torch.utils import data
 
+from torch_geometric.data import Batch
+
 from core.datasets.preprocess import get_data
 from core.datasets.utils import to_data
 from core.utils.vocab import Tokens
@@ -25,5 +27,14 @@ class MolecularDataset(data.Dataset):
     def __getitem__(self, index):
         data = self.data.iloc[index]
         seq_len = data.length
-        return to_data(data, self.vocab, self.max_length)
+        
+        frags = []
+        for frag in data.frags:
+            frags.append(to_data(frag))
+        
+        # for i in range(len(frags), self.max_length):
+            
+        mol_data = to_data(data, self.vocab, self.max_length)
+        frags_data = Batch.from_data_list(frags)
+        return mol_data, frags_data
         
