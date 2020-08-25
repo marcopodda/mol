@@ -18,15 +18,15 @@ class Encoder(nn.Module):
                           num_layers=num_layers,
                           batch_first=True,
                           dropout=rnn_dropout,
-                          bidirectional=False)
+                          bidirectional=True)
 
     def forward(self, x):
         x = x.unsqueeze(0) if x.ndim == 2 else x
         output, hidden = self.gru(x)
 
-        # batch_size = output.size(0)
-        # hidden = hidden.view(self.num_layers, 2, batch_size, self.dim_hidden)
-        # hidden = hidden.sum(dim=1)
+        batch_size = output.size(0)
+        hidden = hidden.view(self.num_layers, 2, batch_size, self.dim_hidden)
+        hidden = hidden.sum(dim=1)
 
-        # output = output[:,:,:self.dim_hidden] + output[:,:,self.dim_hidden:]
+        output = output[:,:,:self.dim_hidden] + output[:,:,self.dim_hidden:]
         return output, hidden

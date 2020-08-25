@@ -25,7 +25,7 @@ class VAE(nn.Module):
     def sample_prior(self, z=None, batch_size=1):
         if z is None:
             device = next(self.parameters()).device
-            return torch.randn((batch_size, self.fc_mean.out_features), device=device)
+            return torch.randn((batch_size, self.dim_latent), device=device)
         return torch.randn_like(z)
 
     def reparameterize(self, mean, logv):
@@ -36,23 +36,25 @@ class VAE(nn.Module):
     def encode(self, x):
         if x.ndim > 2:
             x = x.view(-1, x.size(0) * x.size(2))
-        mean = self.fc_mean(F.relu(x))
-        logv = self.fc_logv(F.relu(x))
+        mean = self.fc_mean(x)
+        logv = self.fc_logv(x)
         return mean, logv
     
     def decode(self, z=None):
         if z is None:
             z = self.sample_prior()    
-        z = self.fc_out(F.relu(z))
+        z = self.fc_out(z)
         return z.view(self.rnn_num_layers, -1, self.dim_output)
-
-    def forward(self, x):
-        mean, logv = self.encode(x)
+    
+    def forward(self, mean, logv=None):
+        if logv is None:
+            mean, logv = self.encode(mean)
+            
         z = self.reparameterize(mean, logv)
-        x = self.decode(z)
+        x_rec = self.decode(z)
         loss = self.loss_function(mean, logv)
-        return x, loss
+        return x_rec, loss
 
     def loss_function(self, mean, logv):
         kl_div = -0.5 * torch.sum(1.0 + logv - mean.pow(2) - logv.exp())
-        return kl_div # / (self.hparams.batch_size * self.vocab_size)
+        return kl_div

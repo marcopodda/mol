@@ -6,6 +6,7 @@ import numpy as np
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.metrics.classification import accuracy
 
 import torch
 from torch.nn import functional as F
@@ -15,13 +16,44 @@ from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
 from core.datasets.utils import to_batch
 from core.utils.serialization import load_yaml
 from core.utils.vocab import Tokens
-from core.utils.scores import accuracy
 from core.utils.serialization import save_yaml
 from core.utils.os import get_or_create_dir
+from layers.maskedce import MaskedSoftmaxCELoss, sequence_mask
 from tasks.generation.dataset import MolecularDataset
 from tasks.generation.loader import MolecularDataLoader
 from .model import Model
 from .sampler import Sampler
+
+
+def calc_accuracy(outputs, targets, valid_len):
+    weights = torch.ones_like(targets, device=targets.device)
+    weights = sequence_mask(weights, valid_len, device=targets.device).view(-1)
+    outputs = torch.argmax(F.log_softmax(outputs, dim=-1), dim=-1).view(-1)
+    outputs = (outputs * weights).int()
+    return accuracy(outputs, targets.view(-1))
+
+
+def anneal_kl(anneal_function, step, k1=0.001, k2=0.002, max_value=0.001, x0=100000):
+    assert anneal_function in ['logistic', 'linear', 'step', 'cyclical'], 'unknown anneal_function'
+    if anneal_function == 'logistic':
+        return float(1 / (1 + np.exp(- k1 * (step - x0))))
+    elif anneal_function == 'step':
+        cnt = step // x0
+        step = step % x0
+        if cnt > 0:
+            max_value -= cnt * 0.1
+            max_value = max(0.1, max_value)  
+        ma = min(k2 * cnt + k2, max_value)
+        mi = 0.01 + k1 * cnt
+        return min(ma, mi + 2 * step * (max(ma - mi, 0)) / x0)
+    elif anneal_function == 'linear':
+        return min(max_value, 0.01 + step / x0)
+    elif anneal_function == 'cyclical':
+        cnt = step // x0 // 5
+        step = step % x0
+        ma = min(k2 * cnt + k2, max_value)
+        mi = k1
+        return min(ma, ma * cnt + mi + 2 * step * (ma - mi) / x0)
 
 
 class PLWrapper(pl.LightningModule):
@@ -39,6 +71,7 @@ class PLWrapper(pl.LightningModule):
         self.max_length = self.dataset.max_length
 
         self.model = Model(hparams, output_dir, len(self.dataset.vocab), self.max_length)
+        self.ce = MaskedSoftmaxCELoss()
 
     def prepare_data(self):
         loader = MolecularDataLoader(self.hparams, self.dataset)
@@ -62,31 +95,29 @@ class PLWrapper(pl.LightningModule):
         return self.validation_loader
 
     def training_step(self, batch, batch_idx):
+        
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
-        ce_loss = self.loss(outputs, batch.outseq.view(-1))
-        logs = {"CE_loss": ce_loss, "KD_loss": kd_loss}
-        return {"loss": ce_loss + kd_loss, "logs": logs, "progress_bar": logs}
+        ce_loss = self.ce(outputs, batch.outseq, batch.length)
+        weight = kd_loss.item() / ce_loss.item()
+        logs = {"CE": ce_loss, "KD": kd_loss, "W": weight}
+        return {"loss": ce_loss + weight * kd_loss, "logs": logs, "progress_bar": logs}
     
     def training_epoch_end(self, outputs):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
-        logs = {"train_loss": train_loss_mean}
+        logs = {"tr_loss": train_loss_mean}
         return {"log": logs, "progress_bar": logs}
 
     def validation_step(self, batch, batch_idx):
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
-        ce_loss = self.loss(outputs, batch.outseq.view(-1))
-        return {"val_loss": kd_loss + ce_loss}
+        ce_loss = self.ce(outputs, batch.outseq, batch.length)
+        return {"val_loss": ce_loss}
 
     def validation_epoch_end(self, outputs):
         val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
         logs = {"val_loss": val_loss_mean}
         return {"log": logs, "progress_bar": logs}
-
-    def loss(self, outputs, targets):
-        rec_loss = F.cross_entropy(outputs, targets, ignore_index=Tokens.PAD.value)
-        return rec_loss
 
 
 def run(args):

@@ -22,24 +22,49 @@ class Model(nn.Module):
         
         self.hparams = hparams
         self.output_dir = output_dir
+        self.num_embeddings = vocab_size + len(Tokens)
         self.embedding_dropout = hparams.embedding_dropout
                     
-        embeddings = self.load_embeddings()
+        
         self.enc_embedder = None
         if hparams.encoder_type == "rnn":
-            self.enc_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
-        self.dec_embedder = nn.Embedding.from_pretrained(embeddings, freeze=False, padding_idx=Tokens.PAD.value)
-
-        self.enc_embedder = nn.Embedding(*embeddings.size(), padding_idx=Tokens.PAD.value)
-        self.dec_embedder = nn.Embedding(*embeddings.size(), padding_idx=Tokens.PAD.value)
+            if hparams.embedding_type == "random":
+                self.enc_embedder = nn.Embedding(
+                    num_embeddings=self.num_embeddings, 
+                    embedding_dim=hparams.frag_dim_embed, 
+                    padding_idx=Tokens.PAD.value)
+            else:
+                embeddings = self.load_embeddings()
+                self.enc_embedder = nn.Embedding.from_pretrained(
+                    embeddings=embeddings, 
+                    padding_idx=Tokens.PAD.value,
+                    freeze=False)
+        
+        if hparams.embedding_type == "random":
+            self.dec_embedder = nn.Embedding(
+                num_embeddings=self.num_embeddings, 
+                embedding_dim=hparams.frag_dim_embed, 
+                padding_idx=Tokens.PAD.value)
+        else:
+            embeddings = self.load_embeddings()
+            self.dec_embedder = nn.Embedding.from_pretrained(
+                embeddings=embeddings, 
+                padding_idx=Tokens.PAD.value,
+                freeze=False)
 
         if hparams.encoder_type == "gnn":
-            self.encoder = GNN(
+            self.gnn_mean = GNN(
                 hparams=hparams,
                 num_layers=hparams.gnn_num_layers,
                 dim_edge_embed=hparams.gnn_dim_edge_embed,
                 dim_hidden=hparams.gnn_dim_hidden,
-                dim_output=hparams.rnn_dim_state)
+                dim_output=hparams.rnn_dim_state // 2)
+            self.gnn_logv = GNN(
+                hparams=hparams,
+                num_layers=hparams.gnn_num_layers,
+                dim_edge_embed=hparams.gnn_dim_edge_embed,
+                dim_hidden=hparams.gnn_dim_hidden,
+                dim_output=hparams.rnn_dim_state // 2)
         elif hparams.encoder_type == "rnn":
             self.encoder = Encoder(  
                 hparams=hparams,
@@ -90,12 +115,14 @@ class Model(nn.Module):
             x = self.enc_embedder(batch.outseq)
             x = F.dropout(x, p=self.embedding_dropout, training=self.training)
             _, h = self.encoder(x)
+            hidden_enc, vae_loss = self.vae(h)
         elif self.hparams.encoder_type == "gnn":
-            h = self.encoder(batch)
+            # h = self.encoder(batch)
+            mean = self.gnn_mean(batch)
+            logv = self.gnn_logv(batch)
+            hidden_enc, vae_loss = self.vae(mean, logv)
         else:
             raise ValueError("Unknown encoder type!")
-
-        hidden_enc, vae_loss = self.vae(h)
 
         x = self.dec_embedder(batch.inseq)
         x = F.dropout(x, p=self.embedding_dropout, training=self.training)

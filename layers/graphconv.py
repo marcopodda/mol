@@ -4,6 +4,7 @@ from torch.nn import functional as F
 from torch_geometric.nn import NNConv, global_add_pool, Set2Set
 from torch_geometric.nn.norm import BatchNorm
 from torch_geometric.utils import degree
+from torch_scatter import scatter_add
 
 from core.datasets.features import ATOM_FDIM, BOND_FDIM
 from layers.mlp import MLP
@@ -60,8 +61,10 @@ class GNN(nn.Module):
         outputs = []
         for conv, bn in zip(self.convs, self.bns):
             x = conv(x, edge_index, edge_attr=edge_attr)
-            x = bn(F.relu(bn(x)))
+            x = bn(F.relu(x))
         
-        output = global_add_pool(x, batch)
-        return self.readout(output) if self.dim_output != self.dim_hidden else output
+        output = global_add_pool(x, batch) 
+        output = self.readout(output) if self.dim_output != self.dim_hidden else output
+        nodes_per_graph = scatter_add(torch.ones_like(batch), batch).view(-1, 1)
+        return output / nodes_per_graph
         
