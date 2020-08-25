@@ -22,7 +22,6 @@ def ok_to_break(bond):
     if bond.GetBondType() != Chem.rdchem.BondType.SINGLE:
         return False
 
-
     begin_atom = bond.GetBeginAtom()
     end_atom = bond.GetEndAtom()
 
@@ -74,7 +73,7 @@ def create_chain(splits):
     """Build up a chain of fragments from a molecule.
        This is required so that a given list of fragments can be rebuilt into the same
        molecule as was given when splitting the molecule."""
-
+    
     splits_ids = np.asarray(
         [sorted([a.GetAtomicNum() for a in m.GetAtoms()
               if a.GetAtomicNum() >= MOL_SPLIT_START]) for m in splits])
@@ -96,7 +95,6 @@ def create_chain(splits):
             mols.append(splits[i])
             splits2.append(splits_ids[i])
             splits_ids[i] = []
-
 
     while len(look_for) > 0:
         sid = look_for.pop()
@@ -156,8 +154,7 @@ def get_join_list(mol):
                 join.append(None)
 
             b = a.GetBonds()[0]
-            ja = b.GetBeginAtom() if b.GetBeginAtom().GetAtomicNum() < MOL_SPLIT_START else \
-                 b.GetEndAtom()
+            ja = b.GetBeginAtom() if b.GetBeginAtom().GetAtomicNum() < MOL_SPLIT_START else b.GetEndAtom()
             join[an - MOL_SPLIT_START] = ja.GetIdx()
             rem[an - MOL_SPLIT_START] = a.GetIdx()
             bonds[an - MOL_SPLIT_START] = b.GetBondType()
@@ -166,7 +163,6 @@ def get_join_list(mol):
     return [x for x in join if x is not None],\
            [x for x in bonds if x is not None],\
            [x for x in rem if x is not None]
-
 
 
 def join_fragments(fragments):
@@ -186,7 +182,6 @@ def join_fragments(fragments):
     offset = fragments[0].GetNumAtoms()
 
     for f in fragments[1:]:
-
         j, b, r = get_join_list(f)
         p = to_join.pop()
         pb = bonds.pop()
@@ -199,13 +194,13 @@ def join_fragments(fragments):
 
         for x in j[:-1]:
             to_join.append(x + offset)
+        
         for x in r:
             del_atoms.append(x + offset)
+        
         bonds += b[:-1]
-
         offset += f.GetNumAtoms()
         new_mol = Chem.CombineMols(new_mol, f)
-
 
     new_mol =  Chem.EditableMol(new_mol)
 
@@ -215,4 +210,5 @@ def join_fragments(fragments):
     # Remove atom with greatest number first:
     for s in sorted(del_atoms, reverse=True):
         new_mol.RemoveAtom(s)
+    
     return new_mol.GetMol()

@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import Subset, DataLoader
 from torch_geometric.data import Batch
 
 from sklearn.model_selection import train_test_split
@@ -25,24 +25,27 @@ class MolecularDataLoader:
         self.train_indices, self.val_indices = train_test_split(range(self.num_samples), test_size=0.1)
 
     def collate(self, data_list):
-        return Batch.from_data_list(data_list)
+        mols, frags = zip(*data_list)
+        return Batch.from_data_list(mols), frags
 
-    def get_train(self):
+    def get_train(self, batch_size=None):
         dataset = Subset(self.dataset, self.train_indices)
+        batch_size = batch_size or self.hparams.batch_size
         return DataLoader(
             dataset=dataset,
             collate_fn=lambda b: self.collate(b),
-            batch_size=self.hparams.batch_size,
+            batch_size=batch_size,
             shuffle=True,
             pin_memory=True,
             num_workers=self.hparams.num_workers)
 
-    def get_val(self):
+    def get_val(self, batch_size=None):
         dataset = Subset(self.dataset, self.val_indices)
+        batch_size = batch_size or self.hparams.batch_size
         return DataLoader(
             dataset=dataset,
             collate_fn=lambda b: self.collate(b),
-            batch_size=self.hparams.batch_size,
+            batch_size=batch_size,
             shuffle=False,
             pin_memory=True,
             num_workers=self.hparams.num_workers)

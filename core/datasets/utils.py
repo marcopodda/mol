@@ -31,11 +31,8 @@ def get_graph_data(row):
 
 
 def to_data(row, vocab=None, max_length=None):
-    frags_data = [get_graph_data(row)]
+    data = get_graph_data(row)
     
-    for frag in row.frags:
-        frags.append(get_graph_data(frag))
-
     try:
         assert vocab is not None
         assert max_length is not None

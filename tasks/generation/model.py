@@ -3,6 +3,7 @@ from argparse import Namespace
 import torch
 from torch import nn
 from torch.nn import functional as F
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 from core.datasets.features import ATOM_FDIM
 from core.utils.vocab import Tokens
@@ -24,6 +25,7 @@ class Model(nn.Module):
         self.output_dir = output_dir
         self.num_embeddings = vocab_size + len(Tokens)
         self.embedding_dropout = hparams.embedding_dropout
+        self.max_length = max_length
                     
         
         self.enc_embedder = None
@@ -51,6 +53,13 @@ class Model(nn.Module):
                 embeddings=embeddings, 
                 padding_idx=Tokens.PAD.value,
                 freeze=False)
+        
+        self.dec_embedder = GNN(
+                hparams=hparams,
+                num_layers=hparams.gnn_num_layers,
+                dim_edge_embed=hparams.gnn_dim_edge_embed,
+                dim_hidden=hparams.gnn_dim_hidden,
+                dim_output=hparams.frag_dim_embed)
 
         if hparams.encoder_type == "gnn":
             self.gnn_mean = GNN(
@@ -111,20 +120,33 @@ class Model(nn.Module):
         return torch.load(embeddings_path)
 
     def forward(self, batch):
+        graphs_batch, frags_batch = batch
+        
         if self.hparams.encoder_type == "rnn":
             x = self.enc_embedder(batch.outseq)
             x = F.dropout(x, p=self.embedding_dropout, training=self.training)
             _, h = self.encoder(x)
             hidden_enc, vae_loss = self.vae(h)
+            B = hidden_enc.size(0)
+            device = hidden_enc.device
         elif self.hparams.encoder_type == "gnn":
             # h = self.encoder(batch)
-            mean = self.gnn_mean(batch)
-            logv = self.gnn_logv(batch)
+            mean = self.gnn_mean(graphs_batch)
+            logv = self.gnn_logv(graphs_batch)
             hidden_enc, vae_loss = self.vae(mean, logv)
+            B = mean.size(0)
+            device = mean.device
         else:
             raise ValueError("Unknown encoder type!")
-
-        x = self.dec_embedder(batch.inseq)
+        
+        x = torch.zeros((B, self.max_length, self.hparams.frag_dim_embed), device=device)
+        
+        for i, frags in enumerate(frags_batch):
+            for j, frag in enumerate(frags):
+                x[i, :len(frags), :] = self.dec_embedder(frag)
+            
+        # x = self.dec_embedder(batch.inseq)
+        
         x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
         output, hidden_dec = self.decoder(x, hidden_enc)

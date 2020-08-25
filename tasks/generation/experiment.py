@@ -95,10 +95,10 @@ class PLWrapper(pl.LightningModule):
         return self.validation_loader
 
     def training_step(self, batch, batch_idx):
-        
+        graphs_batch, frags_batch = batch
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
-        ce_loss = self.ce(outputs, batch.outseq, batch.length)
+        ce_loss = self.ce(outputs, graphs_batch.outseq)
         weight = kd_loss.item() / ce_loss.item()
         logs = {"CE": ce_loss, "KD": kd_loss, "W": weight}
         return {"loss": ce_loss + weight * kd_loss, "logs": logs, "progress_bar": logs}
@@ -109,9 +109,10 @@ class PLWrapper(pl.LightningModule):
         return {"log": logs, "progress_bar": logs}
 
     def validation_step(self, batch, batch_idx):
+        graphs_batch, frags_batch = batch
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
-        ce_loss = self.ce(outputs, batch.outseq, batch.length)
+        ce_loss = self.ce(outputs, graphs_batch.outseq)
         return {"val_loss": ce_loss}
 
     def validation_epoch_end(self, outputs):

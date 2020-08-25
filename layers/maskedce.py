@@ -21,7 +21,7 @@ class MaskedSoftmaxCELoss(nn.Module):
     # label shape: (batch_size, seq_len)
     # valid_length shape: (batch_size, )
     
-    def forward(self, pred, label, valid_length):
+    def forward(self, pred, label):
         # the sample weights shape should be (batch_size, seq_len)
         label = label.view(-1)
         ce_loss = F.cross_entropy(pred, label, ignore_index=Tokens.PAD.value, reduction="none")

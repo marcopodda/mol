@@ -7,6 +7,7 @@ from torch.nn import functional as F
 
 from core.utils.vocab import Tokens
 from layers.misc import WeightDropGRU
+from layers.graphconv import GNN
 
 
 class Attention(nn.Module):

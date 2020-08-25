@@ -31,10 +31,7 @@ class MolecularDataset(data.Dataset):
         frags = []
         for frag in data.frags:
             frags.append(to_data(frag))
-        
-        # for i in range(len(frags), self.max_length):
             
         mol_data = to_data(data, self.vocab, self.max_length)
-        frags_data = Batch.from_data_list(frags)
-        return mol_data, frags_data
+        return mol_data, frags
         
