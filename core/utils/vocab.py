@@ -98,3 +98,4 @@ class Vocab:
             freqs = ([0] * len(Tokens)) + freqs
         freqs = np.array(freqs, dtype=np.float) ** 0.75
         return freqs / freqs.sum()
+
