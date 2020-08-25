@@ -63,7 +63,8 @@ class GNN(nn.Module):
             x = conv(x, edge_index, edge_attr=edge_attr)
             x = bn(F.relu(x))
         
-        batch = data.batch if "batch" in data else torch.LongTensor([0] * data.num_nodes).to(x.device)
+        batch = data.batch if "batch" in data else torch.LongTensor([0] * data.num_nodes)
+        batch = batch.to(x.device)
         output = global_add_pool(x, batch) 
         output = self.readout(output) if self.dim_output != self.dim_hidden else output
         nodes_per_graph = scatter_add(torch.ones_like(batch), batch).view(-1, 1)
