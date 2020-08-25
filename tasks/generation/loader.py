@@ -26,7 +26,7 @@ class MolecularDataLoader:
 
     def collate(self, data_list):
         mols, frags = zip(*data_list)
-        return Batch.from_data_list(mols), frags
+        return Batch.from_data_list(mols), [Batch.from_data_list(f) for f in frags]
 
     def get_train(self, batch_size=None):
         dataset = Subset(self.dataset, self.train_indices)

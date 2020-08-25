@@ -109,8 +109,6 @@ class Model(nn.Module):
             dim_hidden=self.mlp_dim_hidden, 
             dim_output=self.mlp_dim_output)
 
-        self.sos = torch.randn((1, self.hparams.frag_dim_embed))
-
     def load_embeddings(self):
         embeddings_filename = f"{self.hparams.embedding_type}_{self.hparams.frag_dim_embed}.pt"
         embeddings_path = self.output_dir / "embeddings" / embeddings_filename
@@ -143,12 +141,11 @@ class Model(nn.Module):
         
         x = torch.zeros((B, self.max_length, self.hparams.frag_dim_embed), device=device)
         
+        sos = torch.randn((1, self.hparams.frag_dim_embed), device=device)
         for i, frags in enumerate(frags_batch):
-            for j, frag in enumerate(frags):
-                print(frag.device)
-                enc = self.dec_embedder(frag)
-                x[i, j+1, :] = enc
-            x[i, 0, :] = self.sos.to(device)
+            enc = self.dec_embedder(frags)
+            x[i, 1:enc.size(0)+1, :] = enc
+            x[i, 0, :] = sos
             
         # x = self.dec_embedder(batch.inseq)
         
