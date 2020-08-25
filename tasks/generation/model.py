@@ -32,41 +32,27 @@ class Model(nn.Module):
                 self.enc_embedder = nn.Embedding(
                     num_embeddings=self.num_embeddings, 
                     embedding_dim=hparams.frag_dim_embed, 
-                    padding_idx=Tokens.PAD.value,
-                    scale_grad_by_freq=True,
-                    max_norm=2.0)
+                    padding_idx=Tokens.PAD.value)
             else:
                 embeddings = self.load_embeddings()
                 self.enc_embedder = nn.Embedding.from_pretrained(
                     embeddings=embeddings, 
                     padding_idx=Tokens.PAD.value,
-                    scale_grad_by_freq=True,
-                    freeze=False,
-                    max_norm=2.0)
+                    freeze=False)
         
         if hparams.embedding_type == "random":
             self.dec_embedder = nn.Embedding(
                 num_embeddings=self.num_embeddings, 
                 embedding_dim=hparams.frag_dim_embed, 
-                padding_idx=Tokens.PAD.value,
-                scale_grad_by_freq=True,
-                max_norm=2.0)
+                padding_idx=Tokens.PAD.value)
         else:
             embeddings = self.load_embeddings()
             self.dec_embedder = nn.Embedding.from_pretrained(
                 embeddings=embeddings, 
                 padding_idx=Tokens.PAD.value,
-                scale_grad_by_freq=True,
-                freeze=False,
-                max_norm=2.0)
+                freeze=False)
 
         if hparams.encoder_type == "gnn":
-            # self.encoder = GNN(
-            #     hparams=hparams,
-            #     num_layers=hparams.gnn_num_layers,
-            #     dim_edge_embed=hparams.gnn_dim_edge_embed,
-            #     dim_hidden=hparams.gnn_dim_hidden,
-            #     dim_output=hparams.rnn_dim_state)
             self.gnn_mean = GNN(
                 hparams=hparams,
                 num_layers=hparams.gnn_num_layers,
