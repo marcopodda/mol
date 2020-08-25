@@ -143,7 +143,7 @@ class Model(nn.Module):
         
         for i, frags in enumerate(frags_batch):
             for j, frag in enumerate(frags):
-                x[i, :len(frags), :] = self.dec_embedder(frag)
+                x[i, j, :] = self.dec_embedder(frag)
             
         # x = self.dec_embedder(batch.inseq)
         
