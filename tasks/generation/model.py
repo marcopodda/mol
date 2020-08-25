@@ -140,10 +140,11 @@ class Model(nn.Module):
             raise ValueError("Unknown encoder type!")
         
         x = torch.zeros((B, self.max_length, self.hparams.frag_dim_embed), device=device)
-        
+        print(x.device)
         for i, frags in enumerate(frags_batch):
             for j, frag in enumerate(frags):
                 enc = self.dec_embedder(frag)
+                print(enc.device)
                 x[i, j, :] = enc.to(device)
             
         # x = self.dec_embedder(batch.inseq)
