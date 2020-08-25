@@ -142,7 +142,7 @@ class Model(nn.Module):
         else:
             raise ValueError("Unknown encoder type!")
         
-        self.x[:, 1:, :] = 0
+        self.x[:, 1:, :] = torch.zeros_like(self.x[:, 1:, :])
         for i, frags in enumerate(frags_batch):
             enc = self.dec_embedder(frags)
             self.x[i, 1:enc.size(0)+1, :] = enc
