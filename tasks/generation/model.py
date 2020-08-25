@@ -109,7 +109,8 @@ class Model(nn.Module):
             dim_hidden=self.mlp_dim_hidden, 
             dim_output=self.mlp_dim_output)
         
-        self.sos = torch.randn((1, hparams.frag_dim_embed))
+        self.x = torch.zeros((hparams.batch_size, self.max_length, self.hparams.frag_dim_embed))
+        self.x[:, 0, :] = torch.randn((1, hparams.frag_dim_embed))
 
     def load_embeddings(self):
         embeddings_filename = f"{self.hparams.embedding_type}_{self.hparams.frag_dim_embed}.pt"
@@ -141,13 +142,11 @@ class Model(nn.Module):
         else:
             raise ValueError("Unknown encoder type!")
         
-        x = torch.zeros((B, self.max_length, self.hparams.frag_dim_embed), device=device)
-        
-        sos = torch.randn((1, self.hparams.frag_dim_embed), device=device)
+        self.x[:, 1:, :] = 0
         for i, frags in enumerate(frags_batch):
             enc = self.dec_embedder(frags)
-            x[i, 1:enc.size(0)+1, :] = enc
-            x[i, 0, :] = self.sos
+            self.x[i, 1:enc.size(0)+1, :] = enc
+        x = self.x[:B, :, :]
             
         # x = self.dec_embedder(batch.inseq)
         

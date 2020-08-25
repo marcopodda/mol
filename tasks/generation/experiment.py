@@ -81,7 +81,7 @@ class PLWrapper(pl.LightningModule):
         self.validation_loader = loader.get_val()
         
         device = next(self.parameters()).device
-        self.model.sos = self.model.sos.to(device)
+        self.model.x = self.model.x.to(device)
 
     def forward(self, data):
         return self.model(data)
