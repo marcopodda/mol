@@ -79,9 +79,6 @@ class PLWrapper(pl.LightningModule):
         save_yaml(loader.val_indices, indices_path / "val_indices.yml")
         self.training_loader = loader.get_train()
         self.validation_loader = loader.get_val()
-        
-        device = next(self.parameters()).device
-        self.model.x = self.model.x.to(device)
 
     def forward(self, data):
         return self.model(data)
