@@ -29,7 +29,7 @@ class MolecularDataset(data.Dataset):
         self.data, self.vocab = get_data(output_dir, name, hparams.num_samples)
         self.max_length = self.data.length.max() + 1
         
-        sos_path = output_dir / "DATA" / "sos.dat"
+        sos_path = output_dir / "DATA" / f"sos_{hparams.frag_dim_embed}.dat"
         if sos_path.exists():
             self.sos = torch.FloatTensor(load_numpy(sos_path))
         else:
