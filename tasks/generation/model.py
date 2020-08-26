@@ -143,20 +143,13 @@ class Model(nn.Module):
         
         x = self.dec_embedder(frags_batch, aggregate=False)
         x = global_add_pool(x, batch=frags_batch.frags_batch)
-        print(x.size())
-        # x = self.unpack(x, frags_batch.batch)
+        
         cumsum = 0
         for i, l in enumerate(graphs_batch.length):
             seq_matrix[i,1:l+1,:] = x[cumsum:cumsum+l,:]
             cumsum += l
-        x = seq_matrix
         
-        # for i, frags in enumerate(frags_batch):
-            
-        #     x[i, 1:enc.size(0)+1, :] = enc
-        # # x = self.dec_embedder(batch.inseq)
-        
-        x = F.dropout(x, p=self.embedding_dropout, training=self.training)
+        x = F.dropout(seq_matrix, p=self.embedding_dropout, training=self.training)
 
         output, hidden_dec = self.decoder(x, hidden_enc)
         # h = hidden_enc.view(-1, self.hparams.rnn_dim_state * self.hparams.rnn_num_layers)
@@ -164,11 +157,3 @@ class Model(nn.Module):
         # props = self.mlp(h)
         
         return output, vae_loss, hidden_enc, hidden_dec, props
-    
-    def unpack(self, x, batch):
-        # assert x.size(0) == torch.max(node_offset, dim=1)[0].sum()
-        # mask = torch.ones(node_offset.max(dim=1))
-        # res = node_offset.view(-1, 1) > mask.view(1, -1)
-        # print(node_offset)
-        
-        return x
