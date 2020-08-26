@@ -12,6 +12,7 @@ from core.datasets.preprocess import get_data
 from core.datasets.features import mol2nx
 from core.datasets.utils import to_data, pad
 from core.utils.vocab import Tokens
+from core.utils.serialization import load_numpy, save_numpy
 
 
 class MolecularDataset(data.Dataset):
@@ -20,9 +21,20 @@ class MolecularDataset(data.Dataset):
         
         if isinstance(hparams, dict):
             hparams = Namespace(**hparams)
-            
+        
+        self.hparams = hparams
+        self.output_dir = output_dir
+        self.name = name
+        
         self.data, self.vocab = get_data(output_dir, name, hparams.num_samples)
         self.max_length = self.data.length.max() + 1
+        
+        sos_path = output_dir / "DATA" / "sos.dat"
+        if sos_path.exists():
+            self.sos = torch.FloatTensor(load_numpy(sos_path))
+        else:
+            self.sos = torch.randn((1, hparams.frag_dim_embed))
+            save_numpy(self.sos.numpy(), sos_path)
 
     def __len__(self):
         return self.data.shape[0]

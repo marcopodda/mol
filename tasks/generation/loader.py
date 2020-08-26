@@ -23,7 +23,6 @@ class MolecularDataLoader:
         self.num_samples = len(dataset)
         self.dataset = dataset
         self.train_indices, self.val_indices = train_test_split(range(self.num_samples), test_size=0.1)
-        self.sos = torch.randn((1, self.hparams.frag_dim_embed))
 
     def collate(self, data_list):
         mols, frags = zip(*data_list)
@@ -35,7 +34,7 @@ class MolecularDataLoader:
             cumsum += inc
         
         seq_matrix = torch.zeros((len(mols), self.dataset.max_length, self.hparams.frag_dim_embed))
-        seq_matrix[:, 0, :] = self.sos.repeat(len(mols), 1)
+        seq_matrix[:, 0, :] = self.dataset.sos.repeat(len(mols), 1)
         
         return Batch.from_data_list(mols), Batch.from_data_list(frags), seq_matrix
 

@@ -2,17 +2,21 @@ import torch
 from torch.nn import functional as F
 from torch.distributions import Categorical
 
+from torch_geometric.data import Batch
+
 from rdkit import Chem
 
 from core.mols.split import join_fragments
+from core.datasets.utils import get_graph_data
 from core.utils.vocab import Tokens
 
 
 class Sampler:
-    def __init__(self, model, vocab):
+    def __init__(self, model, dataset):
         self.hparams = model.hparams
         self.model = model
-        self.vocab = vocab
+        self.dataset = dataset
+        self.vocab = dataset.vocab
         self.max_length = 13
         
     def run(self, num_samples=30000, temp=1.0):
@@ -49,12 +53,11 @@ class Sampler:
 
     def generate_one(self, embedder, vae, decoder, temp):
         h = vae.decode()
-        x = torch.LongTensor([[Tokens.SOS.value]])
+        x = self.dataset.sos.unsqueeze(0)
         
         sample, eos_found = [], False
         while len(sample) < self.max_length:
-            x_emb = embedder(x)
-            logits, h = decoder.forward(x_emb, h)
+            logits, h = decoder.forward(x, h)
 
             # logits = self.top_k(logits)
             probs = torch.softmax(logits / temp, dim=-1)
@@ -74,7 +77,10 @@ class Sampler:
             
             # remove tokens offset to be processed by vocab
             sample.append(token - len(Tokens))
-            x = torch.LongTensor([[token]])
+            next_frag = self.vocab[token - len(Tokens)]
+            data = get_graph_data(next_frag)
+            batch = Batch.from_data_list([data])
+            x = embedder(batch).unsqueeze(0)
         
         return sample if eos_found else []
 

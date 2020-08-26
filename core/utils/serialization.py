@@ -36,9 +36,9 @@ def load_numpy(path):
     return np.loadtxt(path, ndmin=2)
 
 
-def save_numpy(matrix, path):
+def save_numpy(obj, path):
     path = Path(path)
-    np.savetxt(path, matrix)
+    np.savetxt(path, obj)
 
 
 def load_json(path):

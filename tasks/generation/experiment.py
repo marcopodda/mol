@@ -70,7 +70,7 @@ class PLWrapper(pl.LightningModule):
         self.dataset = MolecularDataset(hparams, output_dir, name)
         self.max_length = self.dataset.max_length
 
-        self.model = Model(hparams, output_dir, len(self.dataset.vocab), self.max_length)
+        self.model = Model(hparams, self.output_dir, len(self.dataset.vocab), self.max_length)
         self.ce = MaskedSoftmaxCELoss()
 
     def prepare_data(self):
@@ -156,7 +156,7 @@ def run_sampling(output_dir, dataset_name, epoch=None, num_samples=30000, temp=1
         if not sample_path.exists():
             print(f"processing {sample_path}...")
             plw = PLWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
-            sampler = Sampler(plw.model, plw.dataset.vocab)
+            sampler = Sampler(plw.model, plw.dataset)
             samples = sampler.run(num_samples=num_samples, temp=temp)
             save_yaml(samples, sample_path)
         

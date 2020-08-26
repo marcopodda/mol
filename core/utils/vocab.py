@@ -3,9 +3,9 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+import torch
 
 from core.mols.props import bulk_tanimoto
-from core.utils.serialization import load_pickle, save_pickle
 
 
 class Tokens(Enum):
@@ -98,4 +98,5 @@ class Vocab:
             freqs = ([0] * len(Tokens)) + freqs
         freqs = np.array(freqs, dtype=np.float) ** 0.75
         return freqs / freqs.sum()
+        
 
