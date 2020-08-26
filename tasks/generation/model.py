@@ -13,6 +13,8 @@ from layers.mlp import MLP
 from layers.encoder import Encoder
 from layers.decoder import Decoder
 
+from torch_geometric.nn import global_add_pool
+
 
 class Model(nn.Module):        
     def __init__(self, hparams, output_dir, vocab_size, max_length):
@@ -120,7 +122,7 @@ class Model(nn.Module):
         return torch.load(embeddings_path)
 
     def forward(self, batch):
-        graphs_batch, frags_batch = batch
+        graphs_batch, frags_batch, seq_matrix = batch
         
         if self.hparams.encoder_type == "rnn":
             x = self.enc_embedder(batch.outseq)
@@ -139,11 +141,20 @@ class Model(nn.Module):
         else:
             raise ValueError("Unknown encoder type!")
         
-        x = torch.zeros((B, self.max_length, self.hparams.frag_dim_embed), device=device)
-        for i, frags in enumerate(frags_batch):
-            enc = self.dec_embedder(frags)
-            x[i, 1:enc.size(0)+1, :] = enc
-        # x = self.dec_embedder(batch.inseq)
+        x = self.dec_embedder(frags_batch, aggregate=False)
+        x = global_add_pool(x, batch=frags_batch.frags_batch)
+        print(x.size())
+        # x = self.unpack(x, frags_batch.batch)
+        cumsum = 0
+        for i, l in enumerate(graphs_batch.length):
+            seq_matrix[i,1:l+1,:] = x[cumsum:cumsum+l,:]
+            cumsum += l
+        x = seq_matrix
+        
+        # for i, frags in enumerate(frags_batch):
+            
+        #     x[i, 1:enc.size(0)+1, :] = enc
+        # # x = self.dec_embedder(batch.inseq)
         
         x = F.dropout(x, p=self.embedding_dropout, training=self.training)
 
@@ -153,3 +164,11 @@ class Model(nn.Module):
         # props = self.mlp(h)
         
         return output, vae_loss, hidden_enc, hidden_dec, props
+    
+    def unpack(self, x, batch):
+        # assert x.size(0) == torch.max(node_offset, dim=1)[0].sum()
+        # mask = torch.ones(node_offset.max(dim=1))
+        # res = node_offset.view(-1, 1) > mask.view(1, -1)
+        # print(node_offset)
+        
+        return x

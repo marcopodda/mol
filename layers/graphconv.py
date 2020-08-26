@@ -55,18 +55,22 @@ class GNN(nn.Module):
             if p.dim() > 1 and p.requires_grad:
                 nn.init.xavier_uniform_(p, gain=nn.init.calculate_gain('relu'))
 
-    def forward(self, data):
-        x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
+    def forward(self, data, aggregate=True):
+        x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
 
         outputs = []
         for conv, bn in zip(self.convs, self.bns):
             x = conv(x, edge_index, edge_attr=edge_attr)
             x = bn(F.relu(x))
         
-        batch = data.batch if "batch" in data else torch.LongTensor([0] * data.num_nodes)
-        batch = batch.to(x.device)
-        output = global_add_pool(x, batch) 
-        output = self.readout(output) if self.dim_output != self.dim_hidden else output
-        nodes_per_graph = scatter_add(torch.ones_like(batch), batch).view(-1, 1)
-        return output / nodes_per_graph
+        if aggregate is True:
+            x = global_add_pool(x, batch) 
+        
+        output = self.readout(x) if self.dim_output != self.dim_hidden else x
+        
+        if aggregate is True:
+            nodes_per_graph = scatter_add(torch.ones_like(batch), batch).view(-1, 1)
+            return output / nodes_per_graph
+        
+        return output
         

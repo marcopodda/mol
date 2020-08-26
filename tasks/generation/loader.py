@@ -23,10 +23,21 @@ class MolecularDataLoader:
         self.num_samples = len(dataset)
         self.dataset = dataset
         self.train_indices, self.val_indices = train_test_split(range(self.num_samples), test_size=0.1)
+        self.sos = torch.randn((1, self.hparams.frag_dim_embed))
 
     def collate(self, data_list):
         mols, frags = zip(*data_list)
-        return Batch.from_data_list(mols), [Batch.from_data_list(f) for f in frags]
+        
+        cumsum = 0
+        for i, frag in enumerate(frags):
+            inc = (frag.frags_batch.max() + 1).item()
+            frag.frags_batch += cumsum
+            cumsum += inc
+        
+        seq_matrix = torch.zeros((len(mols), self.dataset.max_length, self.hparams.frag_dim_embed))
+        seq_matrix[:, 0, :] = self.sos.repeat(len(mols), 1)
+        
+        return Batch.from_data_list(mols), Batch.from_data_list(frags), seq_matrix
 
     def get_train(self, batch_size=None):
         dataset = Subset(self.dataset, self.train_indices)
@@ -37,7 +48,7 @@ class MolecularDataLoader:
             batch_size=batch_size,
             shuffle=True,
             pin_memory=True,
-            num_workers=self.hparams.num_workers)
+            num_workers=0) # self.hparams.num_workers)
 
     def get_val(self, batch_size=None):
         dataset = Subset(self.dataset, self.val_indices)
@@ -48,4 +59,4 @@ class MolecularDataLoader:
             batch_size=batch_size,
             shuffle=False,
             pin_memory=True,
-            num_workers=self.hparams.num_workers)
+            num_workers=0) # self.hparams.num_workers)

@@ -1,9 +1,11 @@
+import networkx as nx
 import torch
 
 from rdkit import Chem
 from rdkit.Chem import rdmolops
 
 from torch_geometric.utils import dense_to_sparse
+from core.mols.utils import mol_from_smiles
 
 
 ATOMS = [ "C", "N", "S", "O", "F", "Cl", "Br"]
@@ -91,3 +93,31 @@ def get_features(mol):
     edge_index = torch.LongTensor(edge_index).t()
     
     return edge_index, node_features, edge_features
+
+
+def mol2nx(mol):
+    if isinstance(mol, str):
+        mol = mol_from_smiles(mol)
+        
+    edge_index = []
+
+    for bond in mol.GetBonds():
+        start, end = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+        edge_index.append((start, end))
+        edge_index.append((end, start)) # add for reverse edge
+        
+    G = nx.DiGraph()
+    G.add_edges_from(edge_index)
+    
+    for bond in mol.GetBonds():
+        bond_features = get_bond_features(bond)
+        start, end = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+        G.edges[(start, end)]["edge_attr"] = [float(f) for f in bond_features]
+        G.edges[(end, start)]["edge_attr"] = [float(f) for f in bond_features]
+    
+    for node in G.nodes():
+        atom = mol.GetAtomWithIdx(node)
+        atom_features = get_atom_features(atom)
+        G.nodes[node]["x"] = [float(f) for f in atom_features]
+    
+    return G
