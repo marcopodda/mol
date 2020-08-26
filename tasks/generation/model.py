@@ -143,7 +143,6 @@ class Model(nn.Module):
         for i, frags in enumerate(frags_batch):
             enc = self.dec_embedder(frags)
             x[i, 1:enc.size(0)+1, :] = enc
-        print(x.device)
         # x = self.dec_embedder(batch.inseq)
         
         x = F.dropout(x, p=self.embedding_dropout, training=self.training)
