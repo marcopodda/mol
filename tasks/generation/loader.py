@@ -7,10 +7,10 @@ from sklearn.model_selection import train_test_split
 
 def collate_single(mols, frags, dataset, hparams):
     frags.frags_batch = 0
-    in_matrix = torch.zeros((1, dataset.max_length, hparams.frag_dim_embed))
-    in_matrix[0, 0, :] = dataset.sos
-    
-    return Batch.from_data_list([mols]), Batch.from_data_list([frags]), in_matrix
+    out_matrix = torch.zeros((1, dataset.max_length, hparams.frag_dim_embed))
+    out_matrix[0, len(frags), :] = dataset.eos
+
+    return Batch.from_data_list([mols]), Batch.from_data_list([frags]), out_matrix
 
 
 class MolecularDataLoader:

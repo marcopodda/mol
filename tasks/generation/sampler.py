@@ -69,16 +69,18 @@ class Sampler:
         return samples
 
     def generate_one(self, encoder, embedder, decoder, temp):
-        smiles, (gbatch, _, _) = self.prepare_data()
+        smiles, (gbatch, fbatch, enc_inputs) = self.prepare_data()
         
-        h = encoder(gbatch)
-        h = h.unsqueeze(0).repeat(self.hparams.rnn_num_layers, 1, 1)
+        enc_inputs = embedder.gnn(fbatch, enc_inputs)
+        enc_outputs, h = encoder(enc_inputs)
+        # h = h.unsqueeze(0).repeat(self.hparams.rnn_num_layers, 1, 1)
         
         x = self.dataset.sos.unsqueeze(0)
+        c = torch.zeros_like(enc_outputs[:,:1,:])
         
         sample, eos_found = [], False
         while len(sample) < self.max_length:
-            logits, h = decoder(x, h)
+            logits, h, c, _ = decoder(x, h, enc_outputs, c)
 
             # logits = self.top_k(logits)
             probs = torch.softmax(logits / temp, dim=-1)

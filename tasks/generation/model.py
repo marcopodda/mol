@@ -74,7 +74,7 @@ class Model(nn.Module):
         for i in range(S):
             x = dec_inputs[:, i, :].unsqueeze(1)
             ctx = torch.zeros_like(enc_outputs[:,:1,:]) if i == 0 else ctx
-            out, h, ctx, w = self.decoder.forward_att(x, h, enc_outputs, ctx)
+            out, h, ctx, w = self.decoder(x, h, enc_outputs, ctx)
             outputs.append(out.unsqueeze(1))
 
         outputs = torch.cat(outputs, dim=1)

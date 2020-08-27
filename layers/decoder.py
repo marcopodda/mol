@@ -39,7 +39,7 @@ class Decoder(nn.Module):
     #     logits = self.out(output).squeeze(1)
     #     return logits, hidden
 
-    def forward_att(self, x, hidden, enc_outputs, prev_context):
+    def forward(self, x, hidden, enc_outputs, prev_context):
         # Note: we run this one step at a time
 
         # Combine embedded input word and last context, run through RNN
