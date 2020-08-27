@@ -5,6 +5,14 @@ from torch_geometric.data import Batch
 from sklearn.model_selection import train_test_split
 
 
+def collate_single(mols, frags, dataset, hparams):
+    frags.frags_batch = 0
+    seq_matrix = torch.zeros((1, dataset.max_length, hparams.frag_dim_embed))
+    seq_matrix[0, 0, :] = dataset.sos
+    
+    return Batch.from_data_list([mols]), Batch.from_data_list([frags]), seq_matrix
+
+
 class MolecularDataLoader:
     r"""Data loader which merges data objects from a
     :class:`torch_geometric.data.dataset` to a mini-batch.

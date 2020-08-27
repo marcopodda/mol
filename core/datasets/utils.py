@@ -5,10 +5,11 @@ import numpy as np
 
 import torch
 from torch_geometric.data import Data, Batch
+from torch_geometric.utils import from_networkx
 
 from rdkit import Chem
 
-from core.datasets.features import get_features
+from core.datasets.features import get_features, mol2nx
 from core.utils.vocab import Tokens
 
 
@@ -24,24 +25,18 @@ def get_graph_data(row):
         mol = Chem.MolFromSmiles(row.smiles)
     else:
         mol = Chem.MolFromSmiles(row)
-
-    edge_index, x, edge_attr = get_features(mol)
-    data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
-    return data
+    
+    G = mol2nx(mol)
+    return from_networkx(G)
 
 
 def to_data(row, vocab=None, max_length=None):
     data = get_graph_data(row)
     
-    try:
-        assert vocab is not None
-        assert max_length is not None
+    if vocab is not None and max_length is not None:
         seq = [vocab[f] + len(Tokens) for f in row.frags]
-        data["inseq"] = pad([Tokens.SOS.value] + seq, max_length)
         data["outseq"] = pad(seq + [Tokens.EOS.value], max_length)
         data["length"] = torch.LongTensor([[len(seq)]])
-    except Exception as e:
-        pass
 
     return data
 

@@ -29,12 +29,17 @@ class MolecularDataset(data.Dataset):
         self.data, self.vocab = get_data(output_dir, name, hparams.num_samples)
         self.max_length = self.data.length.max() + 1
         
-        sos_path = output_dir / "DATA" / f"sos_{hparams.frag_dim_embed}.dat"
-        if sos_path.exists():
-            self.sos = torch.FloatTensor(load_numpy(sos_path))
+        self.sos = self._initialize_token("sos")
+        self.eos = self._initialize_token("eos")
+    
+    def _initialize_token(self, name):
+        path = self.output_dir / "DATA" / f"{name}_{self.hparams.frag_dim_embed}.dat"    
+        if path.exists():
+            token = torch.FloatTensor(load_numpy(path))
         else:
-            self.sos = torch.randn((1, hparams.frag_dim_embed))
-            save_numpy(self.sos.numpy(), sos_path)
+            token = torch.randn((1, self.hparams.frag_dim_embed))
+            save_numpy(token.numpy(), path)
+        return token
 
     def __len__(self):
         return self.data.shape[0]
@@ -46,9 +51,9 @@ class MolecularDataset(data.Dataset):
         frags = [mol2nx(f) for f in data.frags]       
         num_nodes = [f.number_of_nodes() for f in frags]
         frags_batch = torch.cat([torch.LongTensor([i]).repeat(n) for (i, n) in enumerate(num_nodes)])
-        frags_graph = from_networkx(nx.disjoint_union_all(frags,))
+        frags_graph = from_networkx(nx.disjoint_union_all(frags))
         frags_graph["frags_batch"] = frags_batch
+        frags_graph["length"] = torch.LongTensor([[len(frags)]])
         
         mol_data = to_data(data, self.vocab, self.max_length)
         return mol_data, frags_graph
-        

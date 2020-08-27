@@ -25,37 +25,6 @@ from .model import Model
 from .sampler import Sampler
 
 
-def calc_accuracy(outputs, targets, valid_len):
-    weights = torch.ones_like(targets, device=targets.device)
-    weights = sequence_mask(weights, valid_len, device=targets.device).view(-1)
-    outputs = torch.argmax(F.log_softmax(outputs, dim=-1), dim=-1).view(-1)
-    outputs = (outputs * weights).int()
-    return accuracy(outputs, targets.view(-1))
-
-
-def anneal_kl(anneal_function, step, k1=0.001, k2=0.002, max_value=0.001, x0=100000):
-    assert anneal_function in ['logistic', 'linear', 'step', 'cyclical'], 'unknown anneal_function'
-    if anneal_function == 'logistic':
-        return float(1 / (1 + np.exp(- k1 * (step - x0))))
-    elif anneal_function == 'step':
-        cnt = step // x0
-        step = step % x0
-        if cnt > 0:
-            max_value -= cnt * 0.1
-            max_value = max(0.1, max_value)  
-        ma = min(k2 * cnt + k2, max_value)
-        mi = 0.01 + k1 * cnt
-        return min(ma, mi + 2 * step * (max(ma - mi, 0)) / x0)
-    elif anneal_function == 'linear':
-        return min(max_value, 0.01 + step / x0)
-    elif anneal_function == 'cyclical':
-        cnt = step // x0 // 5
-        step = step % x0
-        ma = min(k2 * cnt + k2, max_value)
-        mi = k1
-        return min(ma, ma * cnt + mi + 2 * step * (ma - mi) / x0)
-
-
 class PLWrapper(pl.LightningModule):
     def __init__(self, hparams, output_dir, name):
         super().__init__()
@@ -96,8 +65,7 @@ class PLWrapper(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         graphs_batch, frags_batch, _ = batch
-        outputs, kd_loss, he, ho, props = self.model(batch)
-        # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
+        outputs, kd_loss = self.model(batch)
         ce_loss = self.ce(outputs, graphs_batch.outseq)
         weight = 1.0  # kd_loss.item() / ce_loss.item()
         logs = {"CE": ce_loss, "KD": kd_loss, "W": weight}
@@ -110,8 +78,7 @@ class PLWrapper(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         graphs_batch, frags_batch, _ = batch
-        outputs, kd_loss, he, ho, props = self.model(batch)
-        # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
+        outputs, kd_loss = self.model(batch)
         ce_loss = self.ce(outputs, graphs_batch.outseq)
         return {"val_loss": ce_loss}
 

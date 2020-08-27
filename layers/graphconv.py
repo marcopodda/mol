@@ -74,3 +74,26 @@ class GNN(nn.Module):
         
         return output
         
+
+class GNNEmbedder(nn.Module):
+    def __init__(self, hparams, num_layers, dim_edge_embed, dim_hidden, dim_output):
+        super().__init__()
+        self.hparams = hparams
+        
+        self.gnn = GNN(
+            hparams=hparams,
+            num_layers=num_layers,
+            dim_edge_embed=dim_edge_embed,
+            dim_hidden=dim_hidden,
+            dim_output=dim_output)
+        
+    def forward(self, batch, output):
+        x = self.gnn(batch, aggregate=False)
+        x = global_add_pool(x, batch=batch.frags_batch)
+        
+        cumsum = 0
+        for i, l in enumerate(batch.length):
+            output[i,1:l+1,:] = x[cumsum:cumsum+l,:]
+            cumsum += l
+        
+        return output
