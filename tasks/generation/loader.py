@@ -34,7 +34,7 @@ class MolecularDataLoader:
 
     def collate(self, data_list):
         mols, frags = zip(*data_list)
-        bath_size = len(mols)
+        batch_size = len(mols)
         
         cumsum = 0
         for i, frag in enumerate(frags):
