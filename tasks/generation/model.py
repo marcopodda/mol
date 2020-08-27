@@ -69,7 +69,8 @@ class Model(nn.Module):
                 num_layers=hparams.gnn_num_layers,
                 dim_edge_embed=hparams.gnn_dim_edge_embed,
                 dim_hidden=hparams.gnn_dim_hidden,
-                dim_output=hparams.rnn_dim_state // 2)
+                dim_output=hparams.rnn_dim_state)
+                # dim_output=hparams.rnn_dim_state // 2)
             self.gnn_logv = GNN(
                 hparams=hparams,
                 num_layers=hparams.gnn_num_layers,
@@ -128,11 +129,14 @@ class Model(nn.Module):
             x = self.enc_embedder(batch.outseq)
             x = F.dropout(x, p=self.embedding_dropout, training=self.training)
             _, h = self.encoder(x)
-            h, vae_loss = self.vae(h)
+            # h, vae_loss = self.vae(h)
+            vae_loss = 0
         elif self.hparams.encoder_type == "gnn":
             mean = self.gnn_mean(graphs_batch)
-            logv = self.gnn_logv(graphs_batch)
-            h, vae_loss = self.vae(mean, logv)
+            # logv = self.gnn_logv(graphs_batch)
+            # h, vae_loss = self.vae(mean, logv)
+            h = mean.unsqueeze(0).repeat(self.hparams.rnn_num_layers, 1, 1)
+            vae_loss = 0
         else:
             raise ValueError("Unknown encoder type!")
         
