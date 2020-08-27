@@ -99,7 +99,7 @@ class PLWrapper(pl.LightningModule):
         outputs, kd_loss, he, ho, props = self.model(batch)
         # mse_loss = 0 if props is None else F.mse_loss(props.view(-1), batch.props)
         ce_loss = self.ce(outputs, graphs_batch.outseq)
-        weight = 1.0 # kd_loss.item() / ce_loss.item()
+        weight = 0.1 # kd_loss.item() / ce_loss.item()
         logs = {"CE": ce_loss, "KD": kd_loss, "W": weight}
         return {"loss": ce_loss + weight * kd_loss, "logs": logs, "progress_bar": logs}
     
