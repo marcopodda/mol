@@ -128,16 +128,11 @@ class Model(nn.Module):
             x = self.enc_embedder(batch.outseq)
             x = F.dropout(x, p=self.embedding_dropout, training=self.training)
             _, h = self.encoder(x)
-            hidden_enc, vae_loss = self.vae(h)
-            B = hidden_enc.size(0)
-            device = hidden_enc.device
+            h, vae_loss = self.vae(h)
         elif self.hparams.encoder_type == "gnn":
-            # h = self.encoder(batch)
             mean = self.gnn_mean(graphs_batch)
             logv = self.gnn_logv(graphs_batch)
-            hidden_enc, vae_loss = self.vae(mean, logv)
-            B = mean.size(0)
-            device = mean.device
+            h, vae_loss = self.vae(mean, logv)
         else:
             raise ValueError("Unknown encoder type!")
         
@@ -151,9 +146,9 @@ class Model(nn.Module):
         
         # x = F.dropout(seq_matrix, p=self.embedding_dropout, training=self.training)
 
-        output, hidden_dec = self.decoder(seq_matrix, hidden_enc)
-        # h = hidden_enc.view(-1, self.hparams.rnn_dim_state * self.hparams.rnn_num_layers)
+        output, h_dec = self.decoder(seq_matrix, h)
+        # h = h.view(-1, self.hparams.rnn_dim_state * self.hparams.rnn_num_layers)
         props = None
         # props = self.mlp(h)
         
-        return output, vae_loss, hidden_enc, hidden_dec, props
+        return output, vae_loss, h, h_dec, props

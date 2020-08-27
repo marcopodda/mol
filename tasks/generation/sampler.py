@@ -57,7 +57,7 @@ class Sampler:
         
         sample, eos_found = [], False
         while len(sample) < self.max_length:
-            logits, h = decoder.forward(x, h)
+            logits, h = decoder(x, h)
 
             # logits = self.top_k(logits)
             probs = torch.softmax(logits / temp, dim=-1)

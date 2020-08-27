@@ -46,7 +46,7 @@ class MolecularDataset(data.Dataset):
         frags = [mol2nx(f) for f in data.frags]       
         num_nodes = [f.number_of_nodes() for f in frags]
         frags_batch = torch.cat([torch.LongTensor([i]).repeat(n) for (i, n) in enumerate(num_nodes)])
-        frags_graph = from_networkx(nx.disjoint_union_all(frags))
+        frags_graph = from_networkx(nx.disjoint_union_all(frags,))
         frags_graph["frags_batch"] = frags_batch
         
         mol_data = to_data(data, self.vocab, self.max_length)
