@@ -81,12 +81,11 @@ class Sampler:
             logits, h = decoder(x, h)
 
             # logits = self.top_k(logits)
-            # probs = torch.softmax(logits / temp, dim=-1)
-            # token = Categorical(probs=probs).sample().item()
-            # token = torch.multinomial(probs, 1).item()
+            probs = torch.softmax(logits / temp, dim=-1)
+            token = Categorical(probs=probs).sample().item()
 
-            probs = F.log_softmax(logits, dim=-1)
-            token = torch.argmax(probs).item()
+            # probs = F.log_softmax(logits, dim=-1)
+            # token = torch.argmax(probs).item()
 
             if token in [Tokens.PAD.value, Tokens.SOS.value, Tokens.MASK.value]:
                 sample = []
