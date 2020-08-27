@@ -149,9 +149,9 @@ class Model(nn.Module):
             seq_matrix[i,1:l+1,:] = x[cumsum:cumsum+l,:]
             cumsum += l
         
-        x = F.dropout(seq_matrix, p=self.embedding_dropout, training=self.training)
+        # x = F.dropout(seq_matrix, p=self.embedding_dropout, training=self.training)
 
-        output, hidden_dec = self.decoder(x, hidden_enc)
+        output, hidden_dec = self.decoder(seq_matrix, hidden_enc)
         # h = hidden_enc.view(-1, self.hparams.rnn_dim_state * self.hparams.rnn_num_layers)
         props = None
         # props = self.mlp(h)
