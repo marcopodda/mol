@@ -7,10 +7,10 @@ from sklearn.model_selection import train_test_split
 
 def collate_single(mols, frags, dataset, hparams):
     frags.frags_batch = 0
-    out_matrix = torch.zeros((1, dataset.max_length, hparams.frag_dim_embed))
-    out_matrix[0, len(frags), :] = dataset.eos
+    enc_inputs = torch.zeros((1, dataset.max_length, hparams.frag_dim_embed))
+    enc_inputs[0, len(frags), :] = dataset.eos
 
-    return Batch.from_data_list([mols]), Batch.from_data_list([frags]), out_matrix
+    return Batch.from_data_list([mols]), Batch.from_data_list([frags]), enc_inputs
 
 
 class MolecularDataLoader:
@@ -34,6 +34,7 @@ class MolecularDataLoader:
 
     def collate(self, data_list):
         mols, frags = zip(*data_list)
+        bath_size = len(mols)
         
         cumsum = 0
         for i, frag in enumerate(frags):
@@ -41,14 +42,14 @@ class MolecularDataLoader:
             frag.frags_batch += cumsum
             cumsum += inc
         
-        in_matrix = torch.zeros((len(mols), self.dataset.max_length, self.hparams.frag_dim_embed))
-        in_matrix[:, 0, :] = self.dataset.sos.repeat(len(mols), 1)
-        
         lengths = [m.length.item() for m in mols]
-        out_matrix = torch.zeros((len(mols), self.dataset.max_length, self.hparams.frag_dim_embed))
-        out_matrix[:, lengths, :] = self.dataset.eos.repeat(len(mols), 1)
+        enc_inputs = torch.zeros((batch_size, self.dataset.max_length, self.hparams.frag_dim_embed))
+        enc_inputs[:, lengths, :] = self.dataset.eos.repeat(batch_size, 1)
         
-        return Batch.from_data_list(mols), Batch.from_data_list(frags), in_matrix, out_matrix
+        dec_inputs = torch.zeros((batch_size, self.dataset.max_length, self.hparams.frag_dim_embed))
+        dec_inputs[:, 0, :] = self.dataset.sos.repeat(batch_size, 1)
+    
+        return Batch.from_data_list(mols), Batch.from_data_list(frags), enc_inputs, dec_inputs
 
     def get_train(self, batch_size=None):
         dataset = Subset(self.dataset, self.train_indices)

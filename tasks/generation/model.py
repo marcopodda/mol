@@ -53,7 +53,7 @@ class Model(nn.Module):
             dim_output=vocab_size + len(Tokens))
 
     def forward(self, batch):
-        graphs_batch, frags_batch, dec_inputs, enc_inputs = batch
+        graphs_batch, frags_batch, enc_inputs, dec_inputs = batch
         
         enc_inputs = self.embedder(frags_batch, enc_inputs, input=False)
         enc_inputs = F.dropout(enc_inputs, p=self.embedding_dropout, training=self.training)

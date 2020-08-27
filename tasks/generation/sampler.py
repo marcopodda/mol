@@ -37,8 +37,8 @@ class Sampler:
         model = self.model.to("cpu")
         model.eval()
         
-        encoder = model.encoder
         embedder = model.embedder
+        encoder = model.encoder
         decoder = model.decoder
         
         samples = []
@@ -46,7 +46,11 @@ class Sampler:
         max_trials = 1000000
         
         while len(samples) < num_samples and num_trials < max_trials:
-            smiles, frags = self.generate_one(encoder, embedder, decoder, temp=temp)
+            try:
+                smiles, frags = self.generate_one(embedder, encoder, decoder, temp=temp)
+            except:
+                num_trials += 1 
+                continue
             
             if len(frags) >= 2:
                 frags = [Chem.MolFromSmiles(f) for f in frags]
@@ -68,12 +72,11 @@ class Sampler:
             
         return samples
 
-    def generate_one(self, encoder, embedder, decoder, temp):
-        smiles, (gbatch, fbatch, enc_inputs) = self.prepare_data()
+    def generate_one(self, embedder, encoder, decoder, temp):
+        smiles, (_, fbatch, enc_inputs) = self.prepare_data()
         
-        enc_inputs = embedder.gnn(fbatch, enc_inputs)
+        enc_inputs = embedder(fbatch, enc_inputs, input=False)
         enc_outputs, h = encoder(enc_inputs)
-        # h = h.unsqueeze(0).repeat(self.hparams.rnn_num_layers, 1, 1)
         
         x = self.dataset.sos.unsqueeze(0)
         c = torch.zeros_like(enc_outputs[:,:1,:])
@@ -83,27 +86,28 @@ class Sampler:
             logits, h, c, _ = decoder(x, h, enc_outputs, c)
 
             # logits = self.top_k(logits)
-            probs = torch.softmax(logits / temp, dim=-1)
-            token = Categorical(probs=probs).sample().item()
+            # probs = torch.softmax(logits / temp, dim=-1)
+            # index = Categorical(probs=probs).sample().item()
+            
+            probs = F.log_softmax(logits, dim=-1)
+            index = torch.argmax(probs, dim=-1).item()
 
-            # probs = F.log_softmax(logits, dim=-1)
-            # token = torch.argmax(probs).item()
-
-            if token in [Tokens.PAD.value, Tokens.SOS.value, Tokens.MASK.value]:
+            if index in [Tokens.PAD.value, Tokens.SOS.value, Tokens.MASK.value]:
                 sample = []
                 break
 
-            if token == Tokens.EOS.value:
+            if index == Tokens.EOS.value:
                 eos_found = True
                 break
             
             # remove tokens offset to be processed by vocab
-            sample.append(self.vocab[token - len(Tokens)])
-            next_frag = self.vocab[token - len(Tokens)]
-            data = get_graph_data(next_frag)
-            fbatch = Batch.from_data_list([data])
-            x = embedder.gnn(fbatch).unsqueeze(0)
-        
+            fragment_idx = index - len(Tokens)
+            fragment = self.vocab[fragment_idx]
+            sample.append(fragment)
+            data = get_graph_data(self.vocab[fragment_idx])
+            batch = Batch.from_data_list([data])
+            x = embedder.gnn(batch, aggregate=True).unsqueeze(0)
+            
         return [smiles, sample] if eos_found else []
 
     def top_k(self, logits, k=100):

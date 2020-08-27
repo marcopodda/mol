@@ -86,10 +86,13 @@ class GNNEmbedder(nn.Module):
             dim_edge_embed=dim_edge_embed,
             dim_hidden=dim_hidden,
             dim_output=dim_output)
+    
+    def forward_gnn(self, batch):
+        x = self.gnn(batch, aggregate=False)
+        return global_add_pool(x, batch=batch.frags_batch)
         
     def forward(self, batch, mat, input=False):
-        x = self.gnn(batch, aggregate=False)
-        x = global_add_pool(x, batch=batch.frags_batch)
+        x = self.forward_gnn(batch)
         
         cumsum = 0
         for i, l in enumerate(batch.length):
