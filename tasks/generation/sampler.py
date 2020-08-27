@@ -105,8 +105,8 @@ class Sampler:
             fragment_idx = index - len(Tokens)
             fragment = self.vocab[fragment_idx]
             sample.append(fragment)
-            data = get_graph_data(self.vocab[fragment_idx])
-            batch = Batch.from_data_list([data])
+            # data = get_graph_data(self.vocab[fragment_idx])
+            # batch = Batch.from_data_list([data])
             # x = embedder.gnn(batch, aggregate=True).unsqueeze(0)
             it += 1
             
