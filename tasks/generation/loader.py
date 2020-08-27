@@ -9,8 +9,12 @@ def collate_single(mols, frags, dataset, hparams):
     frags.frags_batch = 0
     enc_inputs = torch.zeros((1, dataset.max_length, hparams.frag_dim_embed))
     enc_inputs[0, len(frags), :] = dataset.eos
+    
+    dec_inputs = torch.zeros((1, dataset.max_length, hparams.frag_dim_embed))
+    dec_inputs[0, 0, :] = dataset.sos
 
-    return Batch.from_data_list([mols]), Batch.from_data_list([frags]), enc_inputs
+
+    return Batch.from_data_list([mols]), Batch.from_data_list([frags]), enc_inputs, dec_inputs
 
 
 class MolecularDataLoader:

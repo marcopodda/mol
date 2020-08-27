@@ -73,16 +73,17 @@ class Sampler:
         return samples
 
     def generate_one(self, embedder, encoder, decoder, temp):
-        smiles, (_, fbatch, enc_inputs) = self.prepare_data()
+        smiles, (_, fbatch, enc_inputs, dec_inputs) = self.prepare_data()
         
         enc_inputs = embedder(fbatch, enc_inputs, input=False)
         enc_outputs, h = encoder(enc_inputs)
         
-        x = self.dataset.sos.unsqueeze(0)
+        dec_inputs = embedder(fbatch, dec_inputs, input=True)
         c = torch.zeros_like(enc_outputs[:,:1,:])
         
-        sample, eos_found = [], False
+        sample, eos_found, it = [], False, 0
         while len(sample) < self.max_length:
+            x = dec_inputs[:, it:it+1, :]
             logits, h, c, _ = decoder(x, h, enc_outputs, c)
 
             # logits = self.top_k(logits)
@@ -106,7 +107,8 @@ class Sampler:
             sample.append(fragment)
             data = get_graph_data(self.vocab[fragment_idx])
             batch = Batch.from_data_list([data])
-            x = embedder.gnn(batch, aggregate=True).unsqueeze(0)
+            # x = embedder.gnn(batch, aggregate=True).unsqueeze(0)
+            it += 1
             
         return [smiles, sample] if eos_found else []
 
