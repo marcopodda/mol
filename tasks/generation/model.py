@@ -68,7 +68,7 @@ class Model(nn.Module):
     
     def decode_with_attention(self, dec_inputs, enc_hidden, enc_outputs):
         _, S, _ = dec_inputs.size()
-        h = enc_hidden
+        h = None
 
         outputs = []
         for i in range(S):
