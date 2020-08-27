@@ -64,7 +64,7 @@ class PLWrapper(pl.LightningModule):
         return self.validation_loader
 
     def training_step(self, batch, batch_idx):
-        graphs_batch, frags_batch, _ = batch
+        graphs_batch, frags_batch, _, _ = batch
         outputs, kd_loss = self.model(batch)
         ce_loss = self.ce(outputs, graphs_batch.outseq)
         weight = 1.0  # kd_loss.item() / ce_loss.item()
@@ -77,7 +77,7 @@ class PLWrapper(pl.LightningModule):
         return {"log": logs, "progress_bar": logs}
 
     def validation_step(self, batch, batch_idx):
-        graphs_batch, frags_batch, _ = batch
+        graphs_batch, frags_batch, _, _ = batch
         outputs, kd_loss = self.model(batch)
         ce_loss = self.ce(outputs, graphs_batch.outseq)
         return {"val_loss": ce_loss}

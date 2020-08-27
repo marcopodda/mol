@@ -87,13 +87,14 @@ class GNNEmbedder(nn.Module):
             dim_hidden=dim_hidden,
             dim_output=dim_output)
         
-    def forward(self, batch, output):
+    def forward(self, batch, mat, input=False):
         x = self.gnn(batch, aggregate=False)
         x = global_add_pool(x, batch=batch.frags_batch)
         
         cumsum = 0
         for i, l in enumerate(batch.length):
-            output[i,1:l+1,:] = x[cumsum:cumsum+l,:]
+            offset = range(1, l+1) if input is True else range(l)
+            mat[i,offset,:] = x[cumsum:cumsum+l,:]
             cumsum += l
         
-        return output
+        return mat

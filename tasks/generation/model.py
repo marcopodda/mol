@@ -29,34 +29,19 @@ class Model(nn.Module):
         self.embedding_dropout = hparams.embedding_dropout
         self.max_length = max_length
 
-        self.encoder = GNN(
-            hparams=hparams,
-            num_layers=hparams.gnn_num_layers,
-            dim_edge_embed=hparams.gnn_dim_edge_embed,
-            dim_hidden=hparams.gnn_dim_hidden,
-            dim_output=hparams.rnn_dim_state)
-            # dim_output=hparams.rnn_dim_state // 2)
-            
-        self.gnn_logv = GNN(
-            hparams=hparams,
-            num_layers=hparams.gnn_num_layers,
-            dim_edge_embed=hparams.gnn_dim_edge_embed,
-            dim_hidden=hparams.gnn_dim_hidden,
-            dim_output=hparams.rnn_dim_state // 2)
-
-        self.vae = VAE(
-            hparams=hparams,
-            vocab_size=vocab_size,
-            dim_input=hparams.rnn_dim_state,
-            dim_latent=hparams.rnn_dim_state // 2,
-            dim_output=hparams.rnn_dim_state)
-
         self.embedder = GNNEmbedder(
             hparams=hparams,
             num_layers=hparams.gnn_num_layers,
             dim_edge_embed=hparams.gnn_dim_edge_embed,
             dim_hidden=hparams.gnn_dim_hidden,
             dim_output=hparams.frag_dim_embed)
+
+        self.encoder = Encoder(
+            hparams=hparams, 
+            rnn_dropout=hparams.rnn_dropout, 
+            num_layers=hparams.rnn_num_layers, 
+            dim_input=hparams.frag_dim_embed, 
+            dim_hidden=hparams.rnn_dim_state)
 
         self.decoder = Decoder(
             hparams=hparams,
@@ -68,17 +53,29 @@ class Model(nn.Module):
             dim_output=vocab_size + len(Tokens))
 
     def forward(self, batch):
-        graphs_batch, frags_batch, seq_matrix = batch
+        graphs_batch, frags_batch, dec_inputs, enc_inputs = batch
         
-        h = self.encoder(graphs_batch)
-        # logv = self.gnn_logv(graphs_batch)
-        # h, vae_loss = self.vae(mean, logv)
-        h = h.unsqueeze(0).repeat(self.hparams.rnn_num_layers, 1, 1)
-        vae_loss = 0
+        enc_inputs = self.embedder(frags_batch, enc_inputs, input=False)
+        enc_inputs = F.dropout(enc_inputs, p=self.embedding_dropout, training=self.training)
+        enc_outputs, enc_hidden = self.encoder(enc_inputs)
         
-        x = self.embedder(frags_batch, seq_matrix)
-        x = F.dropout(x, p=self.embedding_dropout, training=self.training)
+        dec_inputs = self.embedder(frags_batch, dec_inputs, input=True)
+        dec_inputs = F.dropout(dec_inputs, p=self.embedding_dropout, training=self.training)
 
-        output, h_dec = self.decoder(x, h)
+        dec_outputs = self.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
         
-        return output, vae_loss
+        return dec_outputs, 0
+    
+    def decode_with_attention(self, dec_inputs, enc_hidden, enc_outputs):
+        _, S, _ = dec_inputs.size()
+        h = enc_hidden
+
+        outputs = []
+        for i in range(S):
+            x = dec_inputs[:, i, :].unsqueeze(1)
+            ctx = torch.zeros_like(enc_outputs[:,:1,:]) if i == 0 else ctx
+            out, h, ctx, w = self.decoder.forward_att(x, h, enc_outputs, ctx)
+            outputs.append(out.unsqueeze(1))
+
+        outputs = torch.cat(outputs, dim=1)
+        return outputs.view(-1, outputs.size(2))
