@@ -77,7 +77,6 @@ class Sampler:
         
         enc_inputs = embedder(fbatch, enc_inputs, input=False)
         enc_outputs, h = encoder(enc_inputs)
-        h = None
         
         x = self.dataset.sos.unsqueeze(0)
         c = torch.zeros_like(enc_outputs[:,:1,:])
