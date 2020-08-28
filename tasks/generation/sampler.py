@@ -54,6 +54,7 @@ class Sampler:
         
         S = self.max_length
         V = len(self.vocab) + len(Tokens)
+        K = 5
         
         samples = []
         
@@ -62,8 +63,9 @@ class Sampler:
         with torch.no_grad():
             preds = []
             for batch in loader:
-                logits = self.top_k(model(batch), k=5)
-                probs = torch.softmax(logits.view(-1, S, V) / temp, dim=-1)
+                logits = model(batch).view(-1, S, V)
+                logits = self.top_k(logits, k=5)
+                probs = torch.softmax(logits / temp, dim=-1)
                 indexes = Categorical(probs=probs).sample() 
                 # indexes = torch.argmax(probs, dim=-1)
                 preds.append(indexes.squeeze())
@@ -155,8 +157,9 @@ class Sampler:
 
     def top_k(self, logits, k=5):
         # shape (B, S, K)
+        B, S, _ = logits.size()
         values, indices = torch.topk(logits, k)
-        return values
+        return values.view(B, S, k)
         
         # indices_to_remove = logits < torch.topk(logits, k)[0][..., -1, None]
         # logits[indices_to_remove] = -float('Inf')
