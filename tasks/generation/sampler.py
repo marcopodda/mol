@@ -51,6 +51,9 @@ class Sampler:
         model = self.model
         model.eval()
         
+        S = self.max_length
+        V = len(self.vocab) + len(Tokens)
+        
         samples = []
         
         smiles, loader = self.prepare_data(num_samples)
@@ -58,7 +61,7 @@ class Sampler:
         with torch.no_grad():
             preds = []
             for batch in loader:
-                logits = model(batch).view(-1, self.max_length, len(self.vocab) + len(Tokens))
+                logits = model(batch).view(-1, S, V)
                 probs = torch.softmax(logits / temp, dim=-1)
                 indexes = Categorical(probs=probs).sample() 
                 # indexes = torch.argmax(probs, dim=-1)
