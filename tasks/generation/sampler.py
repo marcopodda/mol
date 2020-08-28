@@ -60,8 +60,8 @@ class Sampler:
             for batch in loader:
                 logits = model(batch).view(-1, self.max_length, len(self.vocab) + len(Tokens))
                 probs = torch.softmax(logits / temp, dim=-1)
-                # indexes = Categorical(probs=probs).sample() 
-                indexes = torch.argmax(probs, dim=-1)
+                indexes = Categorical(probs=probs).sample() 
+                # indexes = torch.argmax(probs, dim=-1)
                 preds.append(indexes.squeeze())
         
             preds = torch.cat(preds, dim=0).cpu().numpy()
