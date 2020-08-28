@@ -82,7 +82,7 @@ class Sampler:
         
         logits = decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
         probs = torch.softmax(logits, dim=-1)
-        indexes = torch.argmax(probs, dim=-1)
+        indexes = Categorical(probs=probs).sample().item() # torch.argmax(probs, dim=-1)
         sample = indexes[indexes>len(Tokens)] - len(Tokens)
         sample = sample.detach().numpy().tolist()
         return smiles, [self.vocab[f] for f in sample]
