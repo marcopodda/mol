@@ -10,6 +10,7 @@ from torch_geometric.data import Batch
 from rdkit import Chem
 
 from core.mols.split import join_fragments
+from core.mols.props import similarity
 from core.datasets.utils import get_graph_data
 from core.utils.vocab import Tokens
 from core.utils.serialization import load_yaml, save_yaml
@@ -78,7 +79,11 @@ class Sampler:
                     mol = join_fragments(frags)
                     sample = Chem.MolToSmiles(mol)
                     print(f"Val: {smi} - Sampled: {sample}")
-                    samples.append({"smi": smi, "gen": sample})
+                    samples.append({
+                        "smi": smi, 
+                        "gen": sample,
+                        "sim": similarity(smi, sample)
+                    })
                     
                     if len(samples) % 1000 == 0:
                         print(f"Sampled {len(samples)} molecules.")
