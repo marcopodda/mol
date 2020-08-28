@@ -66,6 +66,5 @@ class Model(nn.Module):
         
         probs = F.log_softmax(logits, dim=-1)
         indexes = torch.argmax(probs, dim=-1)
-        print(indexes)
         
         return logits

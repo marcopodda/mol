@@ -2,6 +2,7 @@ import numpy as np
 
 import torch
 from torch.nn import functional as F
+from torch.utils.data import Subset, DataLoader
 from torch.distributions import Categorical
 
 from torch_geometric.data import Batch
@@ -11,9 +12,9 @@ from rdkit import Chem
 from core.mols.split import join_fragments
 from core.datasets.utils import get_graph_data
 from core.utils.vocab import Tokens
-from core.utils.serialization import load_yaml
+from core.utils.serialization import load_yaml, save_yaml
 
-from tasks.generation.loader import collate_single
+from tasks.generation.loader import collate
 
 
 class Sampler:
@@ -23,34 +24,52 @@ class Sampler:
         self.output_dir = model.output_dir
         self.dataset = dataset
         self.vocab = dataset.vocab
-        self.max_length = 13
+        self.max_length = dataset.max_length
         
-    def prepare_data(self):
+    def prepare_data(self, num_samples, batch_size=128):
         indices_dir = self.output_dir / "generation" / "logs"
         indices = load_yaml(indices_dir / "val_indices.yml")
-        index = int(np.random.choice(indices))
-        smiles = self.dataset.data.iloc[index].smiles
-        m, f = self.dataset[index]
-        return smiles, collate_single(m, f, self.dataset, self.hparams)
         
-    def run(self, num_samples=10, temp=1.0):
-        model = self.model.to("cpu")
+        indices = np.random.choice(indices, min(num_samples, len(indices)), replace=False)
+        indices = sorted(indices)
+        save_yaml(indices, "test_indices.yml")
+        
+        dataset = Subset(self.dataset, indices)
+        smiles = self.dataset.data.iloc[indices].smiles.tolist()
+        loader = DataLoader(
+            dataset=dataset,
+            collate_fn=lambda b: collate(b, self.dataset, self.hparams),
+            batch_size=batch_size,
+            shuffle=False,
+            pin_memory=True,
+            num_workers=self.hparams.num_workers)
+        return smiles, loader
+        
+    def run(self, num_samples=1000, temp=1.0):
+        # model = self.model.to("cpu")
+        model = self.model
         model.eval()
         
-        embedder = model.embedder
-        encoder = model.encoder
-        decoder = model.decoder
+        samples = []
+        
+        smiles, loader = self.prepare_data(num_samples)
+        
+        with torch.no_grad():
+            preds = []
+            for batch in loader:
+                logits = model(batch).view(-1, self.max_length, len(self.vocab) + len(Tokens))
+                probs = torch.softmax(logits / temp, dim=-1)
+                # indexes = Categorical(probs=probs).sample() 
+                indexes = torch.argmax(probs, dim=-1)
+                preds.append(indexes.squeeze())
+        
+            preds = torch.cat(preds, dim=0).cpu().numpy()
         
         samples = []
-        num_trials = 0
-        max_trials = 1000000
         
-        while len(samples) < num_samples and num_trials < max_trials:
-            try:
-                smiles, frags = self.generate_one(embedder, encoder, decoder, temp=temp)
-            except:
-                num_trials += 1 
-                continue
+        for i, smi in enumerate(smiles):
+            idxs = [int(p) for p in preds[i] if p > len(Tokens)]
+            frags = [self.vocab[i - len(Tokens)] for i in idxs]
             
             if len(frags) >= 2:
                 frags = [Chem.MolFromSmiles(f) for f in frags]
@@ -58,8 +77,8 @@ class Sampler:
                 try:
                     mol = join_fragments(frags)
                     sample = Chem.MolToSmiles(mol)
-                    print(f"Val: {smiles} - Sampled: {sample}")
-                    samples.append([smiles, sample])
+                    print(f"Val: {smi} - Sampled: {sample}")
+                    samples.append({"smi": smi, "gen": sample})
                     
                     if len(samples) % 1000 == 0:
                         print(f"Sampled {len(samples)} molecules.")
@@ -67,13 +86,13 @@ class Sampler:
                     print(e, "Rejected.")
             else:
                 print("Rejected.")
-
-            num_trials += 1
-            
+        
         return samples
+            
 
-    def generate_one(self, embedder, encoder, decoder, temp):
-        smiles, (_, fbatch, enc_inputs, dec_inputs) = self.prepare_data()
+    def generate(self, embedder, encoder, decoder, temp):
+        smiles, batch = self.prepare_data()
+        _, fbatch, enc_inputs, dec_inputs = batch
         
         enc_inputs = embedder(fbatch, enc_inputs, input=False)
         enc_outputs, enc_hidden = encoder(enc_inputs)

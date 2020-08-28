@@ -5,15 +5,24 @@ from torch_geometric.data import Batch
 from sklearn.model_selection import train_test_split
 
 
-def collate_single(mols, frags, dataset, hparams):
-    enc_inputs = torch.zeros((1, dataset.max_length, hparams.frag_dim_embed))
-    enc_inputs[0, len(frags), :] = dataset.eos
+def collate(data_list, dataset, hparams):
+    mols, frags = zip(*data_list)
+    batch_size = len(mols)
     
-    dec_inputs = torch.zeros((1, dataset.max_length, hparams.frag_dim_embed))
-    dec_inputs[0, 0, :] = dataset.sos
+    cumsum = 0
+    for i, frag in enumerate(frags):
+        inc = (frag.frags_batch.max() + 1).item()
+        frag.frags_batch += cumsum
+        cumsum += inc
+    
+    lengths = [m.length.item() for m in mols]
+    enc_inputs = torch.zeros((batch_size, dataset.max_length, hparams.frag_dim_embed))
+    enc_inputs[:, lengths, :] = dataset.eos.repeat(batch_size, 1)
+    
+    dec_inputs = torch.zeros((batch_size, dataset.max_length, hparams.frag_dim_embed))
+    dec_inputs[:, 0, :] = dataset.sos.repeat(batch_size, 1)
 
-
-    return Batch.from_data_list([mols]), Batch.from_data_list([frags]), enc_inputs, dec_inputs
+    return Batch.from_data_list(mols), Batch.from_data_list(frags), enc_inputs, dec_inputs
 
 
 class MolecularDataLoader:
