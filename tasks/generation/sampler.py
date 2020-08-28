@@ -62,8 +62,7 @@ class Sampler:
         with torch.no_grad():
             preds = []
             for batch in loader:
-                logits = model(batch)
-                logits = self.top_k(logits)
+                logits = self.topk(model(batch), k=5)
                 probs = torch.softmax(logits.view(-1, S, V) / temp, dim=-1)
                 indexes = Categorical(probs=probs).sample() 
                 # indexes = torch.argmax(probs, dim=-1)
@@ -155,7 +154,10 @@ class Sampler:
         # return [smiles, sample] if eos_found else []
 
     def top_k(self, logits, k=5):
-        logits = logits.view(-1)
-        indices_to_remove = logits < torch.topk(logits, k)[0][..., -1, None]
-        logits[indices_to_remove] = -float('Inf')
-        return logits.view(1, -1)
+        # shape (B, S, K)
+        values, indices = torch.topk(logits, k)
+        return values
+        
+        # indices_to_remove = logits < torch.topk(logits, k)[0][..., -1, None]
+        # logits[indices_to_remove] = -float('Inf')
+        # return logits.view(B, S, V)
