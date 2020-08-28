@@ -62,20 +62,10 @@ class Model(nn.Module):
         dec_inputs = self.embedder(frags_batch, dec_inputs, input=True)
         dec_inputs = F.dropout(dec_inputs, p=self.embedding_dropout, training=self.training)
 
-        dec_outputs = self.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
+        logits = self.decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
         
-        return dec_outputs, 0
-    
-    def decode_with_attention(self, dec_inputs, enc_hidden, enc_outputs):
-        _, S, _ = dec_inputs.size()
-        h = enc_hidden
-
-        outputs = []
-        for i in range(S):
-            x = dec_inputs[:, i, :].unsqueeze(1)
-            ctx = torch.zeros_like(enc_outputs[:,:1,:]) if i == 0 else ctx
-            out, h, ctx, w = self.decoder(x, h, enc_outputs, ctx)
-            outputs.append(out.unsqueeze(1))
-
-        outputs = torch.cat(outputs, dim=1)
-        return outputs.view(-1, outputs.size(2))
+        probs = F.log_softmax(logits, dim=-1)
+        indexes = torch.argmax(probs, dim=-1)
+        print(indexes)
+        
+        return logits

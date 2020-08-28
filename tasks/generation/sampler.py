@@ -76,41 +76,49 @@ class Sampler:
         smiles, (_, fbatch, enc_inputs, dec_inputs) = self.prepare_data()
         
         enc_inputs = embedder(fbatch, enc_inputs, input=False)
-        enc_outputs, h = encoder(enc_inputs)
+        enc_outputs, enc_hidden = encoder(enc_inputs)
         
         dec_inputs = embedder(fbatch, dec_inputs, input=True)
-        c = torch.zeros_like(enc_outputs[:,:1,:])
         
-        sample, eos_found, it = [], False, 0
-        while len(sample) < self.max_length:
-            x = dec_inputs[:, it:it+1, :]
-            logits, h, c, _ = decoder(x, h, enc_outputs, c)
+        logits = decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
+        probs = torch.softmax(logits, dim=-1)
+        indexes = torch.argmax(probs, dim=-1)
+        sample = indexes[indexes>len(Tokens)] - len(Tokens)
+        sample = sample.detach().numpy().tolist()
+        return smiles, [self.vocab[f] for f in sample]
+        # print(indexes)
+        
+        # h = enc_hidden
+        # o = enc_outputs
+        # c = torch.zeros_like(enc_outputs[:,:1,:])
+        # sample, eos_found, it = [], False, 0
+        
+        # while len(sample) < self.max_length:
+        #     x = dec_inputs[:, it:it+1, :]
+        #     logits, h, c, _ = decoder(x, h, o, c)
 
-            # logits = self.top_k(logits)
-            # probs = torch.softmax(logits / temp, dim=-1)
-            # index = Categorical(probs=probs).sample().item()
+        #     # logits = self.top_k(logits)
+        #     # probs = torch.softmax(logits / temp, dim=-1)
+        #     # index = Categorical(probs=probs).sample().item()
             
-            probs = F.log_softmax(logits, dim=-1)
-            index = torch.argmax(probs, dim=-1).item()
+        #     probs = F.log_softmax(logits, dim=-1)
+        #     index = torch.argmax(probs, dim=-1).item()
 
-            if index in [Tokens.PAD.value, Tokens.SOS.value, Tokens.MASK.value]:
-                sample = []
-                break
+        #     if index in [Tokens.PAD.value, Tokens.SOS.value, Tokens.MASK.value]:
+        #         sample = []
+        #         break
 
-            if index == Tokens.EOS.value:
-                eos_found = True
-                break
+        #     if index == Tokens.EOS.value:
+        #         eos_found = True
+        #         break
             
-            # remove tokens offset to be processed by vocab
-            fragment_idx = index - len(Tokens)
-            fragment = self.vocab[fragment_idx]
-            sample.append(fragment)
-            # data = get_graph_data(self.vocab[fragment_idx])
-            # batch = Batch.from_data_list([data])
-            # x = embedder.gnn(batch, aggregate=True).unsqueeze(0)
-            it += 1
-            
-        return [smiles, sample] if eos_found else []
+        #     # remove tokens offset to be processed by vocab
+        #     fragment_idx = index - len(Tokens)
+        #     fragment = self.vocab[fragment_idx]
+        #     sample.append(fragment)
+        #     it += 1
+        
+        # return [smiles, sample] if eos_found else []
 
     def top_k(self, logits, k=100):
         logits = logits.view(-1)

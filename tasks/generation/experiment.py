@@ -40,7 +40,7 @@ class PLWrapper(pl.LightningModule):
         self.max_length = self.dataset.max_length
 
         self.model = Model(hparams, self.output_dir, len(self.dataset.vocab), self.max_length)
-        self.ce = MaskedSoftmaxCELoss()
+        # self.ce = MaskedSoftmaxCELoss()
 
     def prepare_data(self):
         loader = MolecularDataLoader(self.hparams, self.dataset)
@@ -65,11 +65,10 @@ class PLWrapper(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         graphs_batch, frags_batch, _, _ = batch
-        outputs, kd_loss = self.model(batch)
-        ce_loss = self.ce(outputs, graphs_batch.outseq)
-        weight = 1.0  # kd_loss.item() / ce_loss.item()
-        logs = {"CE": ce_loss, "KD": kd_loss, "W": weight}
-        return {"loss": ce_loss + weight * kd_loss, "logs": logs, "progress_bar": logs}
+        outputs = self.model(batch)
+        ce_loss = F.cross_entropy(outputs, graphs_batch.outseq.view(-1)) # , ignore_index=0)
+        logs = {"CE": ce_loss}
+        return {"loss": ce_loss, "logs": logs, "progress_bar": logs}
     
     def training_epoch_end(self, outputs):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
@@ -78,8 +77,8 @@ class PLWrapper(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         graphs_batch, frags_batch, _, _ = batch
-        outputs, kd_loss = self.model(batch)
-        ce_loss = self.ce(outputs, graphs_batch.outseq)
+        outputs = self.model(batch)
+        ce_loss = F.cross_entropy(outputs, graphs_batch.outseq.view(-1)) # , ignore_index=0)
         return {"val_loss": ce_loss}
 
     def validation_epoch_end(self, outputs):

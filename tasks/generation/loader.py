@@ -6,7 +6,6 @@ from sklearn.model_selection import train_test_split
 
 
 def collate_single(mols, frags, dataset, hparams):
-    frags.frags_batch = 0
     enc_inputs = torch.zeros((1, dataset.max_length, hparams.frag_dim_embed))
     enc_inputs[0, len(frags), :] = dataset.eos
     
