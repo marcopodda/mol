@@ -63,6 +63,7 @@ class Sampler:
             preds = []
             for batch in loader:
                 logits = model(batch).view(-1, S, V)
+                logits = self.top_k(logits)
                 probs = torch.softmax(logits / temp, dim=-1)
                 indexes = Categorical(probs=probs).sample() 
                 # indexes = torch.argmax(probs, dim=-1)
@@ -153,7 +154,7 @@ class Sampler:
         
         # return [smiles, sample] if eos_found else []
 
-    def top_k(self, logits, k=100):
+    def top_k(self, logits, k=5):
         logits = logits.view(-1)
         indices_to_remove = logits < torch.topk(logits, k)[0][..., -1, None]
         logits[indices_to_remove] = -float('Inf')
