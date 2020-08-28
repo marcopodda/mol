@@ -78,7 +78,7 @@ class Sampler:
                 try:
                     mol = join_fragments(frags)
                     sample = Chem.MolToSmiles(mol)
-                    print(f"Val: {smi} - Sampled: {sample}")
+                    # print(f"Val: {smi} - Sampled: {sample}")
                     samples.append({
                         "smi": smi, 
                         "gen": sample,
