@@ -59,30 +59,31 @@ class Sampler:
         num_trials = 0
         max_trials = 1000000
         
-        while len(samples) < num_samples and num_trials < max_trials:
-            res = self.generate_one(embedder, encoder, decoder, temp=temp)
-            if len(res) == 2:
-                smiles, gen = res
-                if len(gen) >= 2:
-                    frags = [Chem.MolFromSmiles(f) for f in gen]
+        with torch.no_grad():
+            while len(samples) < num_samples and num_trials < max_trials:
+                res = self.generate_one(embedder, encoder, decoder, temp=temp)
+                if len(res) == 2:
+                    smiles, gen = res
+                    if len(gen) >= 2:
+                        frags = [Chem.MolFromSmiles(f) for f in gen]
+                    
+                        try:
+                            mol = join_fragments(frags)
+                            sample = Chem.MolToSmiles(mol)
+                            # print(f"Val: {smi} - Sampled: {sample}")
+                            samples.append({
+                                "smi": smiles, 
+                                "gen": sample,
+                                "sim": float(similarity(smiles, sample))
+                            })
+                            
+                            # if len(samples) % 1000 == 0:
+                            #     print(f"Sampled {len(samples)} molecules.")
+                            print(f"Sampled {len(samples)} molecules.")
+                        except Exception as e:
+                            print(e, "Rejected.")
                 
-                    try:
-                        mol = join_fragments(frags)
-                        sample = Chem.MolToSmiles(mol)
-                        # print(f"Val: {smi} - Sampled: {sample}")
-                        samples.append({
-                            "smi": smiles, 
-                            "gen": sample,
-                            "sim": float(similarity(smiles, sample))
-                        })
-                        
-                        # if len(samples) % 1000 == 0:
-                        #     print(f"Sampled {len(samples)} molecules.")
-                        print(f"Sampled {len(samples)} molecules.")
-                    except Exception as e:
-                        print(e, "Rejected.")
-            
-            num_trials += 1
+                num_trials += 1
             
         return samples    
         
