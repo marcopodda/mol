@@ -81,7 +81,7 @@ class Sampler:
         dec_inputs = embedder(fbatch, dec_inputs, input=True)
         
         logits = decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
-        probs = torch.softmax(logits, dim=-1)
+        probs = torch.softmax(logits / temp, dim=-1)
         indexes = Categorical(probs=probs).sample().item() # torch.argmax(probs, dim=-1)
         sample = indexes[indexes>len(Tokens)] - len(Tokens)
         sample = sample.detach().numpy().tolist()
