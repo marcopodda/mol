@@ -82,7 +82,7 @@ class Sampler:
                     samples.append({
                         "smi": smi, 
                         "gen": sample,
-                        "sim": similarity(smi, sample)
+                        "sim": float(similarity(smi, sample))
                     })
                     
                     if len(samples) % 1000 == 0:
