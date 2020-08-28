@@ -8,6 +8,7 @@ from torch.distributions import Categorical
 from torch_geometric.data import Batch
 
 from rdkit import Chem
+from moses.utils import disable_rdkit_log, enable_rdkit_log
 
 from core.mols.split import join_fragments
 from core.mols.props import similarity
@@ -71,6 +72,8 @@ class Sampler:
         
         samples = []
         
+        disable_rdkit_log()
+        
         for i, smi in enumerate(smiles):
             idxs = [int(p) for p in preds[i] if p > len(Tokens)]
             frags = [self.vocab[i - len(Tokens)] for i in idxs]
@@ -82,6 +85,8 @@ class Sampler:
                     mol = join_fragments(frags)
                     sample = Chem.MolToSmiles(mol)
                     # print(f"Val: {smi} - Sampled: {sample}")
+                    
+                    
                     samples.append({
                         "smi": smi, 
                         "gen": sample,
@@ -91,9 +96,10 @@ class Sampler:
                     if len(samples) % 1000 == 0:
                         print(f"Sampled {len(samples)} molecules.")
                 except Exception as e:
-                    print(e, "Rejected.")
-            else:
-                print("Rejected.")
+                    # print(e, "Rejected.")
+                    pass
+        
+        enable_rdkit_log()
         
         return samples
             
