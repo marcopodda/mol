@@ -62,9 +62,9 @@ class Sampler:
         with torch.no_grad():
             preds = []
             for batch in loader:
-                logits = model(batch).view(-1, S, V)
+                logits = model(batch)
                 logits = self.top_k(logits)
-                probs = torch.softmax(logits / temp, dim=-1)
+                probs = torch.softmax(logits.view(-1, S, V) / temp, dim=-1)
                 indexes = Categorical(probs=probs).sample() 
                 # indexes = torch.argmax(probs, dim=-1)
                 preds.append(indexes.squeeze())
