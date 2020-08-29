@@ -17,6 +17,7 @@ from core.utils.vocab import Tokens
 from core.utils.serialization import load_yaml, save_yaml
 
 from tasks.generation.loader import collate
+from tasks.generation.dataset import VocabDataset
 
 
 class Sampler:
@@ -33,8 +34,8 @@ class Sampler:
         indices = load_yaml(indices_dir / "val_indices.yml")
         
         indices = np.random.choice(indices, min(num_samples, len(indices)), replace=False)
-        indices = sorted(indices)
-        save_yaml(indices, "test_indices.yml")
+        indices = sorted([int(i) for i in indices])
+        save_yaml(indices, indices_dir / "test_indices.yml")
         
         dataset = Subset(self.dataset, indices)
         smiles = self.dataset.data.iloc[indices].smiles.tolist()
@@ -46,6 +47,18 @@ class Sampler:
             pin_memory=True,
             num_workers=self.hparams.num_workers)
         return smiles, loader
+    
+    def load_data(self, num_samples, batch_size=128):
+        indices_dir = self.output_dir / "generation" / "logs"
+        indices = load_yaml(indices_dir / "val_indices.yml")
+        
+        indices = np.random.choice(indices, min(num_samples, len(indices)), replace=False)
+        indices = sorted(indices)
+        save_yaml(indices, "test_indices.yml")
+        
+        smiles = self.dataset.data.iloc[indices].smiles.tolist()
+        frags = self.dataset.data.iloc[indices].frags.tolist()
+        return smiles, frags
         
     def run(self, num_samples=30000, temp=1.0):
         model = self.model.to("cpu")
@@ -56,8 +69,26 @@ class Sampler:
         max_trials = 1000000
         
         with torch.no_grad():
+            # prepare embeddings matrix
+            device = next(model.parameters()).device
+            dataset = VocabDataset(self.vocab)
+            loader = DataLoader(
+                dataset=dataset, 
+                shuffle=False, 
+                batch_size=512, 
+                pin_memory=True, 
+                collate_fn=lambda l: Batch.from_data_list(l),
+                num_workers=self.hparams.num_workers)
+            gnn = model.embedder.gnn
+            
+            embeddings = []
+            for batch in loader:
+                embed = gnn(batch.to(device), aggregate=True)
+                embeddings.append(embed)
+            embeddings = torch.cat(embeddings, dim=0)
+            
             while len(samples) < num_samples and num_trials < max_trials:
-                res = self.generate_one(model, temp=temp)
+                res = self.generate_one(model, embeddings, temp=temp)
                 if len(res) == 2:
                     smiles, gen = res
                     if len(gen) >= 2:
@@ -83,23 +114,45 @@ class Sampler:
             
         return samples          
 
-    def generate_one(self, model, temp):
-        smiles, loader = self.prepare_data(num_samples=1, batch_size=1)
-        batch = next(iter(loader))
-        _, fbatch, enc_inputs, dec_inputs = batch
+    def pad(self ,seq):
+        for _ in range(len(seq), self.max_length):
+            seq.append(torch.zeros_like(seq[0]))
+        return seq
+
+    def generate_one(self, model, embeddings, temp):
+        smiles, frags_list = self.load_data(num_samples=1, batch_size=1)
+        # batch = next(iter(loader))
+        
+        # prepare encoder inputs
+        seqs, bofs = [], []
+        for frags in frags_list:
+            idxs = [self.vocab[f] for f in frags]
+            seq = [embeddings[i,:].view(1, -1) for i in idxs]
+            bofs.append(torch.cat(seq, dim=0).sum(dim=0, keepdim=True))
+            seq += [self.dataset.eos]
+            seqs.append(torch.cat(self.pad(seq), dim=0))
+        
+        enc_inputs = torch.cat(seqs, dim=0)
+        bof = torch.cat(bofs, dim=0)
+        # print([s.size() for s in seqs], [b.size() for b in bofs])
+        # assert False
+            
+        # seqs = torch.cat
+        # batch = None
+        # _, fbatch, enc_inputs, dec_inputs = batch
         
         embedder = model.embedder
         encoder = model.encoder
         decoder = model.decoder
         
-        enc_inputs = embedder(fbatch, enc_inputs, input=False)
-        bof = model.compute_bof(fbatch, enc_inputs)
+        # enc_inputs = embedder(fbatch, enc_inputs, input=False)
+        # bof = model.compute_bof(fbatch, enc_inputs)
         enc_outputs, enc_hidden = encoder(enc_inputs)
         
         h = enc_hidden
         o = enc_outputs
         c = torch.zeros_like(enc_outputs[:,:1,:])
-        x = torch.cat([dec_inputs[:, :1, :], bof], dim=-1)  # SOS
+        x = torch.cat([self.dataset.sos, bof], dim=-1).unsqueeze(0)  # SOS
         sample, eos_found, it = [], True, 0
         
         while len(sample) < self.max_length:
@@ -121,13 +174,10 @@ class Sampler:
             
             # remove tokens offset to be processed by vocab
             fragment_idx = index - len(Tokens)
-            fragment = self.vocab[fragment_idx]
-            sample.append(fragment)
+            sample.append(self.vocab[fragment_idx])
             
-            x = get_graph_data(fragment)
-            batch = Batch.from_data_list([x])
-            x = embedder.gnn(batch, aggregate=True).unsqueeze(0)
-            x = torch.cat([x, bof], dim=-1)
+            x = embeddings[fragment_idx, :].view(1, -1)
+            x = torch.cat([x, bof], dim=-1).unsqueeze(0)
         
         return [smiles[0], sample] if eos_found else []
     

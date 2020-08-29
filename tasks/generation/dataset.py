@@ -15,6 +15,17 @@ from core.utils.vocab import Tokens
 from core.utils.serialization import load_numpy, save_numpy
 
 
+class VocabDataset(data.Dataset):
+    def __init__(self, vocab):
+        self.vocab = vocab
+
+    def __getitem__(self, index):
+        return to_data(self.vocab[index])
+
+    def __len__(self):
+        return len(self.vocab)
+
+
 class MolecularDataset(data.Dataset):
     def __init__(self, hparams, output_dir, name):
         super().__init__()
