@@ -91,7 +91,8 @@ class Sampler:
         return embedder
         
     def run(self, num_samples=30000, temp=1.0):
-        model = self.model.to("cpu")
+        # model = self.model.to("cpu")
+        model = self.model
         model.eval()
         
         samples = []
