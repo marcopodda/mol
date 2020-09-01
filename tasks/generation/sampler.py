@@ -49,11 +49,11 @@ class Sampler:
             num_workers=self.hparams.num_workers)
         return smiles, loader
     
-    def load_test_data(self, num_samples=128):
+    def load_test_data(self, batch_size=128):
         indices_dir = self.output_dir / "generation" / "logs"
         indices = load_yaml(indices_dir / "val_indices.yml")
         
-        indices = np.random.choice(indices, min(num_samples, len(indices)), replace=False)
+        indices = np.random.choice(indices, min(batch_size, len(indices)), replace=False)
         indices = sorted(indices)
         save_yaml(indices, "test_indices.yml")
         
@@ -136,8 +136,7 @@ class Sampler:
         return res
 
     def generate(self, model, embedder, temp, num_samples, batch_size):
-        smiles, frags_list = self.load_test_data(num_samples=num_samples)
-        # batch = next(iter(loader))
+        smiles, frags_list = self.load_test_data(batch_size=batch_size)
         batch_size = min(batch_size, len(smiles))
         
         # prepare encoder inputs
