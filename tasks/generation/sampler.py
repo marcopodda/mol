@@ -1,6 +1,7 @@
 import numpy as np
 
 import torch
+from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import Subset, DataLoader
 from torch.distributions import Categorical
@@ -86,9 +87,10 @@ class Sampler:
                 embed = gnn(batch.to(device), aggregate=True)
                 embeddings.append(embed)
             embeddings = torch.cat(embeddings, dim=0)
+            embedder = nn.Embedding.from_pretrained(embeddings,)
             
             while len(samples) < num_samples and num_trials < max_trials:
-                res = self.generate_one(model, embeddings, temp=temp)
+                res = self.generate_one(model, embedder, temp=temp)
                 if len(res) == 2:
                     smiles, gen = res
                     if len(gen) >= 2:
@@ -114,56 +116,51 @@ class Sampler:
             
         return samples          
 
-    def pad(self ,seq):
-        for _ in range(len(seq), self.max_length):
-            seq.append(torch.zeros_like(seq[0]))
-        return seq
+    def pad(self, seqs, lengths):
+        dim_embed = self.hparams.frag_dim_embed
+        res = torch.zeros((len(lengths), self.max_length, dim_embed))
+        for i, seq in enumerate(seqs):
+            res[i, :lengths[i], :] = seq
+        return res
 
-    def generate_one(self, model, embeddings, temp):
+    def generate_one(self, model, embedder, temp):
         smiles, frags_list = self.load_data(num_samples=1, batch_size=1)
         # batch = next(iter(loader))
         
         # prepare encoder inputs
-        seqs, bofs = [], []
+        seqs, bofs, lengths = [], [], []
         for frags in frags_list:
-            idxs = [self.vocab[f] for f in frags]
-            seq = [embeddings[i,:].view(1, -1) for i in idxs]
-            bofs.append(torch.cat(seq, dim=0).sum(dim=0, keepdim=True))
-            seq += [self.dataset.eos]
-            seqs.append(torch.cat(self.pad(seq), dim=0))
+            idxs = torch.LongTensor([self.vocab[f] for f in frags])
+            seq = embedder(idxs)
+            bof = seq.sum(dim=0, keepdim=True)
+            input_seq = torch.cat([seq, self.dataset.eos], dim=0)
+            seqs.append(input_seq)
+            lengths.append(len(seq) + 1)
+            bofs.append(bof)
         
-        enc_inputs = torch.cat(seqs, dim=0)
-        bof = torch.cat(bofs, dim=0)
-        # print([s.size() for s in seqs], [b.size() for b in bofs])
-        # assert False
-            
-        # seqs = torch.cat
-        # batch = None
-        # _, fbatch, enc_inputs, dec_inputs = batch
+        bofs = torch.cat(bofs)
+        enc_inputs = self.pad(seqs, lengths)
         
-        embedder = model.embedder
         encoder = model.encoder
         decoder = model.decoder
         
-        # enc_inputs = embedder(fbatch, enc_inputs, input=False)
-        # bof = model.compute_bof(fbatch, enc_inputs)
         enc_outputs, enc_hidden = encoder(enc_inputs)
         
         h = enc_hidden
         o = enc_outputs
         c = torch.zeros_like(enc_outputs[:,:1,:])
-        x = torch.cat([self.dataset.sos, bof], dim=-1).unsqueeze(0)  # SOS
+        x = torch.cat([self.dataset.sos, bofs], dim=-1).unsqueeze(0)  # SOS
         sample, eos_found, it = [], True, 0
         
         while len(sample) < self.max_length:
             logits, h, c, _ = decoder(x, h, o, c)
 
             # logits = self.top_k(logits)
-            # probs = torch.softmax(logits / temp, dim=-1)
-            # index = Categorical(probs=probs).sample().item()
+            probs = torch.softmax(logits / temp, dim=-1)
+            index = Categorical(probs=probs).sample().item()
             
-            probs = F.log_softmax(logits, dim=-1)
-            index = torch.argmax(probs, dim=-1).item()
+            # probs = F.log_softmax(logits, dim=-1)
+            # index = torch.argmax(probs, dim=-1).item()
             
             if index in [Tokens.PAD.value, Tokens.SOS.value, Tokens.MASK.value]:
                 break
@@ -176,7 +173,7 @@ class Sampler:
             fragment_idx = index - len(Tokens)
             sample.append(self.vocab[fragment_idx])
             
-            x = embeddings[fragment_idx, :].view(1, -1)
+            x = embedder(torch.LongTensor([fragment_idx]))
             x = torch.cat([x, bof], dim=-1).unsqueeze(0)
         
         return [smiles[0], sample] if eos_found else []
