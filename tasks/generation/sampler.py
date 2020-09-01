@@ -106,6 +106,7 @@ class Sampler:
             while len(samples) < num_samples and num_trials < max_trials:
                 res = self.generate(model, embedder, temp=temp)
                 smiles, gens = res
+                
                 for smi, gen in zip(smiles, gens):
                     if len(gen) >= 2:
                         try:
@@ -117,13 +118,12 @@ class Sampler:
                                 "smi": smiles, 
                                 "gen": sample,
                                 "sim": float(similarity(smi, sample))
-                            })
-                            if len(samples) % 100 == 0:
-                                print(f"Sampled {len(samples)} molecules.")
-                            # print(f"Sampled {len(samples)} molecules.")
+                            })         
                         except Exception as e:
                             # print(e, "Rejected.")
                             pass
+                
+                print(f"Sampled {len(samples)} molecules.")
                 num_trials += 1
             
         return samples[:num_samples]          
