@@ -104,9 +104,8 @@ class Sampler:
             embedder = self.get_embedder(model)
             
             while len(samples) < num_samples and num_trials < max_trials:
-                res = self.generate(model, embedder, temp=temp, num_samples=num_samples, batch_size=batch_size)
-                smiles, gens = res
-                
+                smiles, gens = self.generate(model, embedder, temp=temp, num_samples=num_samples, batch_size=batch_size)
+
                 for smi, gen in zip(smiles, gens):
                     if len(gen) >= 2:
                         try:
@@ -115,7 +114,7 @@ class Sampler:
                             sample = Chem.MolToSmiles(mol)
                             # print(f"Val: {smi} - Sampled: {sample}")
                             samples.append({
-                                "smi": smiles, 
+                                "smi": smi, 
                                 "gen": sample,
                                 "sim": float(similarity(smi, sample))
                             })         
@@ -187,8 +186,8 @@ class Sampler:
             x = torch.cat([x, bofs], dim=-1)
             x = x.view(batch_size, 1, -1)
             
-        samples = self.translate(samples)
-        return smiles, samples
+        frags = self.translate(samples)
+        return smiles, frags
     
     def translate(self, samples):
         frags = []
