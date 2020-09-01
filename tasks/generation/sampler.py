@@ -49,7 +49,7 @@ class Sampler:
             num_workers=self.hparams.num_workers)
         return smiles, loader
     
-    def load_data(self, num_samples, batch_size=128):
+    def load_data(self, num_samples=128):
         indices_dir = self.output_dir / "generation" / "logs"
         indices = load_yaml(indices_dir / "val_indices.yml")
         
@@ -61,6 +61,35 @@ class Sampler:
         frags = self.dataset.data.iloc[indices].frags.tolist()
         return smiles, frags
         
+    def get_embedder(self, model):
+        device = next(model.parameters()).device
+        dataset = VocabDataset(self.vocab)
+        loader = DataLoader(
+            dataset=dataset, 
+            shuffle=False, 
+            batch_size=512, 
+            pin_memory=True, 
+            collate_fn=lambda l: Batch.from_data_list(l),
+            num_workers=self.hparams.num_workers)
+        gnn = model.embedder.gnn
+        
+        tokens = torch.cat([
+            torch.zeros_like(self.dataset.sos),
+            self.dataset.sos,
+            self.dataset.eos,
+            torch.randn_like(self.dataset.sos)
+        ])
+        
+        embeddings = []
+        for batch in loader:
+            embed = gnn(batch.to(device), aggregate=True)
+            embeddings.append(embed)
+        
+        embeddings = torch.cat(embeddings, dim=0)
+        embeddings = torch.cat([tokens, embeddings])
+        embedder = nn.Embedding.from_pretrained(embeddings)
+        return embedder
+        
     def run(self, num_samples=30000, temp=1.0):
         model = self.model.to("cpu")
         model.eval()
@@ -71,50 +100,32 @@ class Sampler:
         
         with torch.no_grad():
             # prepare embeddings matrix
-            device = next(model.parameters()).device
-            dataset = VocabDataset(self.vocab)
-            loader = DataLoader(
-                dataset=dataset, 
-                shuffle=False, 
-                batch_size=512, 
-                pin_memory=True, 
-                collate_fn=lambda l: Batch.from_data_list(l),
-                num_workers=self.hparams.num_workers)
-            gnn = model.embedder.gnn
-            
-            embeddings = []
-            for batch in loader:
-                embed = gnn(batch.to(device), aggregate=True)
-                embeddings.append(embed)
-            embeddings = torch.cat(embeddings, dim=0)
-            embedder = nn.Embedding.from_pretrained(embeddings,)
+            embedder = self.get_embedder(model)
             
             while len(samples) < num_samples and num_trials < max_trials:
-                res = self.generate_one(model, embedder, temp=temp)
-                if len(res) == 2:
-                    smiles, gen = res
+                res = self.generate(model, embedder, temp=temp)
+                smiles, gens = res
+                for smi, gen in zip(smiles, gens):
                     if len(gen) >= 2:
-                        frags = [Chem.MolFromSmiles(f) for f in gen]
-                    
                         try:
+                            frags = [Chem.MolFromSmiles(f) for f in gen]
                             mol = join_fragments(frags)
                             sample = Chem.MolToSmiles(mol)
                             # print(f"Val: {smi} - Sampled: {sample}")
                             samples.append({
                                 "smi": smiles, 
                                 "gen": sample,
-                                "sim": float(similarity(smiles, sample))
+                                "sim": float(similarity(smi, sample))
                             })
-                            
-                            # if len(samples) % 1000 == 0:
-                            #     print(f"Sampled {len(samples)} molecules.")
-                            print(f"Sampled {len(samples)} molecules.")
+                            if len(samples) % 100 == 0:
+                                print(f"Sampled {len(samples)} molecules.")
+                            # print(f"Sampled {len(samples)} molecules.")
                         except Exception as e:
-                            print(e, "Rejected.")
-                
+                            # print(e, "Rejected.")
+                            pass
                 num_trials += 1
             
-        return samples          
+        return samples[:num_samples]          
 
     def pad(self, seqs, lengths):
         dim_embed = self.hparams.frag_dim_embed
@@ -123,9 +134,10 @@ class Sampler:
             res[i, :lengths[i], :] = seq
         return res
 
-    def generate_one(self, model, embedder, temp):
-        smiles, frags_list = self.load_data(num_samples=1, batch_size=1)
+    def generate(self, model, embedder, temp, num_samples=1000):
+        smiles, frags_list = self.load_data(num_samples=num_samples)
         # batch = next(iter(loader))
+        batch_size = len(smiles)
         
         # prepare encoder inputs
         seqs, bofs, lengths = [], [], []
@@ -148,36 +160,45 @@ class Sampler:
         
         h = enc_hidden
         o = enc_outputs
-        c = torch.zeros_like(enc_outputs[:,:1,:])
-        x = torch.cat([self.dataset.sos, bofs], dim=-1).unsqueeze(0)  # SOS
-        sample, eos_found, it = [], True, 0
+        sos = self.dataset.sos.repeat(batch_size, 1)
+        x = torch.cat([sos, bofs], dim=-1)
+        x = x.view(batch_size, 1, -1)
+            
+        c = torch.zeros_like(x)
         
-        while len(sample) < self.max_length:
+        sample, eos_found = [], True
+        samples = torch.zeros((batch_size, self.max_length))
+        
+        for it in range(self.max_length):
             logits, h, c, _ = decoder(x, h, o, c)
 
             # logits = self.top_k(logits)
             probs = torch.softmax(logits / temp, dim=-1)
-            index = Categorical(probs=probs).sample().item()
+            indexes = Categorical(probs=probs).sample()
             
-            # probs = F.log_softmax(logits, dim=-1)
-            # index = torch.argmax(probs, dim=-1).item()
+            if it > 0:
+                prev = samples[:, it-1]
+                mask = prev < len(Tokens)
+                indexes[mask] = Tokens.PAD.value
             
-            if index in [Tokens.PAD.value, Tokens.SOS.value, Tokens.MASK.value]:
-                break
-
-            if index == Tokens.EOS.value:
-                eos_found = True
-                break
+            samples[:, it] = indexes 
             
-            # remove tokens offset to be processed by vocab
-            fragment_idx = index - len(Tokens)
-            sample.append(self.vocab[fragment_idx])
+            x = embedder(indexes)
+            x = torch.cat([x, bofs], dim=-1)
+            x = x.view(batch_size, 1, -1)
             
-            x = embedder(torch.LongTensor([fragment_idx]))
-            x = torch.cat([x, bof], dim=-1).unsqueeze(0)
-        
-        return [smiles[0], sample] if eos_found else []
+        samples = self.translate(samples)
+        return smiles, samples
     
+    def translate(self, samples):
+        frags = []
+        samples = samples.cpu().numpy()
+        for i in range(samples.shape[0]):
+            vec = samples[i] - len(Tokens)
+            vec = vec[vec>=0]
+            vec = [int(i) for i in vec]
+            frags.append([self.vocab[i] for i in vec])
+        return frags   
         
     def run_batch(self, num_samples=1000, temp=1.0):
         # model = self.model.to("cpu")
