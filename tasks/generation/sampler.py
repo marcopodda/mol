@@ -117,7 +117,7 @@ class Sampler:
                                 "smi": smi, 
                                 "gen": sample,
                                 "sim": float(similarity(smi, sample))
-                            })         
+                            })
                         except Exception as e:
                             # print(e, "Rejected.")
                             pass
