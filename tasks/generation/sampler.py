@@ -90,7 +90,7 @@ class Sampler:
         embedder = nn.Embedding.from_pretrained(embeddings)
         return embedder
         
-    def run(self, temp=1.0, num_samples=30000, batch_size=1000):
+    def run(self, temp=1.0, num_samples=30000, batch_size=1000, greedy=True):
         # model = self.model.to("cpu")
         model = self.model
         model.eval()
@@ -104,7 +104,13 @@ class Sampler:
             embedder = self.get_embedder(model)
             
             while len(samples) < num_samples and num_trials < max_trials:
-                smiles, gens = self.generate(model, embedder, temp=temp, num_samples=num_samples, batch_size=batch_size)
+                smiles, gens = self.generate(
+                    model=model, 
+                    embedder=embedder, 
+                    temp=temp, 
+                    num_samples=num_samples, 
+                    batch_size=batch_size,
+                    greedy=greedy)
 
                 for smi, gen in zip(smiles, gens):
                     if len(gen) >= 2:
@@ -134,7 +140,7 @@ class Sampler:
             res[i, :lengths[i], :] = seq
         return res
 
-    def generate(self, model, embedder, temp, num_samples, batch_size):
+    def generate(self, model, embedder, temp, num_samples, batch_size, greedy):
         smiles, frags_list = self.load_test_data(batch_size=batch_size)
         batch_size = min(batch_size, len(smiles))
         
@@ -170,10 +176,13 @@ class Sampler:
         
         for it in range(self.max_length):
             logits, h, c, _ = decoder(x, h, o, c)
-
-            # logits = self.top_k(logits)
-            probs = torch.softmax(logits / temp, dim=-1)
-            indexes = Categorical(probs=probs).sample()
+            
+            if greedy:
+                probs = torch.log_softmax(logits, dim=-1)
+                indexes = torch.argmax(probs, dim=-1)
+            else:
+                probs = torch.softmax(logits / temp, dim=-1)
+                indexes = Categorical(probs=probs).sample()
             
             if it > 0:
                 prev = samples[:, it-1]
