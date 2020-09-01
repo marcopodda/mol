@@ -30,7 +30,7 @@ class Sampler:
         self.vocab = dataset.vocab
         self.max_length = dataset.max_length
         
-    def prepare_data(self, num_samples, batch_size=128):
+    def prepare_data(self, num_samples, batch_size=512):
         indices_dir = self.output_dir / "generation" / "logs"
         indices = load_yaml(indices_dir / "val_indices.yml")
         
@@ -49,7 +49,7 @@ class Sampler:
             num_workers=self.hparams.num_workers)
         return smiles, loader
     
-    def load_data(self, num_samples=128):
+    def load_test_data(self, num_samples=128):
         indices_dir = self.output_dir / "generation" / "logs"
         indices = load_yaml(indices_dir / "val_indices.yml")
         
@@ -90,7 +90,7 @@ class Sampler:
         embedder = nn.Embedding.from_pretrained(embeddings)
         return embedder
         
-    def run(self, num_samples=30000, temp=1.0):
+    def run(self, temp=1.0, num_samples=30000, batch_size=1000):
         # model = self.model.to("cpu")
         model = self.model
         model.eval()
@@ -104,7 +104,7 @@ class Sampler:
             embedder = self.get_embedder(model)
             
             while len(samples) < num_samples and num_trials < max_trials:
-                res = self.generate(model, embedder, temp=temp)
+                res = self.generate(model, embedder, temp=temp, num_samples=num_samples, batch_size=batch_size)
                 smiles, gens = res
                 
                 for smi, gen in zip(smiles, gens):
@@ -135,10 +135,10 @@ class Sampler:
             res[i, :lengths[i], :] = seq
         return res
 
-    def generate(self, model, embedder, temp, num_samples=1000):
-        smiles, frags_list = self.load_data(num_samples=num_samples)
+    def generate(self, model, embedder, temp, num_samples, batch_size):
+        smiles, frags_list = self.load_test_data(num_samples=num_samples)
         # batch = next(iter(loader))
-        batch_size = len(smiles)
+        batch_size = min(batch_size, len(smiles))
         
         # prepare encoder inputs
         seqs, bofs, lengths = [], [], []
