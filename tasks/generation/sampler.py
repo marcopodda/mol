@@ -87,6 +87,7 @@ class Sampler:
         
         embeddings = torch.cat(embeddings, dim=0)
         embeddings = torch.cat([tokens, embeddings])
+        torch.save(embeddings.cpu(), "embeddings.pt")
         embedder = nn.Embedding.from_pretrained(embeddings)
         return embedder
         
