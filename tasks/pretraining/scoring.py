@@ -1,12 +1,8 @@
+import numpy as np
 from pathlib import Path
-
-from rdkit import Chem
-
-from core.mols.split import join_fragments
-from core.utils.serialization import load_yaml, save_yaml
-from core.utils.vocab import Vocab
-
 from moses import get_all_metrics
+
+from core.utils.serialization import load_yaml
 
 
 def convert_metrics_dict(metrics_dict):
@@ -15,21 +11,20 @@ def convert_metrics_dict(metrics_dict):
     return metrics_dict
 
 
-def score(output_dir, epoch, n_jobs=40):
-    assert epoch >= 1
+def rec(x, y):
+    return x == y
+
+
+def score(output_dir, dataset_name, epoch=1, n_jobs=40):
     output_dir = Path(output_dir)
     samples_dir = output_dir / "pretraining" / "samples"
-    vocab = Vocab.from_file(output_dir / "DATA" / "vocab.csv")
     samples_path = samples_dir / f"samples_{epoch}.yml"
+    samples = load_yaml(samples_path)
     
-    if samples_path.exists():
-        smiles = load_yaml(samples_path)
-        
-        metrics = get_all_metrics(smiles, n_jobs=n_jobs)
-        metrics = convert_metrics_dict(metrics)
-        metrics["NumSamples"] = len(smiles)
-        
-        path = samples_path.parent / f"{samples_path.stem}_results.yml"
-        save_yaml(metrics, path)
-        return metrics
+    ref_samples = [s["smi"] for s in samples]
+    gen_samples = [s["gen"] for s in samples]
+    
+    scores = get_all_metrics(gen_samples, n_jobs=n_jobs)
+    scores["rec"] = np.mean([rec(x, y) for (x, y) in zip(ref_samples, gen_samples)])
+    return scores
         

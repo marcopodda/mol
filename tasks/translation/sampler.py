@@ -61,12 +61,11 @@ class Sampler:
         
         embeddings = torch.cat(embeddings, dim=0)
         embeddings = torch.cat([tokens, embeddings])
-        torch.save(embeddings.cpu(), "embeddings.pt")
+        # torch.save(embeddings.cpu(), "embeddings.pt")
         embedder = nn.Embedding.from_pretrained(embeddings)
         return embedder
         
     def run(self, temp=1.0, batch_size=1000, greedy=True):
-        # model = self.model.to("cpu")
         model = self.model
         model.eval()
         
@@ -93,10 +92,7 @@ class Sampler:
                             mol = join_fragments(frags)
                             sample = Chem.MolToSmiles(mol)
                             # print(f"Val: {smi} - Sampled: {sample}")
-                            samples.append({
-                                "smi": smi, 
-                                "gen": sample,
-                            })
+                            samples.append({"smi": smi,  "gen": sample})
                         except Exception as e:
                             # print(e, "Rejected.")
                             pass

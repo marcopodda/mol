@@ -17,8 +17,8 @@ from core.datasets.utils import get_graph_data
 from core.utils.vocab import Tokens
 from core.utils.serialization import load_yaml, save_yaml
 
-from tasks.generation.loader import MolecularDataLoader
-from tasks.generation.dataset import MolecularDataset, VocabDataset
+from tasks.translation.loader import TranslationDataLoader
+from tasks.translation.dataset import TranslationDataset, VocabDataset
 
 
 class Sampler:
@@ -61,12 +61,11 @@ class Sampler:
         
         embeddings = torch.cat(embeddings, dim=0)
         embeddings = torch.cat([tokens, embeddings])
-        torch.save(embeddings.cpu(), "embeddings.pt")
+        # torch.save(embeddings.cpu(), "embeddings.pt")
         embedder = nn.Embedding.from_pretrained(embeddings)
         return embedder
         
     def run(self, temp=1.0, batch_size=1000, greedy=True):
-        # model = self.model.to("cpu")
         model = self.model
         model.eval()
         
@@ -93,7 +92,7 @@ class Sampler:
                             mol = join_fragments(frags)
                             sample = Chem.MolToSmiles(mol)
                             # print(f"Val: {smi} - Sampled: {sample}")
-                            samples.append({"smi": smi, "gen": sample})
+                            samples.append({"smi": smi,  "gen": sample})
                         except Exception as e:
                             # print(e, "Rejected.")
                             pass
@@ -101,6 +100,7 @@ class Sampler:
                 print(f"Sampled {len(samples)} molecules.")
             
         return samples     
+
 
     def generate_batch(self, data, model, embedder, temp, batch_size, greedy):
         frags, enc_inputs, dec_inputs = data
