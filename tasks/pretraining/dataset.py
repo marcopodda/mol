@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 
 from core.datasets.preprocess import get_data
 from core.datasets.features import mol2nx
-from core.datasets.utils import pad
+from core.datasets.utils import pad, to_data
 from core.utils.vocab import Tokens
 from core.utils.serialization import load_numpy, save_numpy
 
