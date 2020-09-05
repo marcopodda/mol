@@ -107,16 +107,16 @@ class Sampler:
             
         return samples     
 
+
     def generate_batch(self, data, model, embedder, temp, batch_size, greedy):
         frags, enc_inputs, dec_inputs = data
-        bofs, enc_hidden, enc_outputs = model.encode(frags, enc_inputs)
+        enc_hidden, enc_outputs = model.encode(frags, enc_inputs)
         
-        batch_size = bofs.size(0)
+        batch_size = enc_outputs.size(0)
         
         h = enc_hidden
         o = enc_outputs
         sos = self.dataset.sos.repeat(batch_size, 1)
-        x = torch.cat([sos, bofs.squeeze(1)], dim=-1)
         x = x.view(batch_size, 1, -1)
             
         c = torch.zeros_like(x)
@@ -142,7 +142,6 @@ class Sampler:
             samples[:, it] = indexes 
             
             x = embedder(indexes)
-            x = torch.cat([x, bofs.squeeze(1)], dim=-1)
             x = x.view(batch_size, 1, -1)
             
         frags = self.translate(samples)

@@ -12,13 +12,13 @@ from rdkit import Chem
 from moses.utils import disable_rdkit_log, enable_rdkit_log
 
 from core.mols.split import join_fragments
-from core.mols.props import similarity
+from core.mols.props import similarity, drd2
 from core.datasets.utils import get_graph_data
 from core.utils.vocab import Tokens
 from core.utils.serialization import load_yaml, save_yaml
 
-from tasks.generation.loader import collate
-from tasks.generation.dataset import VocabDataset
+from tasks.translation.loader import TranslationDataLoader
+from tasks.translation.dataset import TranslationDataset, VocabDataset
 
 
 class Sampler:
@@ -32,16 +32,8 @@ class Sampler:
     
     def load_test_data(self, batch_size=128):
         loader = TranslationDataLoader(self.hparams, self.dataset)
-        indices_dir = self.output_dir / "generation" / "logs"
-        indices = load_yaml(indices_dir / "val_indices.yml")
-        
-        indices = np.random.choice(indices, min(batch_size, len(indices)), replace=False)
-        indices = sorted(indices)
-        save_yaml(indices, "test_indices.yml")
-        
-        smiles = self.dataset.data.iloc[indices].smiles.tolist()
-        frags = self.dataset.data.iloc[indices].frags.tolist()
-        return smiles, frags
+        smiles = self.dataset.data.loc[self.dataset.val_indices].smiles.tolist()
+        return smiles, loader.get_val(batch_size=batch_size)
         
     def get_embedder(self, model):
         device = next(model.parameters()).device
@@ -73,25 +65,24 @@ class Sampler:
         embedder = nn.Embedding.from_pretrained(embeddings)
         return embedder
         
-    def run(self, temp=1.0, num_samples=30000, batch_size=1000, greedy=True):
+    def run(self, temp=1.0, batch_size=1000, greedy=True):
         # model = self.model.to("cpu")
         model = self.model
         model.eval()
         
         samples = []
-        num_trials = 0
-        max_trials = 1000000
         
         with torch.no_grad():
             # prepare embeddings matrix
             embedder = self.get_embedder(model)
+            smiles, loader = self.load_test_data(batch_size)
             
-            while len(samples) < num_samples and num_trials < max_trials:
-                smiles, gens = self.generate(
+            for batch in loader:
+                gens = self.generate_batch(
+                    data=batch,
                     model=model, 
                     embedder=embedder, 
-                    temp=temp, 
-                    num_samples=num_samples, 
+                    temp=temp,
                     batch_size=batch_size,
                     greedy=greedy)
 
@@ -102,54 +93,24 @@ class Sampler:
                             mol = join_fragments(frags)
                             sample = Chem.MolToSmiles(mol)
                             # print(f"Val: {smi} - Sampled: {sample}")
-                            samples.append({
-                                "smi": smi, 
-                                "gen": sample,
-                                "sim": float(similarity(smi, sample))
-                            })
+                            samples.append({"smi": smi, "gen": sample})
                         except Exception as e:
                             # print(e, "Rejected.")
                             pass
                 
                 print(f"Sampled {len(samples)} molecules.")
-                num_trials += 1
             
-        return samples[:num_samples]          
+        return samples     
 
-    def pad(self, seqs, lengths):
-        dim_embed = self.hparams.frag_dim_embed
-        res = torch.zeros((len(lengths), self.max_length, dim_embed))
-        for i, seq in enumerate(seqs):
-            res[i, :lengths[i], :] = seq
-        return res
-
-    def generate(self, model, embedder, temp, num_samples, batch_size, greedy):
-        smiles, frags_list = self.load_test_data(batch_size=batch_size)
-        batch_size = min(batch_size, len(smiles))
+    def generate_batch(self, data, model, embedder, temp, batch_size, greedy):
+        frags, enc_inputs, dec_inputs = data
+        enc_hidden, enc_outputs = model.encode(frags, enc_inputs)
         
-        # prepare encoder inputs
-        seqs, bofs, lengths = [], [], []
-        for frags in frags_list:
-            idxs = torch.LongTensor([self.vocab[f] for f in frags])
-            seq = embedder(idxs)
-            bof = seq.sum(dim=0, keepdim=True)
-            input_seq = torch.cat([seq, self.dataset.eos], dim=0)
-            seqs.append(input_seq)
-            lengths.append(len(seq) + 1)
-            bofs.append(bof)
-        
-        bofs = torch.cat(bofs)
-        enc_inputs = self.pad(seqs, lengths)
-        
-        encoder = model.encoder
-        decoder = model.decoder
-        
-        enc_outputs, enc_hidden = encoder(enc_inputs)
+        batch_size = enc_outputs.size(0)
         
         h = enc_hidden
         o = enc_outputs
         sos = self.dataset.sos.repeat(batch_size, 1)
-        x = torch.cat([sos, bofs], dim=-1)
         x = x.view(batch_size, 1, -1)
             
         c = torch.zeros_like(x)
@@ -158,7 +119,7 @@ class Sampler:
         samples = torch.zeros((batch_size, self.max_length))
         
         for it in range(self.max_length):
-            logits, h, c, _ = decoder(x, h, o, c)
+            logits, h, c, _ = model.decoder(x, h, o, c)
             
             if greedy:
                 probs = torch.log_softmax(logits, dim=-1)
@@ -175,11 +136,10 @@ class Sampler:
             samples[:, it] = indexes 
             
             x = embedder(indexes)
-            x = torch.cat([x, bofs], dim=-1)
             x = x.view(batch_size, 1, -1)
             
         frags = self.translate(samples)
-        return smiles, frags
+        return frags
     
     def translate(self, samples):
         frags = []
@@ -190,61 +150,3 @@ class Sampler:
             vec = [int(i) for i in vec]
             frags.append([self.vocab[i] for i in vec])
         return frags   
-        
-    def run_batch(self, num_samples=1000, temp=1.0):
-        # model = self.model.to("cpu")
-        model = self.model
-        model.eval()
-        
-        S = self.max_length
-        V = len(self.vocab) + len(Tokens)
-        K = 5
-        
-        samples = []
-        
-        smiles, loader = self.prepare_data(num_samples)
-        
-        with torch.no_grad():
-            preds = []
-            for batch in loader:
-                logits = model(batch).view(-1, S, V)
-                probs = torch.softmax(logits / temp, dim=-1)
-                indexes = Categorical(probs=probs).sample() 
-                # indexes = torch.argmax(probs, dim=-1)
-                preds.append(indexes.squeeze())
-        
-            preds = torch.cat(preds, dim=0).cpu().numpy()
-        
-        samples = []
-        
-        disable_rdkit_log()
-        
-        for i, smi in enumerate(smiles):
-            idxs = [int(p) for p in preds[i] if p > len(Tokens)]
-            frags = [self.vocab[i - len(Tokens)] for i in idxs]
-            
-            if len(frags) >= 2:
-                frags = [Chem.MolFromSmiles(f) for f in frags]
-                
-                try:
-                    mol = join_fragments(frags)
-                    sample = Chem.MolToSmiles(mol)
-                    # print(f"Val: {smi} - Sampled: {sample}")
-                    
-                    
-                    samples.append({
-                        "smi": smi, 
-                        "gen": sample,
-                        "sim": float(similarity(smi, sample))
-                    })
-                    
-                    if len(samples) % 1000 == 0:
-                        print(f"Sampled {len(samples)} molecules.")
-                except Exception as e:
-                    print(e, "Rejected.")
-                    # pass
-        
-        enable_rdkit_log()
-        
-        return samples
-      

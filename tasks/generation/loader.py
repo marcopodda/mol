@@ -44,9 +44,8 @@ class MolecularDataLoader:
         self.dataset = dataset
         self.train_indices, self.val_indices = train_test_split(range(self.num_samples), test_size=0.1)
 
-    def collate(self, data_list):
-        mols, frags = zip(*data_list)
-        batch_size = len(mols)
+    def collate(self, frags):
+        batch_size = len(frags)
         
         cumsum = 0
         for i, frag in enumerate(frags):
@@ -54,14 +53,14 @@ class MolecularDataLoader:
             frag.frags_batch += cumsum
             cumsum += inc
         
-        lengths = [m.length.item() for m in mols]
+        lengths = [m.length.item() for m in frags]
         enc_inputs = torch.zeros((batch_size, self.dataset.max_length, self.hparams.frag_dim_embed))
         enc_inputs[:, lengths, :] = self.dataset.eos.repeat(batch_size, 1)
         
         dec_inputs = torch.zeros((batch_size, self.dataset.max_length, self.hparams.frag_dim_embed))
         dec_inputs[:, 0, :] = self.dataset.sos.repeat(batch_size, 1)
     
-        return Batch.from_data_list(mols), Batch.from_data_list(frags), enc_inputs, dec_inputs
+        return Batch.from_data_list(frags), enc_inputs, dec_inputs
 
     def get_train(self, batch_size=None):
         dataset = Subset(self.dataset, self.train_indices)

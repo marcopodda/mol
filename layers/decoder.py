@@ -60,7 +60,7 @@ class Decoder(nn.Module):
     
     def decode_with_attention(self, dec_inputs, enc_hidden, enc_outputs):
         B, S, V = dec_inputs.size()
-        h = enc_hidden
+        h = None  # enc_hidden
         
         outputs = []
         for i in range(S):

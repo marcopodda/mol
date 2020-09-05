@@ -40,7 +40,6 @@ class PLWrapper(pl.LightningModule):
         self.max_length = self.dataset.max_length
 
         self.model = Model(hparams, self.output_dir, len(self.dataset.vocab), self.max_length)
-        # self.ce = MaskedSoftmaxCELoss()
 
     def prepare_data(self):
         loader = MolecularDataLoader(self.hparams, self.dataset)
@@ -64,9 +63,9 @@ class PLWrapper(pl.LightningModule):
         return self.validation_loader
 
     def training_step(self, batch, batch_idx):
-        graphs_batch, frags_batch, _, _ = batch
+        frags_batch, _, _ = batch
         outputs = self.model(batch)
-        ce_loss = F.cross_entropy(outputs, graphs_batch.outseq.view(-1)) # , ignore_index=0)
+        ce_loss = F.cross_entropy(outputs, frags_batch.outseq.view(-1), ignore_index=0)
         logs = {"CE": ce_loss}
         return {"loss": ce_loss, "logs": logs, "progress_bar": logs}
     
@@ -76,9 +75,9 @@ class PLWrapper(pl.LightningModule):
         return {"log": logs, "progress_bar": logs}
 
     def validation_step(self, batch, batch_idx):
-        graphs_batch, frags_batch, _, _ = batch
+        frags_batch, _, _ = batch
         outputs = self.model(batch)
-        ce_loss = F.cross_entropy(outputs, graphs_batch.outseq.view(-1)) # , ignore_index=0)
+        ce_loss = F.cross_entropy(outputs, frags_batch.outseq.view(-1), ignore_index=0)
         return {"val_loss": ce_loss}
 
     def validation_epoch_end(self, outputs):

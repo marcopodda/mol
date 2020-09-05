@@ -10,7 +10,7 @@ from torch_geometric.utils import to_networkx, from_networkx
 
 from core.datasets.preprocess import get_data
 from core.datasets.features import mol2nx
-from core.datasets.utils import to_data, pad
+from core.datasets.utils import pad
 from core.utils.vocab import Tokens
 from core.utils.serialization import load_numpy, save_numpy
 
@@ -55,8 +55,7 @@ class MolecularDataset(data.Dataset):
     def __len__(self):
         return self.data.shape[0]
 
-    def __getitem__(self, index):
-        data = self.data.iloc[index]
+    def get_data(self, data):
         seq_len = data.length
         
         frags = [mol2nx(f) for f in data.frags]       
@@ -66,5 +65,11 @@ class MolecularDataset(data.Dataset):
         frags_graph["frags_batch"] = frags_batch
         frags_graph["length"] = torch.LongTensor([[len(frags)]])
         
-        mol_data = to_data(data, self.vocab, self.max_length)
-        return mol_data, frags_graph
+        outseq = [self.vocab[f] + len(Tokens) for f in data.frags] + [Tokens.EOS.value]
+        frags_graph["outseq"] = pad(outseq, self.max_length)
+        
+        return frags_graph
+
+    def __getitem__(self, index):
+        data = self.data.iloc[index]
+        return self.get_data(data)

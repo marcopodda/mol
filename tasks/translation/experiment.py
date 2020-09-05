@@ -99,7 +99,7 @@ def run(args):
         fast_dev_run=args.debug,
         logger=logger,
         gpus=gpu)
-    # path = output_dir.parent / "moses" / "generation" / "checkpoints" / "epoch=30.ckpt"
+    # path = output_dir.parent / "moses" / "generation" / "checkpoints" / "epoch=99.ckpt"
     # ckpt = GenerationPLWrapper.load_from_checkpoint(path.as_posix(), output_dir=output_dir.parent / "moses", name=args.dataset_name)
     train_model = PLWrapper(hparams, output_dir, args.dataset_name)
     # train_model.model.embedder.gnn = ckpt.model.embedder.gnn

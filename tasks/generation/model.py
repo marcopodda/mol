@@ -48,30 +48,28 @@ class Model(nn.Module):
             max_length=max_length,
             rnn_dropout=hparams.rnn_dropout,
             num_layers = hparams.rnn_num_layers,
-            dim_input=hparams.frag_dim_embed * 2,
+            dim_input=hparams.frag_dim_embed,
             dim_hidden=hparams.rnn_dim_state,
             dim_output=vocab_size + len(Tokens))
 
     def forward(self, batch):
-        x_batch, y_batch, enc_inputs, dec_inputs = batch
+        x_batch, enc_inputs, dec_inputs = batch
         
         enc_inputs = self.embedder(x_batch, enc_inputs, input=False)
-        bof = self.compute_bof(x_batch, enc_inputs)
         enc_inputs = F.dropout(enc_inputs, p=self.embedding_dropout, training=self.training)
         enc_outputs, enc_hidden = self.encoder(enc_inputs)
         
-        dec_inputs = self.embedder(y_batch, dec_inputs, input=True)
-        dec_inputs = torch.cat([dec_inputs, bof.repeat(1, dec_inputs.size(1), 1)], dim=-1)
+        dec_inputs = self.embedder(x_batch, dec_inputs, input=True)
         dec_inputs = F.dropout(dec_inputs, p=self.embedding_dropout, training=self.training)
-
         return self.decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
     
-    def compute_bof(self, batch, enc_inputs):
-        B, S, D = enc_inputs.size()
+    def encode(self, frags_batch, enc_inputs):
+        enc_inputs = self.embedder(frags_batch, enc_inputs, input=False)
+        enc_inputs = F.dropout(enc_inputs, p=self.embedding_dropout, training=self.training)
+        enc_outputs, enc_hidden = self.encoder(enc_inputs)
+        return enc_hidden, enc_outputs
         
-        bofs = []
-        for i, l in enumerate(batch.length):
-            bof = enc_inputs[i, :l, :].sum(dim=0, keepdim=True)
-            bofs.append(bof)
-        
-        return torch.cat(bofs, dim=0).view(B, 1, -1)
+    def decode(self, frags_batch, enc_hidden, enc_outputs, dec_inputs):
+        dec_inputs = self.embedder(frags_batch, dec_inputs, input=True)
+        dec_inputs = F.dropout(dec_inputs, p=self.embedding_dropout, training=self.training)
+        return self.decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
