@@ -86,7 +86,7 @@ class PLWrapper(pl.LightningModule):
 
 
 def load_embedder(hparams, output_dir, dataset_name):
-    pretraining_dir = output_dir.parent / dataset_name / "pretraining" / "checkpoints"
+    pretraining_dir = output_dir.parent / "moses" / "pretraining" / "checkpoints"
     path = sorted(pretraining_dir.glob("*.ckpt"))[-1]
     pretrainer = PretrainingPLWrapper.load_from_checkpoint(
         path.as_posix(), 
