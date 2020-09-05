@@ -95,9 +95,9 @@ class Sampler:
                             # print(f"Val: {smi} - Sampled: {sample}")
                             samples.append({
                                 "smi": smi, 
-                                "drd2_smi": drd2(smi),
+                                "smi_drd2": drd2(smi),
                                 "gen": sample,
-                                "drd2_sample": drd2(sample)
+                                "gen_drd2": drd2(sample)
                             })
                         except Exception as e:
                             # print(e, "Rejected.")
