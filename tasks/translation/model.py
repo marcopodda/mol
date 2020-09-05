@@ -53,17 +53,21 @@ class Model(nn.Module):
             dim_output=vocab_size + len(Tokens))
 
     def forward(self, batch):
-        graphs_batch, frags_batch, enc_inputs, dec_inputs = batch
-        
+        frags_x, frags_y, enc_inputs, dec_inputs = batch
+        bof, enc_hidden, enc_outputs = self.encode(frags_x, enc_inputs)
+        return self.decode(frags_y, bof, enc_hidden, enc_outputs, dec_inputs)
+    
+    def encode(self, frags_batch, enc_inputs):
         enc_inputs = self.embedder(frags_batch, enc_inputs, input=False)
         bof = self.compute_bof(frags_batch, enc_inputs)
         enc_inputs = F.dropout(enc_inputs, p=self.embedding_dropout, training=self.training)
         enc_outputs, enc_hidden = self.encoder(enc_inputs)
+        return bof, enc_hidden, enc_outputs
         
+    def decode(self, frags_batch, bof, enc_hidden, enc_outputs, dec_inputs):
         dec_inputs = self.embedder(frags_batch, dec_inputs, input=True)
         dec_inputs = torch.cat([dec_inputs, bof.repeat(1, dec_inputs.size(1), 1)], dim=-1)
         dec_inputs = F.dropout(dec_inputs, p=self.embedding_dropout, training=self.training)
-
         return self.decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
     
     def compute_bof(self, batch, enc_inputs):

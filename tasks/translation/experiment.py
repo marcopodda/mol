@@ -21,6 +21,7 @@ from core.utils.os import get_or_create_dir
 from layers.maskedce import MaskedSoftmaxCELoss, sequence_mask
 from tasks.translation.dataset import TranslationDataset
 from tasks.translation.loader import TranslationDataLoader
+from tasks.translation.sampler import Sampler
 from .model import Model
 
 
@@ -99,4 +100,27 @@ def run(args):
         gpus=gpu)
     train_model = PLWrapper(hparams, output_dir, args.dataset_name)
     trainer.fit(train_model)
+        
+
+def run_sampling(output_dir, dataset_name, epoch=None, temp=1.0, batch_size=1000, greedy=True):
+    assert epoch >= 1
+    output_dir = Path(output_dir)
+    task_dir = output_dir / "translation"
+    ckpt_dir = task_dir / "checkpoints"
+    samples_dir = get_or_create_dir(task_dir / "samples")
+    
+    all_samples = []
+    epoch = (epoch - 1) or "*"
+    
+    for i, checkpoint_name in enumerate(ckpt_dir.glob(f"epoch={epoch}.ckpt")):
+        index = (i + 1) if epoch == "*" else (epoch + 1)
+        sample_path = samples_dir / f"samples_{index}.yml"
+        
+        if not sample_path.exists():
+            print(f"processing {sample_path}...")
+            plw = PLWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
+            sampler = Sampler(plw.model, plw.dataset)
+            samples = sampler.run(temp=temp, batch_size=batch_size, greedy=greedy)
+            save_yaml(samples, sample_path)
+        
         
