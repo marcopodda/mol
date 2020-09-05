@@ -18,7 +18,7 @@ from core.utils.vocab import Tokens
 from core.utils.serialization import load_yaml, save_yaml
 
 from tasks.pretraining.loader import PretrainingDataLoader
-from tasks.pretraining.dataset import PretrainingDataset, VocabDataset
+from tasks.pretraining.dataset import VocabDataset
 
 
 class Sampler:
@@ -31,7 +31,7 @@ class Sampler:
         self.max_length = dataset.max_length
     
     def load_test_data(self, batch_size=128):
-        loader = TranslationDataLoader(self.hparams, self.dataset)
+        loader = PretrainingDataLoader(self.hparams, self.dataset)
         indices = np.random.choice(self.dataset.val_indices, 1000)
         smiles = self.dataset.data.loc[indices].smiles.tolist()
         return smiles, loader.get_val(batch_size=batch_size)
