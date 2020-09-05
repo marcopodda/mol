@@ -90,7 +90,7 @@ def load_embedder(hparams, output_dir, dataset_name):
     path = sorted(pretraining_dir.glob("*.ckpt"))[-1]
     pretrainer = PretrainingPLWrapper.load_from_checkpoint(
         path.as_posix(), 
-        output_dir=output_dir.parent / dataset_name, 
+        output_dir=output_dir.parent / "moses", 
         name=dataset_name)
     return pretrainer.model.embedder.gnn
 
