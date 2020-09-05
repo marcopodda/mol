@@ -32,7 +32,8 @@ class Sampler:
     
     def load_test_data(self, batch_size=128):
         loader = TranslationDataLoader(self.hparams, self.dataset)
-        smiles = self.dataset.data.loc[self.dataset.val_indices].smiles.tolist()
+        indices = np.random.choice(self.dataset.val_indices, 1000)
+        smiles = self.dataset.data.loc[indices].smiles.tolist()
         return smiles, loader.get_val(batch_size=batch_size)
         
     def get_embedder(self, model):
