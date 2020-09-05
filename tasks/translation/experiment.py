@@ -22,7 +22,7 @@ from layers.maskedce import MaskedSoftmaxCELoss, sequence_mask
 from tasks.translation.dataset import TranslationDataset
 from tasks.translation.loader import TranslationDataLoader
 from tasks.translation.sampler import Sampler
-from tasks.generation.experiment import PLWrapper as GenerationPLWrapper
+from tasks.pretraining.experiment import PLWrapper as PretrainingPLWrapper
 from .model import Model
 
 
@@ -85,6 +85,16 @@ class PLWrapper(pl.LightningModule):
     #     return {"log": logs, "progress_bar": logs}
 
 
+def load_embedder(hparams, output_dir, dataset_name):
+    pretraining_dir = output_dir.parent / dataset_name / "pretraining" / "checkpoints"
+    path = sorted(pretraining_dir.glob("*.ckpt"))[-1]
+    pretrainer = PretrainingPLWrapper.load_from_checkpoint(
+        path.as_posix(), 
+        output_dir=output_dir.parent / dataset_name, 
+        name=dataset_name)
+    return pretrainer.model.embedder.gnn
+
+
 def run(args):
     output_dir = Path(args.output_dir)
     gpu = args.gpu if torch.cuda.is_available() else None
@@ -99,10 +109,9 @@ def run(args):
         fast_dev_run=args.debug,
         logger=logger,
         gpus=gpu)
-    # path = output_dir.parent / "moses" / "generation" / "checkpoints" / "epoch=99.ckpt"
-    # ckpt = GenerationPLWrapper.load_from_checkpoint(path.as_posix(), output_dir=output_dir.parent / "moses", name=args.dataset_name)
     train_model = PLWrapper(hparams, output_dir, args.dataset_name)
-    # train_model.model.embedder.gnn = ckpt.model.embedder.gnn
+    gnn = load_embedder(hparams, output_dir, args.dataset_name)
+    train_model.model.embedder.gnn = gnn
     trainer.fit(train_model)
         
 

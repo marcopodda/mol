@@ -18,7 +18,7 @@ def convert_metrics_dict(metrics_dict):
 def score(output_dir, epoch, n_jobs=40):
     assert epoch >= 1
     output_dir = Path(output_dir)
-    samples_dir = output_dir / "generation" / "samples"
+    samples_dir = output_dir / "pretraining" / "samples"
     vocab = Vocab.from_file(output_dir / "DATA" / "vocab.csv")
     samples_path = samples_dir / f"samples_{epoch}.yml"
     
