@@ -22,6 +22,7 @@ from layers.maskedce import MaskedSoftmaxCELoss, sequence_mask
 from tasks.translation.dataset import TranslationDataset
 from tasks.translation.loader import TranslationDataLoader
 from tasks.translation.sampler import Sampler
+from tasks.generation.experiment import PLWrapper as GenerationPLWrapper
 from .model import Model
 
 
@@ -99,9 +100,8 @@ def run(args):
         logger=logger,
         gpus=gpu)
     path = output_dir.parent / "moses" / "generation" / "checkpoints" / "epoch=30.ckpt"
-    ckpt = PLWrapper.load_from_checkpoint(path.as_posix(), output_dir=output_dir, name=args.dataset_name)
+    ckpt = GenerationPLWrapper.load_from_checkpoint(path.as_posix(), output_dir=output_dir, name=args.dataset_name)
     train_model = PLWrapper(hparams, output_dir, args.dataset_name)
-    print([(k, v.size()) for (k, v) in ckpt.model.embedder.gnn.state_dict()])
     train_model.model.embedder.gnn = ckpt.model.embedder.gnn
     trainer.fit(train_model)
         
