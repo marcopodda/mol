@@ -47,7 +47,7 @@ def clean_molecule(smi):
     datadict = {}
 
     try:
-        smi = standardize_smiles(smi)
+        # smi = standardize_smiles(smi)
         mol = Chem.MolFromSmiles(smi)
         if filter_mol(mol):
             frags = split_molecule(mol)
