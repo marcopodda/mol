@@ -98,7 +98,7 @@ def run(args):
         fast_dev_run=args.debug,
         logger=logger,
         gpus=gpu)
-    ckpt = PLWrapper.load_from_checkpoint(output_dir / "generation" / "checkpoints" / "epoch=30.ckpt", output_dir=output_dir, dataset_name=args.dataset_name)
+    ckpt = PLWrapper.load_from_checkpoint(output_dir.parent / "moses" / "generation" / "checkpoints" / "epoch=30.ckpt", output_dir=output_dir, dataset_name=args.dataset_name)
     train_model = PLWrapper(hparams, output_dir, args.dataset_name)
     train_model.model.embedder = ckpt.model.embedder
     trainer.fit(train_model)
