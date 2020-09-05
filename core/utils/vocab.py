@@ -15,15 +15,6 @@ class Tokens(Enum):
     MASK = 3
 
 
-def compute_most_similar(frag, other_frags):
-    other_frags.remove(frag)
-    sim = np.array(bulk_tanimoto(frag, other_frags))
-    second_best, best = np.unique(sorted(sim)).tolist()[-2:]
-    best_idxs = np.where(sim == best)[0]
-    second_best_idxs = np.where(sim == second_best)[0]
-    return frag, [other_frags[i] for i in best_idxs], [other_frags[i] for i in second_best_idxs]
-
-
 class Vocab:
     @classmethod
     def from_file(cls, filename):
@@ -31,14 +22,9 @@ class Vocab:
         
         data = pd.read_csv(filename, index_col=0)
         
-        vocab.most_similar_1 = [None] * data.shape[0]
-        vocab.most_similar_2 = [None] * data.shape[0]
-
         for idx, smi in data.smiles.iteritems():
             vocab._frag2idx[smi] = idx
             vocab._idx2frag[idx] = smi
-            vocab.most_similar_1[idx] = eval(data.most_similar_1.iloc[idx])
-            vocab.most_similar_2[idx] = eval(data.most_similar_2.iloc[idx])
             
         vocab._freq = data.freqs.to_dict()
         return vocab
@@ -47,8 +33,6 @@ class Vocab:
         self._freq = {}
         self._frag2idx = {}
         self._idx2frag = {}
-        self.most_similar_1 = []
-        self.most_similar_2 = []
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -82,9 +66,7 @@ class Vocab:
         freqs = list(self._freq.values())
         df = pd.DataFrame.from_dict({
             "smiles": smiles, 
-            "freqs": freqs, 
-            "most_similar_1": self.most_similar_1, 
-            "most_similar_2": self.most_similar_2})
+            "freqs": freqs})
         df.index = idx
         return df
 

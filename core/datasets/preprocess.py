@@ -12,11 +12,11 @@ from molvs import standardize_smiles
 from core.datasets.download import fetch_dataset
 from core.datasets.utils import load_csv_data
 from core.datasets.features import ATOM_FEATURES
-from core.utils.vocab import Vocab, compute_most_similar
+from core.utils.vocab import Vocab
 from core.mols.props import get_props_data
 from core.mols.fragmentation import fragment
 from core.mols.split import split_molecule
-from core.utils.os import get_or_create_dir
+from core.utils.os import get_or_create_dir, dir_is_empty
 from core.utils.misc import get_n_jobs
 from core.utils.serialization import load_yaml
 
@@ -31,15 +31,70 @@ def get_dataset_info(name):
     return load_yaml(path)
 
 
-def clean_ZINC(raw_data):
+def clean_ZINC(raw_dir, info):
+    raw_data_path = raw_dir / info["filename"]
+    raw_data = pd.read_csv(raw_data_path, **info["parse_args"])
     raw_data = raw_data.replace(r'\n', '', regex=True)
     return raw_data[:500]
+
 
 def postprocess_ZINC(cleaned_data, raw_data):
     return cleaned_data
 
 
-def clean_MolPort(raw_data):
+def clean_drd2(raw_dir, info):
+    file_names = ["train_pairs.txt", "valid.txt", "test.txt"]
+    
+    
+    raw_data_path = raw_dir / "train_pairs.txt"
+    raw_data = pd.read_csv(raw_data_path, names=["x", "y"], **info["parse_args"])[:100]
+    
+    all_smiles, is_x, is_y, is_valid, is_test = [], [], [], [], []
+    
+    all_smiles += raw_data.x.tolist()
+    is_x += [1] * raw_data.shape[0]
+    is_y += [0] * raw_data.shape[0]
+    is_valid += [0] * raw_data.shape[0]
+    is_test += [0] * raw_data.shape[0]
+    
+    all_smiles += raw_data.y.tolist()
+    is_x += [0] * raw_data.shape[0]
+    is_y += [1] * raw_data.shape[0]
+    is_valid += [0] * raw_data.shape[0]
+    is_test += [0] * raw_data.shape[0]
+    
+    raw_data_path = raw_dir / "valid.txt"
+    raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])[:100]
+    
+    all_smiles += raw_data.smiles.tolist()
+    is_x += [0] * raw_data.shape[0]
+    is_y += [0] * raw_data.shape[0]
+    is_valid += [1] * raw_data.shape[0]
+    is_test += [0] * raw_data.shape[0]
+    
+    raw_data_path = raw_dir / "test.txt"
+    raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])[:100]
+    
+    all_smiles += raw_data.smiles.tolist()
+    is_x += [0] * raw_data.shape[0]
+    is_y += [0] * raw_data.shape[0]
+    is_valid += [0] * raw_data.shape[0]
+    is_test += [1] * raw_data.shape[0]
+    
+    return pd.DataFrame({"smiles": all_smiles, "is_x": is_x, "is_y": is_y, "is_valid": is_valid, "is_test": is_test})
+
+
+def postprocess_drd2(cleaned_data, raw_data):
+    cleaned_data["is_x"] = raw_data.is_x
+    cleaned_data["is_y"] = raw_data.is_y
+    cleaned_data["is_valid"] = raw_data.is_valid
+    cleaned_data["is_test"] = raw_data.is_test
+    return cleaned_data
+
+
+def clean_MolPort(raw_dir, info):
+    raw_data_path = raw_dir / info["filename"]
+    raw_data = pd.read_csv(raw_data_path, **info["parse_args"])
     raw_data.columns = ["smiles", "molPortID", "url"]
     return raw_data
 
@@ -48,7 +103,9 @@ def postprocess_MolPort(cleaned_data, raw_data):
     return cleaned_data
 
 
-def clean_ChEMBL(raw_data):
+def clean_ChEMBL(raw_dir, info):
+    raw_data_path = raw_dir / info["filename"]
+    raw_data = pd.read_csv(raw_data_path, **info["parse_args"])
     raw_data.columns = ["smiles"]
     return raw_data
 
@@ -57,7 +114,9 @@ def postprocess_CHEMBL(cleaned_data, raw_data):
     return cleaned_data
 
 
-def clean_moses(raw_data):
+def clean_moses(raw_dir, info):
+    raw_data_path = raw_dir / info["filename"]
+    raw_data = pd.read_csv(raw_data_path, **info["parse_args"])
     return raw_data
 
 
@@ -65,7 +124,9 @@ def postprocess_moses(cleaned_data, raw_data):
     return cleaned_data
 
 
-def clean_AID1706(raw_data):
+def clean_AID1706(raw_dir, info):
+    raw_data_path = raw_dir / info["filename"]
+    raw_data = pd.read_csv(raw_data_path, **info["parse_args"])
     return raw_data
 
 
@@ -91,7 +152,6 @@ def clean_molecule(smi):
     try:
         smi = standardize_smiles(smi)
         mol = Chem.MolFromSmiles(smi)
-        data = {}
         if filter_mol(mol):
             frags = split_molecule(mol)
             length = len(frags)
@@ -101,35 +161,24 @@ def clean_molecule(smi):
                 datadict.update(**get_props_data(mol))
                 datadict.update(frags=[Chem.MolToSmiles(f) for f in frags])
                 datadict.update(length=length)
-        return datadict
-    except Exception as e:
-        print(e)
-        return datadict
+    except:
+        print(f"Couldn't process {smi}.")
+       
+    return datadict
 
 
 def process_data(smiles, n_jobs):
     P = Parallel(n_jobs=n_jobs, verbose=1)
     data = P(delayed(clean_molecule)(smi) for smi in smiles)
-    return pd.DataFrame(data).dropna()
+    return pd.DataFrame(data).dropna().reset_index(drop=True)
 
 
 def populate_vocab(df, n_jobs):
     print("Create vocab...", end=" ")
     vocab = Vocab()
+    
     for _, frags in df.frags.iteritems():
         [vocab.update(f) for f in frags]
-    print("Done.")
-    
-    print("Computing similarities...")
-    vocab.most_similar_1 = [None] * len(vocab)
-    vocab.most_similar_2 = [None] * len(vocab)
-    
-    P = Parallel(n_jobs=-1, verbose=1)
-    frags = list(vocab._frag2idx.keys())
-    results = P(delayed(compute_most_similar)(f, frags) for f in vocab._frag2idx)
-    for frag, ms1, ms2 in results:
-        vocab.most_similar_1[vocab._frag2idx[frag]] = ms1
-        vocab.most_similar_2[vocab._frag2idx[frag]] = ms2
     print("Done.")
     
     return vocab
@@ -142,24 +191,14 @@ def get_vocab(df, path):
     for _, frags in df.frags.iteritems():
         [new_vocab.update(f) for f in frags]
     
-    new_vocab.most_similar_1 = [None] * len(new_vocab)
-    new_vocab.most_similar_2 = [None] * len(new_vocab)
-    
-    for frag, idx in new_vocab._frag2idx.items():
-        ms1 = vocab.most_similar_1[vocab._frag2idx[frag]]
-        new_vocab.most_similar_1[idx] = ms1
-        ms2 = vocab.most_similar_2[vocab._frag2idx[frag]]
-        new_vocab.most_similar_2[idx] = ms2
-    
     return new_vocab
     
 
 def run_preprocess(dataset_name):
     info = get_dataset_info(dataset_name)
     raw_dir = get_or_create_dir(DATA_DIR / dataset_name / "RAW")
-    raw_data_path = raw_dir / info["filename"]
 
-    if not raw_data_path.exists():
+    if not raw_dir.exists() or dir_is_empty(raw_dir):
         fetch_dataset(info, dest_dir=raw_dir)
 
     processed_dir = get_or_create_dir(DATA_DIR / dataset_name / "PROCESSED")
@@ -169,11 +208,11 @@ def run_preprocess(dataset_name):
     if not processed_data_path.exists():
         n_jobs = get_n_jobs()
         clean_fn = globals()[f"clean_{dataset_name}"]
-        data = clean_fn(pd.read_csv(raw_data_path, sep=info["sep"]))
+        data = clean_fn(raw_dir, info)
         cleaned_data = process_data(data[info["smiles_col"]], n_jobs)
         postprocess_fn = globals()[f"postprocess_{dataset_name}"]
         cleaned_data = postprocess_fn(cleaned_data, data)
-        cleaned_data = cleaned_data.dropna()
+        cleaned_data = cleaned_data.dropna().reset_index(drop=True)
         cleaned_data.to_csv(processed_data_path)
         if not processed_vocab_path.exists():
             vocab = populate_vocab(cleaned_data, n_jobs)
