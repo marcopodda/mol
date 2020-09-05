@@ -99,7 +99,7 @@ def run(args):
         logger=logger,
         gpus=gpu)
     path = output_dir.parent / "moses" / "generation" / "checkpoints" / "epoch=30.ckpt"
-    ckpt = PLWrapper.load_from_checkpoint(path.as_posix(), output_dir=output_dir, dataset_name=args.dataset_name)
+    ckpt = PLWrapper.load_from_checkpoint(path.as_posix(), output_dir=output_dir, name=args.dataset_name)
     train_model = PLWrapper(hparams, output_dir, args.dataset_name)
     train_model.model.embedder = ckpt.model.embedder
     trainer.fit(train_model)
