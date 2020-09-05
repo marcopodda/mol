@@ -100,7 +100,7 @@ def run(args):
         gpus=gpu)
     ckpt = PLWrapper.load_from_checkpoint(output_dir / "generation" / "checkpoints" / "epoch=30.ckpt", output_dir=output_dir, dataset_name=args.dataset_name)
     train_model = PLWrapper(hparams, output_dir, args.dataset_name)
-    train_model.embedder = ckpt.model.embedder
+    train_model.model.embedder = ckpt.model.embedder
     trainer.fit(train_model)
         
 
