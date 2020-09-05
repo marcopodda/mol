@@ -44,7 +44,7 @@ class PLWrapper(pl.LightningModule):
     def prepare_data(self):
         loader = MolecularDataLoader(self.hparams, self.dataset)
         indices_path = get_or_create_dir(self.output_dir / "generation" / "logs")
-        save_yaml(loader.val_indices, indices_path / "val_indices.yml")
+        save_yaml(self.dataset.val_indices, indices_path / "val_indices.yml")
         self.training_loader = loader.get_train()
         self.validation_loader = loader.get_val()
 
