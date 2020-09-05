@@ -17,8 +17,8 @@ from core.datasets.utils import get_graph_data
 from core.utils.vocab import Tokens
 from core.utils.serialization import load_yaml, save_yaml
 
-from tasks.pretraining.loader import MolecularDataLoader
-from tasks.pretraining.dataset import MolecularDataset, VocabDataset
+from tasks.pretraining.loader import PretrainingDataLoader
+from tasks.pretraining.dataset import PretrainingDataset, VocabDataset
 
 
 class Sampler:

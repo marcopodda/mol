@@ -28,7 +28,7 @@ class VocabDataset(data.Dataset):
         return len(self.vocab)
 
 
-class MolecularDataset(data.Dataset):
+class PretrainingDataset(data.Dataset):
     def __init__(self, hparams, output_dir, name):
         super().__init__()
         

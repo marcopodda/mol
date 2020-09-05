@@ -25,7 +25,7 @@ def collate(data_list, dataset, hparams):
     return Batch.from_data_list(mols), Batch.from_data_list(frags), enc_inputs, dec_inputs
 
 
-class MolecularDataLoader:
+class PretrainingDataLoader:
     r"""Data loader which merges data objects from a
     :class:`torch_geometric.data.dataset` to a mini-batch.
 

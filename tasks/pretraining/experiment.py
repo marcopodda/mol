@@ -19,8 +19,8 @@ from core.utils.vocab import Tokens
 from core.utils.serialization import save_yaml
 from core.utils.os import get_or_create_dir
 from layers.maskedce import MaskedSoftmaxCELoss, sequence_mask
-from tasks.pretraining.dataset import MolecularDataset
-from tasks.pretraining.loader import MolecularDataLoader
+from tasks.pretraining.dataset import PretrainingDataset
+from tasks.pretraining.loader import PretrainingDataLoader
 from .model import Model
 from .sampler import Sampler
 
@@ -36,13 +36,13 @@ class PLWrapper(pl.LightningModule):
         self.output_dir = output_dir
         self.name = name
 
-        self.dataset = MolecularDataset(hparams, output_dir, name)
+        self.dataset = PretrainingDataset(hparams, output_dir, name)
         self.max_length = self.dataset.max_length
 
         self.model = Model(hparams, self.output_dir, len(self.dataset.vocab), self.max_length)
 
     def prepare_data(self):
-        loader = MolecularDataLoader(self.hparams, self.dataset)
+        loader = PretrainingDataLoader(self.hparams, self.dataset)
         indices_path = get_or_create_dir(self.output_dir / "pretraining" / "logs")
         save_yaml(self.dataset.val_indices, indices_path / "val_indices.yml")
         self.training_loader = loader.get_train()
