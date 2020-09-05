@@ -59,7 +59,8 @@ def clean_molecule(smi):
                 datadict.update(frags=[Chem.MolToSmiles(f) for f in frags])
                 datadict.update(length=length)
     except Exception as e:
-        print(f"Couldn't process {smi}:", e)
+        pass
+        # print(f"Couldn't process {smi}:", e)
        
     return datadict
 

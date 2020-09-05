@@ -76,7 +76,8 @@ def create_chain(splits):
     
     splits_ids = np.asarray(
         [sorted([a.GetAtomicNum() for a in m.GetAtoms()
-              if a.GetAtomicNum() >= MOL_SPLIT_START]) for m in splits], dtype=object)
+              if a.GetAtomicNum() >= MOL_SPLIT_START]) for m in splits])
+    
 
     splits_ids = \
         [sorted([a.GetAtomicNum() for a in m.GetAtoms()
