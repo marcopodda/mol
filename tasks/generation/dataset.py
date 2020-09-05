@@ -8,6 +8,8 @@ from torch.utils import data
 from torch_geometric.data import Batch
 from torch_geometric.utils import to_networkx, from_networkx
 
+from sklearn.model_selection import train_test_split
+
 from core.datasets.preprocess import get_data
 from core.datasets.features import mol2nx
 from core.datasets.utils import pad
@@ -38,6 +40,8 @@ class MolecularDataset(data.Dataset):
         self.name = name
         
         self.data, self.vocab = get_data(output_dir, name, hparams.num_samples)
+        self.num_samples = self.data.shape[0]
+        self.train_indices, self.val_indices = train_test_split(range(self.num_samples), test_size=0.1)
         self.max_length = self.data.length.max() + 1
         
         self.sos = self._initialize_token("sos")

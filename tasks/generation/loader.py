@@ -40,9 +40,7 @@ class MolecularDataLoader:
     """
     def __init__(self, hparams, dataset):
         self.hparams = hparams
-        self.num_samples = len(dataset)
         self.dataset = dataset
-        self.train_indices, self.val_indices = train_test_split(range(self.num_samples), test_size=0.1)
 
     def collate(self, frags):
         batch_size = len(frags)
@@ -63,7 +61,7 @@ class MolecularDataLoader:
         return Batch.from_data_list(frags), enc_inputs, dec_inputs
 
     def get_train(self, batch_size=None):
-        dataset = Subset(self.dataset, self.train_indices)
+        dataset = Subset(self.dataset, self.dataset.train_indices)
         batch_size = batch_size or self.hparams.batch_size
         return DataLoader(
             dataset=dataset,
@@ -74,7 +72,7 @@ class MolecularDataLoader:
             num_workers=self.hparams.num_workers)
 
     def get_val(self, batch_size=None):
-        dataset = Subset(self.dataset, self.val_indices)
+        dataset = Subset(self.dataset, self.dataset.val_indices)
         batch_size = batch_size or self.hparams.batch_size
         return DataLoader(
             dataset=dataset,

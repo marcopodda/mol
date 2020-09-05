@@ -25,8 +25,7 @@ class Encoder(nn.Module):
         output, hidden = self.gru(x)
 
         batch_size = output.size(0)
-        hidden = hidden.view(self.num_layers, 2, batch_size, self.dim_hidden)
-        hidden = hidden.sum(dim=1)
-
+        hidden = hidden.view(self.num_layers, 2, batch_size, self.dim_hidden).sum(dim=1)
+        # hidden = torch.cat([hidden[:, 0, :, :], hidden[:, 1, :, :]])
         output = output[:,:,:self.dim_hidden] + output[:,:,self.dim_hidden:]
         return output, hidden

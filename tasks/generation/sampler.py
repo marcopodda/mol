@@ -110,10 +110,8 @@ class Sampler:
         
         h = enc_hidden
         o = enc_outputs
-        sos = self.dataset.sos.repeat(batch_size, 1)
-        x = x.view(batch_size, 1, -1)
-            
-        c = torch.zeros_like(x)
+        x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1)
+        c = torch.zeros((batch_size, 1, self.hparams.rnn_dim_state), device=x.device)
         
         sample, eos_found = [], True
         samples = torch.zeros((batch_size, self.max_length))
