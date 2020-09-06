@@ -52,12 +52,12 @@ def _clean_translation_dataset(raw_dir, info):
     
 def _fix_consistency(df):
     x_data = df[df.is_x==1]
-    safe = []
+    mark = []
     for index, row in x_data.iterrows():
         y_data = df[(df.smiles==row.target) & (df.is_y==1)]
-        if y_data.shape[0] == 1:
-            safe.append(row.smiles)
-    safe_data = df[df.smiles.isin(safe)]
+        if y_data.shape[0] == 0:
+            mark.append(row.smiles)
+    safe_data = df[~df.smiles.isin(mark)]
     return safe_data.reset_index(drop=True)
 
 
