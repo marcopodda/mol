@@ -38,7 +38,11 @@ def transfer(train_model, output_dir, args):
         output_dir=output_dir.parent / args.pretrain_from, 
         name=args.dataset_name)
     train_model.model.embedder = pretrainer.model.embedder
+    train_model.model.embedder.train(False)
     train_model.model.encoder = pretrainer.model.encoder
+    train_model.model.encoder.train(False)
+    train_model.model.decoder.gru = pretrainer.model.decoder.gru
+    train_model.model.decoder.gru.train(False)
     return train_model
 
 
