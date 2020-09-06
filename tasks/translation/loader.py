@@ -19,7 +19,7 @@ class TranslationDataLoader:
             batch_size=batch_size,
             shuffle=True,
             pin_memory=True,
-            num_workers=self.hparams.num_workers)
+            num_workers=0) # self.hparams.num_workers)
 
     def get_val(self, batch_size=None):
         dataset = Subset(self.dataset, self.dataset.val_indices)
