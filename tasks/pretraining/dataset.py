@@ -14,7 +14,7 @@ from core.datasets.preprocess import get_data
 from core.datasets.features import mol2nx
 from core.datasets.utils import pad, to_data
 from core.utils.vocab import Tokens
-from core.utils.serialization import load_numpy, save_numpy
+from core.utils.serialization import load_numpy, save_numpy, load_yaml, save_yaml
 
 
 class VocabDataset(data.Dataset):
@@ -40,12 +40,25 @@ class PretrainingDataset(data.Dataset):
         self.name = name
         
         self.data, self.vocab = get_data(output_dir, name, hparams.num_samples)
-        self.num_samples = self.data.shape[0]
-        self.train_indices, self.val_indices = train_test_split(range(self.num_samples), test_size=0.1)
+        self.load_indices()
+        
         self.max_length = self.data.length.max() + 1
         
         self.sos = self._initialize_token("sos")
         self.eos = self._initialize_token("eos")
+    
+    def load_indices(self):
+        train_indices_path = output_dir / "pretraining" / "logs" / "train_indices.yml"
+        val_indices_path = output_dir / "pretraining" / "logs" / "val_indices.yml"
+        if train_indices_path.exists():
+            self.train_indices = load_yaml(train_indices_path)
+            self.val_indices = load_yaml(val_indices_path)
+        else:
+            train_indices, val_indices = train_test_split(range(self.data.shape[0]), test_size=0.1)
+            self.train_indices = train_indices.tolist()
+            self.val_indices = val_indices.tolist()
+            save_yaml(self.train_indices, train_indices_path)
+            save_yaml(self.val_indices, val_indices_path)
     
     def _initialize_token(self, name):
         path = self.output_dir / "DATA" / f"{name}_{self.hparams.frag_dim_embed}.dat"    
