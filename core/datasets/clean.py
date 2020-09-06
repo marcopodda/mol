@@ -3,7 +3,7 @@ import pandas as pd
 
 def _clean_translation_dataset(raw_dir, info):
     raw_data_path = raw_dir / "train_pairs.txt"
-    raw_data = pd.read_csv(raw_data_path, names=["x", "y"], **info["parse_args"])
+    raw_data = pd.read_csv(raw_data_path, names=["x", "y"], **info["parse_args"])[:100]
     
     all_smiles, targets, is_x, is_y, is_valid, is_test = [], [], [], [], [], []
     
@@ -22,7 +22,7 @@ def _clean_translation_dataset(raw_dir, info):
     is_test += [0] * raw_data.shape[0]
     
     raw_data_path = raw_dir / "valid.txt"
-    raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])
+    raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])[:100]
     
     all_smiles += raw_data.smiles.tolist()
     targets += ["*"] * raw_data.shape[0]
@@ -32,7 +32,7 @@ def _clean_translation_dataset(raw_dir, info):
     is_test += [0] * raw_data.shape[0]
     
     raw_data_path = raw_dir / "test.txt"
-    raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])
+    raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])[:100]
     
     all_smiles += raw_data.smiles.tolist()
     targets += ["*"] * raw_data.shape[0]
@@ -48,6 +48,17 @@ def _clean_translation_dataset(raw_dir, info):
         "is_y": is_y, 
         "is_valid": is_valid, 
         "is_test": is_test})
+    
+    
+def _fix_consistency(df):
+    x_data = df[df.is_x==1]
+    safe = []
+    for index, row in x_data.iterrows():
+        y_data = df[(df.smiles==row.target) & (df.is_y==1)]
+        if y_data.shape[0] == 1:
+            safe.append(row.smiles)
+    safe_data = df[df.smiles.isin(safe)]
+    return safe_data.reset_index(drop=True)
 
 
 def _postprocess_translation_dataset(cleaned_data, raw_data):
@@ -56,7 +67,7 @@ def _postprocess_translation_dataset(cleaned_data, raw_data):
     cleaned_data["is_y"] = raw_data.is_y
     cleaned_data["is_valid"] = raw_data.is_valid
     cleaned_data["is_test"] = raw_data.is_test
-    return cleaned_data
+    return _fix_consistency(cleaned_data)
 
 
 def clean_ZINC(raw_dir, info):

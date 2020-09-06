@@ -42,12 +42,10 @@ class TranslationDataset:
         
         if mol_data_x.is_x == 1:
             target = self.data[self.data.smiles==mol_data_x.target]
-            print(index, mol_data_x.smiles, target)
             mol_data_y = self.data[self.data.smiles==mol_data_x.target].iloc[0]
             frags_list_y = mol_data_y.frags
             data_y = fragslist2data(frags_list_y)
             data_y["seq"] = build_frag_sequence(frags_list_y, self.vocab, self.max_length)
-            # print(index, mol_data_x.smiles, mol_data_y.smiles)
             return data_x, data_y
             
         return data_x, data_x
