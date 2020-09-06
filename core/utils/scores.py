@@ -1,6 +1,6 @@
 import torch
 
-from core.utils.vocab import Tokens
+from core.datasets.vocab import Tokens
 
 
 def topk_accuracy(outputs, targets, k=1):

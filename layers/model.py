@@ -3,17 +3,11 @@ from argparse import Namespace
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
-from core.datasets.features import ATOM_FDIM
-from core.utils.vocab import Tokens
-from layers.graphconv import GNN, GNNEmbedder
-from layers.vae import VAE
-from layers.mlp import MLP
+from core.datasets.vocab import Tokens
+from layers.graphconv import GNNEmbedder
 from layers.encoder import Encoder
 from layers.decoder import Decoder
-
-from torch_geometric.nn import global_add_pool
 
 
 class Model(nn.Module):        
@@ -53,9 +47,15 @@ class Model(nn.Module):
             dim_output=vocab_size + len(Tokens))
 
     def forward(self, batch):
-        frags_x, frags_y, enc_inputs, dec_inputs = batch
-        enc_hidden, enc_outputs = self.encode(frags_x, enc_inputs)
-        return self.decode(frags_y, enc_hidden, enc_outputs, dec_inputs)
+        x_batch, y_batch, enc_inputs, dec_inputs = batch
+        
+        enc_inputs = self.embedder(x_batch, enc_inputs, input=False)
+        enc_inputs = F.dropout(enc_inputs, p=self.embedding_dropout, training=self.training)
+        enc_outputs, enc_hidden = self.encoder(enc_inputs)
+        
+        dec_inputs = self.embedder(y_batch, dec_inputs, input=True)
+        dec_inputs = F.dropout(dec_inputs, p=self.embedding_dropout, training=self.training)
+        return self.decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
     
     def encode(self, frags_batch, enc_inputs):
         enc_inputs = self.embedder(frags_batch, enc_inputs, input=False)

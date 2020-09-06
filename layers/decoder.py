@@ -5,8 +5,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from core.utils.vocab import Tokens
-from layers.misc import WeightDropGRU
+from core.datasets.vocab import Tokens
+from layers.rnn import WeightDropGRU
 from layers.graphconv import GNN
 from layers.attention import Attention
 

@@ -10,24 +10,12 @@ from torch_geometric.utils import to_networkx, from_networkx
 
 from sklearn.model_selection import train_test_split
 
-from core.datasets.preprocess import get_data
 from core.datasets.features import mol2nx
-from core.datasets.utils import pad, to_data
-from core.utils.vocab import Tokens
+from core.datasets.utils import pad, frag2data, fragslist2data, build_frag_sequence, get_data
+from core.datasets.vocab import Tokens
 from core.utils.os import get_or_create_dir, dir_is_empty
 from core.utils.serialization import load_numpy, save_numpy, load_yaml, save_yaml
-
-
-class VocabDataset(data.Dataset):
-    def __init__(self, vocab):
-        self.vocab = vocab
-
-    def __getitem__(self, index):
-        return to_data(self.vocab[index])
-
-    def __len__(self):
-        return len(self.vocab)
-
+from tasks.pretraining.experiment import TASK
 
 class PretrainingDataset(data.Dataset):
     def __init__(self, hparams, output_dir, name):
@@ -49,7 +37,7 @@ class PretrainingDataset(data.Dataset):
         self.eos = self._initialize_token("eos")
     
     def load_indices(self):
-        logs_dir = get_or_create_dir(self.output_dir / "pretraining" / "logs")
+        logs_dir = get_or_create_dir(self.output_dir / TASK / "logs")
         train_indices_path = logs_dir / "train_indices.yml"
         val_indices_path = logs_dir / "val_indices.yml"
         if dir_is_empty(logs_dir):
@@ -72,21 +60,8 @@ class PretrainingDataset(data.Dataset):
     def __len__(self):
         return self.data.shape[0]
 
-    def get_data(self, data):
-        seq_len = data.length
-        
-        frags = [mol2nx(f) for f in data.frags]       
-        num_nodes = [f.number_of_nodes() for f in frags]
-        frags_batch = torch.cat([torch.LongTensor([i]).repeat(n) for (i, n) in enumerate(num_nodes)])
-        frags_graph = from_networkx(nx.disjoint_union_all(frags))
-        frags_graph["frags_batch"] = frags_batch
-        frags_graph["length"] = torch.LongTensor([[len(frags)]])
-        
-        outseq = [self.vocab[f] + len(Tokens) for f in data.frags] + [Tokens.EOS.value]
-        frags_graph["outseq"] = pad(outseq, self.max_length)
-        
-        return frags_graph
-
     def __getitem__(self, index):
-        data = self.data.iloc[index]
-        return self.get_data(data)
+        frags_list = self.data.iloc[index].frags
+        data = fragslist2data(frags_list)
+        data["seq"] = build_frag_sequence(frags_list, self.vocab, self.max_length)
+        return data

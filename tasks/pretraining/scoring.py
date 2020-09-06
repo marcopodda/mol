@@ -3,6 +3,7 @@ from pathlib import Path
 from moses import get_all_metrics
 
 from core.utils.serialization import load_yaml
+from tasks.pretraining.experiment import TASK
 
 
 def convert_metrics_dict(metrics_dict):
@@ -11,9 +12,15 @@ def convert_metrics_dict(metrics_dict):
     return metrics_dict
 
 
+def reconstruction_accuracy(ref, gen):
+    total = len(ref)
+    correct = sum([x==y for (x, y) in zip(ref, gen)])
+    return correct / total
+
+
 def score(output_dir, dataset_name, epoch=1, n_jobs=40):
     output_dir = Path(output_dir)
-    samples_dir = output_dir / "pretraining" / "samples"
+    samples_dir = output_dir / TASK / "samples"
     samples_path = samples_dir / f"samples_{epoch}.yml"
     samples = load_yaml(samples_path)
     
@@ -21,6 +28,6 @@ def score(output_dir, dataset_name, epoch=1, n_jobs=40):
     gen_samples = [s["gen"] for s in samples]
     
     scores = get_all_metrics(gen_samples, n_jobs=n_jobs)
-    scores["rec"] = np.mean([x==y for (x, y) in zip(ref_samples, gen_samples)])
+    scores["rec"] = reconstruction_accuracy(ref_samples, gen_samples)
     return scores
         

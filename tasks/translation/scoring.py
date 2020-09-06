@@ -5,6 +5,7 @@ from argparse import Namespace
 
 from core.utils.serialization import load_yaml
 from core.mols.props import drd2, qed, logp
+from tasks.translation.experiment import TASK
 
 
 SCORING = {
@@ -17,7 +18,7 @@ SCORING = {
 
 def score(output_dir, dataset_name, epoch=1):
     output_dir = Path(output_dir)
-    samples_dir = output_dir / "translation" / "samples"
+    samples_dir = output_dir / TASK / "samples"
     samples_filename = f"samples_{epoch}.yml"
     samples = load_yaml(samples_dir / samples_filename)
     

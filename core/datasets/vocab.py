@@ -5,8 +5,6 @@ import numpy as np
 import pandas as pd
 import torch
 
-from core.mols.props import bulk_tanimoto
-
 
 class Tokens(Enum):
     PAD = 0
@@ -82,3 +80,22 @@ class Vocab:
         return freqs / freqs.sum()
         
 
+def populate_vocab(df, n_jobs):
+    print("Create vocab...", end=" ")
+    vocab = Vocab()
+    
+    for _, frags in df.frags.iteritems():
+        [vocab.update(f) for f in frags]
+    print("Done.")
+    
+    return vocab
+
+
+def get_vocab(df, path):
+    vocab = Vocab.from_file(path)
+    new_vocab = Vocab()
+    
+    for _, frags in df.frags.iteritems():
+        [new_vocab.update(f) for f in frags]
+    
+    return new_vocab

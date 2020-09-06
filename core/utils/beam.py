@@ -7,7 +7,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from core.utils.vocab import Tokens
+from core.datasets.vocab import Tokens
 
 
 class BeamSearchNode:
