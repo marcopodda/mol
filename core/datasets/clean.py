@@ -3,7 +3,7 @@ import pandas as pd
 
 def _clean_translation_dataset(raw_dir, info):
     raw_data_path = raw_dir / "train_pairs.txt"
-    raw_data = pd.read_csv(raw_data_path, names=["x", "y"], **info["parse_args"])[:100]
+    raw_data = pd.read_csv(raw_data_path, names=["x", "y"], **info["parse_args"])
     
     all_smiles, targets, is_x, is_y, is_valid, is_test = [], [], [], [], [], []
     
@@ -22,7 +22,7 @@ def _clean_translation_dataset(raw_dir, info):
     is_test += [0] * raw_data.shape[0]
     
     raw_data_path = raw_dir / "valid.txt"
-    raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])[:100]
+    raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])
     
     all_smiles += raw_data.smiles.tolist()
     targets += ["*"] * raw_data.shape[0]
@@ -32,7 +32,7 @@ def _clean_translation_dataset(raw_dir, info):
     is_test += [0] * raw_data.shape[0]
     
     raw_data_path = raw_dir / "test.txt"
-    raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])[:100]
+    raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])
     
     all_smiles += raw_data.smiles.tolist()
     targets += ["*"] * raw_data.shape[0]
