@@ -14,6 +14,7 @@ from core.datasets.preprocess import get_data
 from core.datasets.features import mol2nx
 from core.datasets.utils import pad, to_data
 from core.utils.vocab import Tokens
+from core.utils.os import get_or_create_dir, dir_is_empty
 from core.utils.serialization import load_numpy, save_numpy, load_yaml, save_yaml
 
 
@@ -48,9 +49,10 @@ class PretrainingDataset(data.Dataset):
         self.eos = self._initialize_token("eos")
     
     def load_indices(self):
-        train_indices_path = self.output_dir / "pretraining" / "logs" / "train_indices.yml"
-        val_indices_path = self.output_dir / "pretraining" / "logs" / "val_indices.yml"
-        if train_indices_path.exists():
+        logs_dir = get_or_create_dir(self.output_dir / "pretraining" / "logs")
+        train_indices_path = logs_dir / "train_indices.yml"
+        val_indices_path = logs_dir / "val_indices.yml"
+        if dir_is_empty(logs_dir):
             self.train_indices = load_yaml(train_indices_path)
             self.val_indices = load_yaml(val_indices_path)
         else:
