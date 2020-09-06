@@ -19,13 +19,11 @@ from core.utils.serialization import save_yaml
 from core.utils.os import get_or_create_dir
 from layers.model import Model
 from layers.wrapper import Wrapper
+from tasks import TRANSLATION
 from tasks.translation.dataset import TranslationDataset
 from tasks.translation.loader import TranslationDataLoader
 from tasks.translation.sampler import TranslationSampler
 from tasks.pretraining.experiment import PretrainingWrapper
-
-
-TASK = "translation"
 
 
 class TranslationWrapper(Wrapper):
@@ -37,7 +35,7 @@ class TranslationWrapper(Wrapper):
 
 
 def load_embedder(hparams, output_dir, args):
-    pretraining_dir = output_dir.parent / args.pretrain_from / TASK / "checkpoints"
+    pretraining_dir = output_dir.parent / args.pretrain_from / TRANSLATION / "checkpoints"
     path = sorted(pretraining_dir.glob("*.ckpt"))[-1]
     pretrainer = PretrainingWrapper.load_from_checkpoint(
         path.as_posix(), 
@@ -50,8 +48,8 @@ def run(args):
     output_dir = Path(args.output_dir)
     gpu = args.gpu if torch.cuda.is_available() else None
     hparams = Namespace(**load_yaml(args.config_file))
-    logger = TensorBoardLogger(save_dir=output_dir / TASK, name="", version="logs")
-    ckpt_callback = ModelCheckpoint(filepath=get_or_create_dir(output_dir / TASK / "checkpoints"), save_top_k=-1)
+    logger = TensorBoardLogger(save_dir=output_dir / TRANSLATION, name="", version="logs")
+    ckpt_callback = ModelCheckpoint(filepath=get_or_create_dir(output_dir / TRANSLATION / "checkpoints"), save_top_k=-1)
     trainer = pl.Trainer(
         max_epochs=hparams.max_epochs,
         checkpoint_callback=ckpt_callback,
@@ -69,7 +67,7 @@ def run(args):
 def run_sampling(output_dir, dataset_name, epoch=None, temp=1.0, batch_size=1000, greedy=True):
     assert epoch >= 1
     output_dir = Path(output_dir)
-    task_dir = output_dir / TASK
+    task_dir = output_dir / TRANSLATION
     ckpt_dir = task_dir / "checkpoints"
     samples_dir = get_or_create_dir(task_dir / "samples")
     

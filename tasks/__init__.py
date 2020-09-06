@@ -1,0 +1,2 @@
+PRETRAINING = "pretraining"
+TRANSLATION = "translation"

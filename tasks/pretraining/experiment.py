@@ -19,13 +19,11 @@ from core.utils.serialization import save_yaml
 from core.utils.os import get_or_create_dir
 from layers.model import Model
 from layers.wrapper import Wrapper
+from tasks import PRETRAINING
 from tasks.pretraining.dataset import PretrainingDataset
 from tasks.pretraining.loader import PretrainingDataLoader
 
 from .sampler import PretrainingSampler
-
-
-TASK = "pretraining"
 
 
 class PretrainingWrapper(Wrapper):
@@ -33,7 +31,7 @@ class PretrainingWrapper(Wrapper):
 
     def prepare_data(self):
         loader = PretrainingDataLoader(self.hparams, self.dataset)
-        indices_path = get_or_create_dir(self.output_dir / TASK / "logs")
+        indices_path = get_or_create_dir(self.output_dir / PRETRAINING / "logs")
         save_yaml(self.dataset.val_indices, indices_path / "val_indices.yml")
         self.training_loader = loader.get_train()
         self.validation_loader = loader.get_val()
@@ -57,8 +55,8 @@ def run(args):
     output_dir = Path(args.output_dir)
     gpu = args.gpu if torch.cuda.is_available() else None
     hparams = Namespace(**load_yaml(args.config_file))
-    logger = TensorBoardLogger(save_dir=output_dir / TASK, name="", version="logs")
-    ckpt_callback = ModelCheckpoint(filepath=get_or_create_dir(output_dir / TASK / "checkpoints"), save_top_k=-1)
+    logger = TensorBoardLogger(save_dir=output_dir / PRETRAINING, name="", version="logs")
+    ckpt_callback = ModelCheckpoint(filepath=get_or_create_dir(output_dir / PRETRAINING / "checkpoints"), save_top_k=-1)
     trainer = pl.Trainer(
         max_epochs=hparams.max_epochs,
         checkpoint_callback=ckpt_callback,
@@ -74,9 +72,9 @@ def run(args):
 def run_sampling(output_dir, dataset_name, epoch=None,  temp=1.0, batch_size=1000, greedy=True):
     assert epoch >= 1
     output_dir = Path(output_dir)
-    task_dir = output_dir / TASK
-    ckpt_dir = task_dir / "checkpoints"
-    samples_dir = get_or_create_dir(task_dir / "samples")
+    PRETRAINING_dir = output_dir / PRETRAINING
+    ckpt_dir = PRETRAINING_dir / "checkpoints"
+    samples_dir = get_or_create_dir(PRETRAINING_dir / "samples")
     
     all_samples = []
     

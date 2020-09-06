@@ -15,7 +15,7 @@ from core.datasets.utils import pad, frag2data, fragslist2data, build_frag_seque
 from core.datasets.vocab import Tokens
 from core.utils.os import get_or_create_dir, dir_is_empty
 from core.utils.serialization import load_numpy, save_numpy, load_yaml, save_yaml
-from tasks.pretraining.experiment import TASK
+from tasks import PRETRAINING
 
 class PretrainingDataset(data.Dataset):
     def __init__(self, hparams, output_dir, name):
@@ -37,7 +37,7 @@ class PretrainingDataset(data.Dataset):
         self.eos = self._initialize_token("eos")
     
     def load_indices(self):
-        logs_dir = get_or_create_dir(self.output_dir / TASK / "logs")
+        logs_dir = get_or_create_dir(self.output_dir / PRETRAINING / "logs")
         train_indices_path = logs_dir / "train_indices.yml"
         val_indices_path = logs_dir / "val_indices.yml"
         if dir_is_empty(logs_dir):
