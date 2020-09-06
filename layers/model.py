@@ -54,7 +54,7 @@ class Model(nn.Module):
         enc_outputs, enc_hidden = self.encoder(enc_inputs)
         
         dec_inputs = self.embedder(y_batch, dec_inputs, input=True)
-        dec_inputs = F.dropout(dec_inputs, p=self.embedding_dropout, training=self.training)
+        # dec_inputs = F.dropout(dec_inputs, p=self.embedding_dropout, training=self.training)
         return self.decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
     
     def encode(self, frags_batch, enc_inputs):
@@ -65,5 +65,5 @@ class Model(nn.Module):
         
     def decode(self, frags_batch, enc_hidden, enc_outputs, dec_inputs):
         dec_inputs = self.embedder(frags_batch, dec_inputs, input=True)
-        dec_inputs = F.dropout(dec_inputs, p=self.embedding_dropout, training=self.training)
+        # dec_inputs = F.dropout(dec_inputs, p=self.embedding_dropout, training=self.training)
         return self.decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
