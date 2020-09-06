@@ -44,8 +44,8 @@ def transfer(train_model, output_dir, args):
         output_dir=output_dir.parent / args.pretrain_from, 
         name=args.dataset_name)
     # train_model.model.embedder = freeze(pretrainer.model.embedder)
-    train_model.model.encoder.gru = freeze(pretrainer.model.encoder.gru)
-    train_model.model.decoder.gru = freeze(pretrainer.model.decoder.gru)
+    # train_model.model.encoder.gru = freeze(pretrainer.model.encoder.gru)
+    # train_model.model.decoder.gru = freeze(pretrainer.model.decoder.gru)
     return train_model
 
 
