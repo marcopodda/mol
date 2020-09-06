@@ -50,7 +50,7 @@ class Model(nn.Module):
         x_batch, y_batch, enc_inputs, dec_inputs = batch
         
         enc_inputs = self.embedder(x_batch, enc_inputs, input=False)
-        enc_inputs = F.dropout(enc_inputs, p=self.embedding_dropout, training=self.training)
+        # enc_inputs = F.dropout(enc_inputs, p=self.embedding_dropout, training=self.training)
         enc_outputs, enc_hidden = self.encoder(enc_inputs)
         
         dec_inputs = self.embedder(y_batch, dec_inputs, input=True)
@@ -59,7 +59,7 @@ class Model(nn.Module):
     
     def encode(self, frags_batch, enc_inputs):
         enc_inputs = self.embedder(frags_batch, enc_inputs, input=False)
-        enc_inputs = F.dropout(enc_inputs, p=self.embedding_dropout, training=self.training)
+        # enc_inputs = F.dropout(enc_inputs, p=self.embedding_dropout, training=self.training)
         enc_outputs, enc_hidden = self.encoder(enc_inputs)
         return enc_hidden, enc_outputs
         

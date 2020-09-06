@@ -32,7 +32,7 @@ class Wrapper(pl.LightningModule):
         return self.model(data)
 
     def configure_optimizers(self):
-        optimizer = Adam(self.parameters(), lr=self.hparams.lr)
+        optimizer = Adam(self.parameters(), lr=self.hparams.lr, weight_decay=0.01)
         scheduler = ReduceLROnPlateau(optimizer, factor=0.5, min_lr=1e-6, patience=2)
         return optimizer
 

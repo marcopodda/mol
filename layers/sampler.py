@@ -121,10 +121,10 @@ class Sampler:
             
             if greedy:
                 probs = torch.log_softmax(logits, dim=-1)
-                indexes = torch.argmax(probs, dim=-1)
+                indexes = torch.argmax(probs, dim=-1).int()
             else:
                 probs = torch.softmax(logits / temp, dim=-1)
-                indexes = Categorical(probs=probs).sample()
+                indexes = Categorical(probs=probs).sample().int()
             
             if it > 0:
                 prev = samples[:, it-1]
