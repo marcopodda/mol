@@ -125,7 +125,7 @@ class Sampler:
             else:
                 temp = 1.0 if it == 0 else 0.1
                 probs = torch.softmax(logits / temp, dim=-1)
-                indexes = Categorical(probs=probs).sample().int()
+                indexes = Categorical(probs=probs).sample()
             
             if it > 0:
                 prev = samples[:, it-1]
