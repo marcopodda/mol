@@ -22,7 +22,7 @@ def score(output_dir, dataset_name, epoch=1):
     samples_filename = f"samples_{epoch}.yml"
     samples = load_yaml(samples_dir / samples_filename)
     
-    ref_samples = [s["smi"] for s in samples]
+    ref_samples = [s["ref"] for s in samples]
     gen_samples = [s["gen"] for s in samples]
     prop = SCORING[dataset_name]["prop"]
     score_fun = SCORING[dataset_name]["score_fun"]

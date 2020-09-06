@@ -24,7 +24,7 @@ def score(output_dir, dataset_name, epoch=1, n_jobs=40):
     samples_path = samples_dir / f"samples_{epoch}.yml"
     samples = load_yaml(samples_path)
     
-    ref_samples = [s["smi"] for s in samples]
+    ref_samples = [s["ref"] for s in samples]
     gen_samples = [s["gen"] for s in samples]
     
     scores = get_all_metrics(gen_samples, n_jobs=n_jobs)
