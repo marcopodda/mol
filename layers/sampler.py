@@ -71,23 +71,27 @@ class Sampler:
             embedder = self.get_embedder(model)
             smiles, loader = self.get_loader(batch_size)
             
-            for batch in loader:
-                gens = self.generate_batch(
+            for idx, batch in enumerate(loader):
+                refs, gens = self.generate_batch(
                     data=batch,
                     model=model, 
                     embedder=embedder, 
                     temp=temp,
                     batch_size=batch_size,
                     greedy=greedy)
-
-                for smi, gen in zip(smiles, gens):
+                
+                start = idx * batch_size
+                end = start + len(batch)
+                refs = smiles[start:end]
+                
+                for ref, gen in zip(refs, gens):
                     if len(gen) >= 2:
                         try:
                             frags = [Chem.MolFromSmiles(f) for f in gen]
                             mol = join_fragments(frags)
                             sample = Chem.MolToSmiles(mol)
                             # print(f"Val: {smi} - Sampled: {sample}")
-                            samples.append({"smi": smi,  "gen": sample})
+                            samples.append({"ref": ref,  "gen": sample})
                         except Exception as e:
                             # print(e, "Rejected.")
                             pass
