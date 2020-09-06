@@ -1,21 +1,16 @@
+import numpy as np
 from pathlib import Path
 from argparse import Namespace
 
-import numpy as np
-
-import pytorch_lightning as pl
-from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.metrics.classification import accuracy
-
 import torch
 from torch.nn import functional as F
-from torch.optim import Adam, SGD
-from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
+from torch.optim import Adam
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-from core.utils.serialization import load_yaml
-from core.datasets.vocab import Tokens
-from core.utils.serialization import save_yaml
+from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
+
+from core.utils.serialization import load_yaml, save_yaml
 from core.utils.os import get_or_create_dir
 from layers.model import Model
 from layers.wrapper import Wrapper
