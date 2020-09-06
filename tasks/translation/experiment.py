@@ -30,6 +30,12 @@ class TranslationWrapper(Wrapper):
         self.training_loader = loader.get_train()
 
 
+def freeze(layer):
+    for param in layer.parameters():
+        param.requires_grad = False
+    return layer
+
+
 def transfer(train_model, output_dir, args):
     pretraining_dir = output_dir.parent / args.pretrain_from / PRETRAINING / "checkpoints"
     path = sorted(pretraining_dir.glob("*.ckpt"))[-1]
@@ -37,12 +43,9 @@ def transfer(train_model, output_dir, args):
         path.as_posix(), 
         output_dir=output_dir.parent / args.pretrain_from, 
         name=args.dataset_name)
-    train_model.model.embedder = pretrainer.model.embedder
-    train_model.model.embedder.train(False)
-    train_model.model.encoder = pretrainer.model.encoder
-    train_model.model.encoder.train(False)
-    train_model.model.decoder.gru = pretrainer.model.decoder.gru
-    train_model.model.decoder.gru.train(False)
+    train_model.model.embedder = freeze(pretrainer.model.embedder)
+    train_model.model.encoder = freeze(pretrainer.model.encoder)
+    train_model.model.decoder.gru = freeze(pretrainer.model.decoder.gru)
     return train_model
 
 
