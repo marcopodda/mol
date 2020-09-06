@@ -7,6 +7,7 @@ from torch.nn import functional as F
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
+import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 
@@ -29,14 +30,16 @@ class TranslationWrapper(Wrapper):
         self.training_loader = loader.get_train()
 
 
-def load_embedder(hparams, output_dir, args):
+def transfer(train_model, output_dir, args):
     pretraining_dir = output_dir.parent / args.pretrain_from / PRETRAINING / "checkpoints"
     path = sorted(pretraining_dir.glob("*.ckpt"))[-1]
     pretrainer = PretrainingWrapper.load_from_checkpoint(
         path.as_posix(), 
-        output_dir=output_dir.parent / "moses", 
+        output_dir=output_dir.parent / args.pretrain_from, 
         name=args.dataset_name)
-    return pretrainer.model.embedder.gnn
+    train_model.model.embedder = pretrainer.model.embedder
+    train_model.model.encoder = pretrainer.model.encoder
+    return train_model
 
 
 def run(args):
@@ -54,8 +57,7 @@ def run(args):
         logger=logger,
         gpus=gpu)
     train_model = TranslationWrapper(hparams, output_dir, args.dataset_name)
-    gnn = load_embedder(hparams, output_dir, args)
-    train_model.model.embedder.gnn = gnn
+    train_model = transfer(train_model, output_dir, args)
     trainer.fit(train_model)
         
 
