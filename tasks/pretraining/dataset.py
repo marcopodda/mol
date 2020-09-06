@@ -64,4 +64,4 @@ class PretrainingDataset(data.Dataset):
         frags_list = self.data.iloc[index].frags
         data = fragslist2data(frags_list)
         data["seq"] = build_frag_sequence(frags_list, self.vocab, self.max_length)
-        return data
+        return data, data
