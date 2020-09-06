@@ -48,22 +48,17 @@ class Model(nn.Module):
 
     def forward(self, batch):
         x_batch, y_batch, enc_inputs, dec_inputs = batch
-        
-        enc_inputs = self.embedder(x_batch, enc_inputs, input=False)
-        # enc_inputs = F.dropout(enc_inputs, p=self.embedding_dropout, training=self.training)
-        enc_outputs, enc_hidden = self.encoder(enc_inputs)
-        
-        dec_inputs = self.embedder(y_batch, dec_inputs, input=True)
-        # dec_inputs = F.dropout(dec_inputs, p=self.embedding_dropout, training=self.training)
-        return self.decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
+        enc_hidden, enc_outputs = self.encode(x_batch, enc_inputs)
+        logits = self.decode(y_batch, enc_hidden, enc_outputs, dec_inputs)
+        return logits
     
-    def encode(self, frags_batch, enc_inputs):
-        enc_inputs = self.embedder(frags_batch, enc_inputs, input=False)
+    def encode(self, batch, enc_inputs):
+        enc_inputs = self.embedder(batch, enc_inputs, input=False)
         # enc_inputs = F.dropout(enc_inputs, p=self.embedding_dropout, training=self.training)
         enc_outputs, enc_hidden = self.encoder(enc_inputs)
         return enc_hidden, enc_outputs
         
-    def decode(self, frags_batch, enc_hidden, enc_outputs, dec_inputs):
-        dec_inputs = self.embedder(frags_batch, dec_inputs, input=True)
+    def decode(self, batch, enc_hidden, enc_outputs, dec_inputs):
+        dec_inputs = self.embedder(batch, dec_inputs, input=True)
         # dec_inputs = F.dropout(dec_inputs, p=self.embedding_dropout, training=self.training)
         return self.decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
