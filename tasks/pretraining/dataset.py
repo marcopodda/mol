@@ -53,12 +53,12 @@ class PretrainingDataset(data.Dataset):
         train_indices_path = logs_dir / "train_indices.yml"
         val_indices_path = logs_dir / "val_indices.yml"
         if dir_is_empty(logs_dir):
-            self.train_indices = load_yaml(train_indices_path)
-            self.val_indices = load_yaml(val_indices_path)
-        else:
             self.train_indices, self.val_indices = train_test_split(range(self.data.shape[0]), test_size=0.1)
             save_yaml(self.train_indices, train_indices_path)
             save_yaml(self.val_indices, val_indices_path)
+        else:
+            self.train_indices = load_yaml(train_indices_path)
+            self.val_indices = load_yaml(val_indices_path)
     
     def _initialize_token(self, name):
         path = self.output_dir / "DATA" / f"{name}_{self.hparams.frag_dim_embed}.dat"    
