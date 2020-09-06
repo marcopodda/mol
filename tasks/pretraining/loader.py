@@ -81,3 +81,14 @@ class PretrainingDataLoader:
             shuffle=False,
             pin_memory=True,
             num_workers=self.hparams.num_workers)
+    
+    def get_loader(self, indices, batch_size=None, shuffle=False):
+        dataset = Subset(self.dataset, indices)
+        batch_size = batch_size or self.hparams.batch_size
+        return DataLoader(
+            dataset=dataset,
+            collate_fn=lambda b: self.collate(b),
+            batch_size=batch_size,
+            shuffle=shuffle,
+            pin_memory=True,
+            num_workers=self.hparams.num_workers)

@@ -36,6 +36,7 @@ class Attention(nn.Module):
 
     def score(self, hidden, encoder_outputs):
         # [B*T*2H]->[B*T*H]
+        print(hidden.size(), encoder_outputs.size())
         attn_inputs = torch.cat([hidden, encoder_outputs], dim=2)
         energy = F.relu(self.attn(attn_inputs)).transpose(1, 2) # [B*H*T]
         v = self.v.repeat(encoder_outputs.size(0), 1).unsqueeze(1)  # [B*1*H]

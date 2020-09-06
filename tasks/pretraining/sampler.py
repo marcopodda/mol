@@ -30,11 +30,12 @@ class Sampler:
         self.vocab = dataset.vocab
         self.max_length = dataset.max_length
     
-    def load_test_data(self, batch_size=128):
+    def get_loader(self, batch_size=128):
         loader = PretrainingDataLoader(self.hparams, self.dataset)
-        indices = np.random.choice(self.dataset.val_indices, 1000)
+        num_samples = min(len(self.dataset.val_indices), 1000)
+        indices = sorted(np.random.choice(self.dataset.val_indices, num_samples, replace=False))
         smiles = self.dataset.data.loc[indices].smiles.tolist()
-        return smiles, loader.get_val(batch_size=batch_size)
+        return smiles, loader.get_loader(indices, batch_size=batch_size)
         
     def get_embedder(self, model):
         device = next(model.parameters()).device
@@ -75,7 +76,7 @@ class Sampler:
         with torch.no_grad():
             # prepare embeddings matrix
             embedder = self.get_embedder(model)
-            smiles, loader = self.load_test_data(batch_size)
+            smiles, loader = self.get_loader(batch_size)
             
             for batch in loader:
                 gens = self.generate_batch(
@@ -136,6 +137,7 @@ class Sampler:
             
             x = embedder(indexes)
             x = x.view(batch_size, 1, -1)
+            print("h after", h.size())
             
         frags = self.translate(samples)
         return frags
