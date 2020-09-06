@@ -72,7 +72,7 @@ class Sampler:
             smiles, loader = self.get_loader(batch_size)
             
             for idx, batch in enumerate(loader):
-                refs, gens = self.generate_batch(
+                gens = self.generate_batch(
                     data=batch,
                     model=model, 
                     embedder=embedder, 
