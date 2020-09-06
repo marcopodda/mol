@@ -137,7 +137,6 @@ class Sampler:
             
             x = embedder(indexes)
             x = x.view(batch_size, 1, -1)
-            print("h after", h.size())
             
         frags = self.translate(samples)
         return frags

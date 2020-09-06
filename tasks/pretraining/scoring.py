@@ -11,10 +11,6 @@ def convert_metrics_dict(metrics_dict):
     return metrics_dict
 
 
-def rec(x, y):
-    return x == y
-
-
 def score(output_dir, dataset_name, epoch=1, n_jobs=40):
     output_dir = Path(output_dir)
     samples_dir = output_dir / "pretraining" / "samples"
@@ -25,6 +21,6 @@ def score(output_dir, dataset_name, epoch=1, n_jobs=40):
     gen_samples = [s["gen"] for s in samples]
     
     scores = get_all_metrics(gen_samples, n_jobs=n_jobs)
-    scores["rec"] = np.mean([rec(x, y) for (x, y) in zip(ref_samples, gen_samples)])
+    scores["rec"] = np.mean([x==y for (x, y) in zip(ref_samples, gen_samples)])
     return scores
         
