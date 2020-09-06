@@ -48,8 +48,8 @@ class PretrainingDataset(data.Dataset):
         self.eos = self._initialize_token("eos")
     
     def load_indices(self):
-        train_indices_path = output_dir / "pretraining" / "logs" / "train_indices.yml"
-        val_indices_path = output_dir / "pretraining" / "logs" / "val_indices.yml"
+        train_indices_path = self.output_dir / "pretraining" / "logs" / "train_indices.yml"
+        val_indices_path = self.output_dir / "pretraining" / "logs" / "val_indices.yml"
         if train_indices_path.exists():
             self.train_indices = load_yaml(train_indices_path)
             self.val_indices = load_yaml(val_indices_path)
