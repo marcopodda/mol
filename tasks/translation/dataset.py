@@ -34,6 +34,7 @@ class TranslationDataset:
         return self.data.shape[0]
 
     def __getitem__(self, index):
+        print(index)
         mol_data_x = self.data.iloc[index]
         frags_list_x = mol_data_x.frags
         data_x = fragslist2data(frags_list_x)
