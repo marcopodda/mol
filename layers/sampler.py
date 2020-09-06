@@ -121,7 +121,7 @@ class Sampler:
             
             if greedy:
                 probs = torch.log_softmax(logits, dim=-1)
-                indexes = torch.argmax(probs, dim=-1).int()
+                indexes = torch.argmax(probs, dim=-1)
             else:
                 temp = 1.0 if it == 0 else 0.1
                 probs = torch.softmax(logits / temp, dim=-1)
