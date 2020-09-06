@@ -72,9 +72,9 @@ def run(args):
 def run_sampling(output_dir, dataset_name, epoch=None,  temp=1.0, batch_size=1000, greedy=True):
     assert epoch >= 1
     output_dir = Path(output_dir)
-    PRETRAINING_dir = output_dir / PRETRAINING
-    ckpt_dir = PRETRAINING_dir / "checkpoints"
-    samples_dir = get_or_create_dir(PRETRAINING_dir / "samples")
+    task_dir = output_dir / PRETRAINING
+    ckpt_dir = task_dir / "checkpoints"
+    samples_dir = get_or_create_dir(task_dir / "samples")
     
     all_samples = []
     

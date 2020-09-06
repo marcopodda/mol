@@ -19,7 +19,7 @@ from core.utils.serialization import save_yaml
 from core.utils.os import get_or_create_dir
 from layers.model import Model
 from layers.wrapper import Wrapper
-from tasks import TRANSLATION
+from tasks import TRANSLATION, PRETRAINING
 from tasks.translation.dataset import TranslationDataset
 from tasks.translation.loader import TranslationDataLoader
 from tasks.translation.sampler import TranslationSampler
@@ -35,7 +35,7 @@ class TranslationWrapper(Wrapper):
 
 
 def load_embedder(hparams, output_dir, args):
-    pretraining_dir = output_dir.parent / args.pretrain_from / TRANSLATION / "checkpoints"
+    pretraining_dir = output_dir.parent / args.pretrain_from / PRETRAINING / "checkpoints"
     path = sorted(pretraining_dir.glob("*.ckpt"))[-1]
     pretrainer = PretrainingWrapper.load_from_checkpoint(
         path.as_posix(), 
