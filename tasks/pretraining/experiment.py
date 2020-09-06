@@ -112,17 +112,15 @@ def run_sampling(output_dir, dataset_name, epoch=None,  temp=1.0, batch_size=100
     samples_dir = get_or_create_dir(task_dir / "samples")
     
     all_samples = []
-    epoch = (epoch - 1) or "*"
     
-    for i, checkpoint_name in enumerate(ckpt_dir.glob(f"epoch={epoch}.ckpt")):
-        index = (i + 1) if epoch == "*" else (epoch + 1)
-        sample_path = samples_dir / f"samples_{index}.yml"
-        
-        if not sample_path.exists():
-            print(f"processing {sample_path}...")
-            plw = PLWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
-            sampler = Sampler(plw.model, plw.dataset)
-            samples = sampler.run(temp=temp, batch_size=batch_size, greedy=greedy)
-            save_yaml(samples, sample_path)
+    checkpoint_name = list(ckpt_dir.glob(f"epoch={epoch-1}.ckpt"))[0]
+    sample_path = samples_dir / f"samples_{epoch}.yml"
+    
+    if not sample_path.exists():
+        print(f"processing {sample_path}...")
+        plw = PLWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
+        sampler = Sampler(plw.model, plw.dataset)
+        samples = sampler.run(temp=temp, batch_size=batch_size, greedy=greedy)
+        save_yaml(samples, sample_path)
         
         
