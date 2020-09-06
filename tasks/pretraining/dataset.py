@@ -54,9 +54,7 @@ class PretrainingDataset(data.Dataset):
             self.train_indices = load_yaml(train_indices_path)
             self.val_indices = load_yaml(val_indices_path)
         else:
-            train_indices, val_indices = train_test_split(range(self.data.shape[0]), test_size=0.1)
-            self.train_indices = train_indices.tolist()
-            self.val_indices = val_indices.tolist()
+            self.train_indices, self.val_indices = train_test_split(range(self.data.shape[0]), test_size=0.1)
             save_yaml(self.train_indices, train_indices_path)
             save_yaml(self.val_indices, val_indices_path)
     
