@@ -60,7 +60,7 @@ class Sampler:
         embedder = nn.Embedding.from_pretrained(embeddings)
         return embedder
         
-    def run(self, temp=1.0, batch_size=1000, greedy=True):
+    def run(self, temp=1.0, batch_size=128, greedy=True):
         model = self.model
         model.eval()
         
@@ -80,8 +80,9 @@ class Sampler:
                     batch_size=batch_size,
                     greedy=greedy)
                 
+                batch_length = batch[-1].size(0)
                 start = idx * batch_size
-                end = start + len(batch)
+                end = start + batch_length
                 refs = smiles[start:end]
                 
                 for ref, gen in zip(refs, gens):
