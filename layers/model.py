@@ -54,11 +54,11 @@ class Model(nn.Module):
     
     def encode(self, batch, enc_inputs):
         enc_inputs = self.embedder(batch, enc_inputs, input=False)
-        # enc_inputs = F.dropout(enc_inputs, p=self.embedding_dropout, training=self.training)
+        enc_inputs = F.dropout(enc_inputs, p=self.embedding_dropout, training=self.training)
         enc_outputs, enc_hidden = self.encoder(enc_inputs)
         return enc_hidden, enc_outputs
         
     def decode(self, batch, enc_hidden, enc_outputs, dec_inputs):
         dec_inputs = self.embedder(batch, dec_inputs, input=True)
-        # dec_inputs = F.dropout(dec_inputs, p=self.embedding_dropout, training=self.training)
+        dec_inputs = F.dropout(dec_inputs, p=self.embedding_dropout, training=self.training)
         return self.decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)

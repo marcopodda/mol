@@ -2,6 +2,7 @@ import torch
 from torch import nn
 
 from layers.embedder import GNN
+from layers.rnn import WeightDropGRU
 
 
 class Encoder(nn.Module):
@@ -13,11 +14,12 @@ class Encoder(nn.Module):
         self.num_layers = num_layers
         self.rnn_dropout = rnn_dropout
 
-        self.gru = nn.GRU(input_size=dim_input,
+        self.gru = WeightDropGRU(input_size=dim_input,
                           hidden_size=dim_hidden,
                           num_layers=num_layers,
                           batch_first=True,
                           dropout=rnn_dropout,
+                          weight_dropout=rnn_dropout,
                           bidirectional=True)
 
     def forward(self, x):
