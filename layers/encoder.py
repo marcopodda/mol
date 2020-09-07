@@ -13,13 +13,13 @@ class Encoder(nn.Module):
         self.dim_hidden = dim_hidden
         self.num_layers = num_layers
         self.rnn_dropout = rnn_dropout
-
-        self.gru = WeightDropGRU(input_size=dim_input,
+        
+        self.gru = nn.GRU(input_size=dim_input,
                           hidden_size=dim_hidden,
                           num_layers=num_layers,
                           batch_first=True,
+                          # weight_dropout=rnn_dropout,
                           dropout=rnn_dropout,
-                          weight_dropout=rnn_dropout,
                           bidirectional=True)
 
     def forward(self, x):

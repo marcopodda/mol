@@ -22,12 +22,12 @@ class Decoder(nn.Module):
         self.num_layers = num_layers
         self.rnn_dropout = rnn_dropout
 
-        self.gru = WeightDropGRU(input_size=dim_input+dim_hidden,
-                                 hidden_size=dim_hidden,
-                                 num_layers=num_layers,
-                                 batch_first=True,
-                                 weight_dropout=rnn_dropout,
-                                 dropout=rnn_dropout)
+        self.gru = nn.GRU(input_size=dim_input+dim_hidden,
+                          hidden_size=dim_hidden,
+                          num_layers=num_layers,
+                          batch_first=True,
+                          # weight_dropout=rnn_dropout,
+                          dropout=rnn_dropout)
         
         self.attn = Attention(dim_hidden=dim_hidden)
         self.proj = nn.Linear(dim_hidden * 2, dim_hidden)
