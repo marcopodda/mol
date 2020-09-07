@@ -4,41 +4,67 @@ from argparse import Namespace
 
 
 from core.utils.serialization import load_yaml
-from core.mols.props import drd2, qed, logp
+from core.mols.props import drd2, qed, logp, similarity
 from tasks import TRANSLATION
 
 
-SCORING = {
-    "drd2": {"prop": drd2, "score_fun": lambda x: x >= 0.5},
-    "logp4": {"prop": logp, "score_fun": lambda x: x >= 0.4},
-    "logp6": {"prop": logp, "score_fun": lambda x: x >= 0.6},
-    "qed": {"prop": qed, "score_fun": lambda x: x >= 0.9},
+SR1_KWARGS = {
+    "drd2": {"prop_fun": drd2, "similarity_thres": 0.3, "improvement_thres": 0.6},
+    "qed": {"prop_fun": qed, "similarity_thres": 0.3, "improvement_thres": 0.6},
+    "logp4": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 0.8},
+    "logp6": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 0.8},
+}
+
+SR2_KWARGS = {
+    "drd2": {"prop_fun": drd2, "similarity_thres": 0.4, "improvement_thres": 0.8},
+    "qed": {"prop_fun": qed, "similarity_thres": 0.4, "improvement_thres": 0.8},
+    "logp4": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 1.2},
+    "logp6": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 1.2},
 }
 
 
-def score(output_dir, dataset_name, epoch=1):
+def success_rate(x, y, prop_fun, similarity_thres, improvement_thres):
+    sim = similarity(x, y)
+    prop_y = prop_fun(y)
+    return sim >= similarity_thres and prop_y >= improvement_thres    
+
+
+def score(output_dir, dataset_name, epoch=1, fun="drd2"):
     output_dir = Path(output_dir)
     samples_dir = output_dir / TRANSLATION / "samples"
     samples_filename = f"samples_{epoch}.yml"
     samples = load_yaml(samples_dir / samples_filename)
     
-    ref_samples = [s["ref"] for s in samples]
-    gen_samples = [s["gen"] for s in samples]
-    prop = SCORING[dataset_name]["prop"]
-    score_fun = SCORING[dataset_name]["score_fun"]
+    gen = [s["gen"] for s in samples]
+    ref = [s["ref"] for s in samples]
+    num_samples = len(samples)
     
-    scored_samples = [prop(g) for g in gen_samples]
-    valid_scored_samples = [s for s in scored_samples if s]
-    num_valid_scored_samples = len(valid_scored_samples)
-    score = [score_fun(s) for s in valid_scored_samples]
+    # valid samples
+    valid_samples = [(x, y) for (x, y) in zip(ref, gen) if y]
+    num_valid = len(valid_samples)
+    validity_rate = num_valid / num_samples
+    
+    # novel samples
+    novel_samples = [y not in ref for (x, y) in valid_samples]
+    novelty_rate = len(novel_samples) / num_valid
+    
+    # unique samples
+    unique_samples = set([y for (x, y) in valid_samples])
+    uniqueness_rate = len(unique_samples) / num_valid
+    
+    
+    sr1 = [success_rate(x, y, **SR1_KWARGS[fun]) for (x, y) in valid_samples]
+    sr2 = [success_rate(x, y, **SR2_KWARGS[fun]) for (x, y) in valid_samples]
     
     return {
         "num_samples": len(samples),
         "dataset_name": dataset_name,
-        "score": np.mean(score),
-        "valid": len(valid_scored_samples) / len(gen_samples),
-        "unique": len(set(valid_scored_samples)) / num_valid_scored_samples,
-        "novel": len([s in ref_samples for s in valid_scored_samples]) / num_valid_scored_samples
+        "sr1": np.mean(sr1),
+        "sr2": np.mean(sr2),
+        "valid": validity_rate,
+        "unique": uniqueness_rate,
+        "novel": novelty_rate,
+        "scoring": fun
     }
     
     
