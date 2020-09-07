@@ -55,24 +55,16 @@ class GNN(nn.Module):
             if p.dim() > 1 and p.requires_grad:
                 nn.init.xavier_uniform_(p, gain=nn.init.calculate_gain('relu'))
 
-    def forward(self, data, aggregate=True):
-        x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
-
-        outputs = []
+    def forward(self, x, edge_index, edge_attr, batch):
         for conv, bn in zip(self.convs, self.bns):
             x = conv(x, edge_index, edge_attr=edge_attr)
             x = bn(F.relu(x))
         
-        if aggregate is True:
-            x = global_add_pool(x, batch) 
-        
+        x = global_add_pool(x, batch) 
+        nodes_per_graph = scatter_add(torch.ones_like(batch), batch).view(-1, 1)
         output = self.readout(x) if self.dim_output != self.dim_hidden else x
         
-        if aggregate is True:
-            nodes_per_graph = scatter_add(torch.ones_like(batch), batch).view(-1, 1)
-            return output / nodes_per_graph
-        
-        return output
+        return output / nodes_per_graph
         
 
 class GNNEmbedder(nn.Module):
@@ -87,16 +79,14 @@ class GNNEmbedder(nn.Module):
             dim_hidden=dim_hidden,
             dim_output=dim_output)
     
-    def forward_gnn(self, batch):
-        x = self.gnn(batch, aggregate=False)
-        return global_add_pool(x, batch=batch.frags_batch)
+    def forward(self, data, mat, input=False):
+        x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
         
-    def forward(self, batch, mat, input=False):
-        x = self.forward_gnn(batch)
+        x = self.gnn(x, edge_index, edge_attr, batch=data.frags_batch)
         
         cumsum = 0
-        for i, l in enumerate(batch.length):
-            offset = range(1, l+1) if input is True else range(l)
+        for i, l in enumerate(data.length):
+            offset = list(range(1, l+1)) if input is True else list(range(l))
             mat[i,offset,:] = x[cumsum:cumsum+l,:]
             cumsum += l
         

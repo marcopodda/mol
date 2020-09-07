@@ -45,9 +45,9 @@ class TranslationDataset:
             frags_list_y = mol_data_y.frags
             data_y = fragslist2data(frags_list_y)
             data_y["seq"] = build_frag_sequence(frags_list_y, self.vocab, self.max_length)
-            return data_x, data_x
+            return data_x, data_x.clone()
             
-        return data_x, data_x
+        return data_x, data_x.clone()
 
     @property
     def train_indices(self):

@@ -22,15 +22,15 @@ def collate(data_list, dataset, hparams):
     batch_size = len(x_frags)
     
     cumsum = 0
-    for i, frag in enumerate(x_frags):
-        inc = (frag.frags_batch.max() + 1).item()
-        frag.frags_batch += cumsum
+    for i, frag_x in enumerate(x_frags):
+        inc = (frag_x.frags_batch.max() + 1).item()
+        frag_x.frags_batch += cumsum
         cumsum += inc
     
     cumsum = 0
-    for i, frag in enumerate(y_frags):
-        inc = (frag.frags_batch.max() + 1).item()
-        frag.frags_batch += cumsum
+    for i, frag_y in enumerate(y_frags):
+        inc = (frag_y.frags_batch.max() + 1).item()
+        frag_y.frags_batch += cumsum
         cumsum += inc
     
     lengths = [m.length.item() for m in x_frags]

@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from layers.graphconv import GNN
+from layers.embedder import GNN
 
 
 class Encoder(nn.Module):

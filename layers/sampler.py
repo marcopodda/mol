@@ -50,9 +50,11 @@ class Sampler:
         ])
         
         embeddings = []
-        for batch in loader:
-            embed = gnn(batch.to(device), aggregate=True)
-            embeddings.append(embed)
+        for data in loader:
+            data = data.to(device)
+            x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
+            embedding = gnn(x, edge_index, edge_attr, batch)
+            embeddings.append(embedding)
         
         embeddings = torch.cat(embeddings, dim=0)
         embeddings = torch.cat([tokens, embeddings])

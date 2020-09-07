@@ -5,7 +5,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from core.datasets.vocab import Tokens
-from layers.graphconv import GNNEmbedder
+from layers.embedder import GNNEmbedder
 from layers.encoder import Encoder
 from layers.decoder import Decoder
 
