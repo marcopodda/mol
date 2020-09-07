@@ -15,6 +15,7 @@ SR1_KWARGS = {
     "logp6": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 0.8},
 }
 
+
 SR2_KWARGS = {
     "drd2": {"prop_fun": drd2, "similarity_thres": 0.4, "improvement_thres": 0.8},
     "qed": {"prop_fun": qed, "similarity_thres": 0.4, "improvement_thres": 0.8},
@@ -24,12 +25,11 @@ SR2_KWARGS = {
 
 
 def success_rate(x, y, prop_fun, similarity_thres, improvement_thres):
-    sim = similarity(x, y)
-    prop_y = prop_fun(y)
-    return sim >= similarity_thres and prop_y >= improvement_thres    
+    sim, prop = similarity(x, y), prop_fun(y)
+    return sim >= similarity_thres and prop >= improvement_thres    
 
 
-def score(output_dir, dataset_name, epoch=1, fun="drd2"):
+def score(output_dir, dataset_name, epoch=1):
     output_dir = Path(output_dir)
     samples_dir = output_dir / TRANSLATION / "samples"
     samples_filename = f"samples_{epoch}.yml"
@@ -53,18 +53,17 @@ def score(output_dir, dataset_name, epoch=1, fun="drd2"):
     uniqueness_rate = len(unique_samples) / num_valid
     
     
-    sr1 = [success_rate(x, y, **SR1_KWARGS[fun]) for (x, y) in valid_samples]
-    sr2 = [success_rate(x, y, **SR2_KWARGS[fun]) for (x, y) in valid_samples]
+    sr1 = [success_rate(x, y, **SR1_KWARGS[dataset_name]) for (x, y) in valid_samples]
+    sr2 = [success_rate(x, y, **SR2_KWARGS[dataset_name]) for (x, y) in valid_samples]
     
     return {
         "num_samples": len(samples),
-        "dataset_name": dataset_name,
         "sr1": np.mean(sr1),
         "sr2": np.mean(sr2),
         "valid": validity_rate,
         "unique": uniqueness_rate,
         "novel": novelty_rate,
-        "scoring": fun
+        "scoring": dataset_name
     }
     
     
