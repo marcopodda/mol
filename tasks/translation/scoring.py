@@ -51,8 +51,8 @@ def score(output_dir, dataset_name, epoch=1):
     # unique samples
     unique_samples = set([y for (x, y) in valid_samples])
     uniqueness_rate = len(unique_samples) / num_valid
-    
-    
+
+    # success rate scores    
     sr1 = [success_rate(x, y, **SR1_KWARGS[dataset_name]) for (x, y) in valid_samples]
     sr2 = [success_rate(x, y, **SR2_KWARGS[dataset_name]) for (x, y) in valid_samples]
     
