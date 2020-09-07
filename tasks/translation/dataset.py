@@ -40,7 +40,7 @@ class TranslationDataset:
         data_x["seq"] = build_frag_sequence(frags_list_x, self.vocab, self.max_length)
         
         if mol_data_x.is_x == 1:
-            target = self.data[self.data.smiles==mol_data_x.target]
+            target = self.data.smiles==mol_data_x.target
             mol_data_y = self.data[target].iloc[0]
             frags_list_y = mol_data_y.frags
             data_y = fragslist2data(frags_list_y)
