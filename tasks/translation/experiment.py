@@ -37,13 +37,14 @@ def freeze(layer):
 
 
 def transfer(train_model, output_dir, args):
-    pretraining_dir = output_dir.parent / args.pretrain_from / PRETRAINING / "checkpoints"
-    path = sorted(pretraining_dir.glob("*.ckpt"))[-1]
+    pretrain_dir = Path(args.pretrain_from)
+    pretrain_ckpt_dir = pretrain_dir / PRETRAINING / "checkpoints"
+    pretrain_ckpt_path = sorted(pretrain_ckpt_dir.glob("*.ckpt"))[-1]
     pretrainer = PretrainingWrapper.load_from_checkpoint(
-        path.as_posix(), 
-        output_dir=output_dir.parent / args.pretrain_from, 
+        pretrain_ckpt_path.as_posix(), 
+        output_dir=pretrain_dir, 
         name=args.dataset_name)
-    # train_model.model.embedder = pretrainer.model.embedder
+    train_model.model.embedder = pretrainer.model.embedder
     # train_model.model.encoder.gru = freeze(pretrainer.model.encoder.gru)
     # train_model.model.decoder.gru = freeze(pretrainer.model.decoder.gru)
     return train_model
