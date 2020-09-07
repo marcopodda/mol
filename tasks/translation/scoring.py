@@ -8,17 +8,9 @@ from core.mols.props import drd2, qed, logp, similarity
 from tasks import TRANSLATION
 
 
-SR1_KWARGS = {
-    "drd2": {"prop_fun": drd2, "similarity_thres": 0.3, "improvement_thres": 0.6},
-    "qed": {"prop_fun": qed, "similarity_thres": 0.3, "improvement_thres": 0.6},
-    "logp4": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 0.8},
-    "logp6": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 0.8},
-}
-
-
-SR2_KWARGS = {
-    "drd2": {"prop_fun": drd2, "similarity_thres": 0.4, "improvement_thres": 0.8},
-    "qed": {"prop_fun": qed, "similarity_thres": 0.4, "improvement_thres": 0.8},
+SR_KWARGS = {
+    "drd2": {"prop_fun": drd2, "similarity_thres": 0.4, "improvement_thres": 0.5},
+    "qed": {"prop_fun": qed, "similarity_thres": 0.4, "improvement_thres": 0.9},
     "logp4": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 1.2},
     "logp6": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 1.2},
 }
@@ -52,14 +44,12 @@ def score(output_dir, dataset_name, epoch=1):
     unique_samples = set([y for (x, y) in valid_samples])
     uniqueness_rate = len(unique_samples) / num_valid
 
-    # success rate scores    
-    sr1 = [success_rate(x, y, **SR1_KWARGS[dataset_name]) for (x, y) in valid_samples]
-    sr2 = [success_rate(x, y, **SR2_KWARGS[dataset_name]) for (x, y) in valid_samples]
+    # success rate    
+    sr = [success_rate(x, y, **SR_KWARGS[dataset_name]) for (x, y) in valid_samples]
     
     return {
         "num_samples": len(samples),
-        "sr1": np.mean(sr1),
-        "sr2": np.mean(sr2),
+        "success_rate": np.mean(sr),
         "valid": validity_rate,
         "unique": uniqueness_rate,
         "novel": novelty_rate,

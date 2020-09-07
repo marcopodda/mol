@@ -92,7 +92,7 @@ def qed(mol):
 def get_fingerprint(mol):
     if isinstance(mol, str):
         mol = mol_from_smiles(mol)
-    return AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, nBits=1024)
+    return AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, nBits=2048, use_chirality=False)
 
 
 def similarity(mol1, mol2):
