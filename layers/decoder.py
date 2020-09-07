@@ -29,14 +29,14 @@ class Decoder(nn.Module):
                           # weight_dropout=rnn_dropout,
                           dropout=rnn_dropout)
         
-        self.attn = Attention(dim_context=dim_hidden)
+        self.attn = Attention(dim_hidden=dim_hidden)
         self.proj = nn.Linear(dim_hidden * 2, dim_hidden)
         self.out = nn.Linear(dim_hidden, dim_output)
 
     def forward(self, x, hidden, enc_outputs, prev_context):
         # Note: we run this one step at a time
         # Calculate attention from current RNN state and all encoder outputs; apply to encoder outputs
-        attn_weights = self.attn(hidden[-1], enc_outputs)
+        attn_weights = self.attn(hidden, enc_outputs)
         context = attn_weights.bmm(enc_outputs) # B x 1 x N
         
         # Combine embedded input word and last context, run through RNN
@@ -58,8 +58,8 @@ class Decoder(nn.Module):
         outputs = []
         for i in range(S):
             x = dec_inputs[:, i, :].unsqueeze(1)
-            ctx = torch.zeros_like(enc_outputs[:,:1,:]) if i == 0 else ctx
-            logits, h, ctx, w = self(x, h, enc_outputs, ctx)
+            c = torch.zeros_like(enc_outputs[:,:1,:]) if i == 0 else c
+            logits, h, c, w = self(x, h, enc_outputs, c)
             outputs.append(logits.unsqueeze(1))
 
         outputs = torch.cat(outputs, dim=1)
