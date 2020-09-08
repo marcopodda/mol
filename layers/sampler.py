@@ -11,7 +11,7 @@ from torch_geometric.data import Batch
 from rdkit import Chem
 from moses.utils import disable_rdkit_log, enable_rdkit_log
 
-from core.datasets.common import VocabDataset
+from core.datasets.common import VocabDataset, VocabDataLoader
 from core.datasets.vocab import Tokens
 from core.mols.split import join_fragments
 from core.mols.props import similarity, drd2
@@ -36,13 +36,7 @@ class Sampler:
     def get_embedder(self, model):
         device = next(model.parameters()).device
         dataset = VocabDataset(self.vocab)
-        loader = DataLoader(
-            dataset=dataset, 
-            shuffle=False, 
-            batch_size=512, 
-            pin_memory=True, 
-            collate_fn=lambda l: Batch.from_data_list(l),
-            num_workers=self.hparams.num_workers)
+        loader = VocabDataLoader(self.hparams, dataset)
         gnn = model.embedder.gnn
         
         tokens = torch.cat([
@@ -53,7 +47,7 @@ class Sampler:
         ])
         
         embeddings = []
-        for data in loader:
+        for data in loader(batch_size=512):
             data = data.to(device)
             x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
             embedding = gnn(x, edge_index, edge_attr, batch)

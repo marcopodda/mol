@@ -2,6 +2,8 @@ import torch
 from torch.utils.data import Subset, DataLoader
 from torch_geometric.data import Batch
 
+from core.datasets.common import collate_single, predilled_tensor
+
 
 class TranslationDataLoaderMixin:
     def __init__(self, hparams, dataset):
@@ -27,46 +29,35 @@ class TranslationDataLoaderMixin:
 class TranslationTrainDataLoader(TranslationDataLoaderMixin):
     def collate(self, data_list):
         x_frags, y_frags = zip(*data_list)
-        batch_size = len(x_frags)
         
-        cumsum = 0
-        for i, frag_x in enumerate(x_frags):
-            inc = (frag_x.frags_batch.max() + 1).item()
-            frag_x.frags_batch += cumsum
-            cumsum += inc
+        x_frag_batch = collate_single(x_frags)
+        y_frag_batch = collate_single(y_frags)
         
-        cumsum = 0
-        for i, frag_y in enumerate(y_frags):
-            inc = (frag_y.frags_batch.max() + 1).item()
-            frag_y.frags_batch += cumsum
-            cumsum += inc
+        B = len(x_frags)
+        M = self.dataset.max_length
+        H = self.hparams.frag_dim_embed
+        L = [m.length.item() for m in x_frags]
         
-        lengths = [m.length.item() for m in x_frags]
-        enc_inputs = torch.zeros((batch_size, self.max_length, self.hparams.frag_dim_embed))
-        enc_inputs[:, lengths, :] = self.dataset.eos.repeat(batch_size, 1)
-        
-        dec_inputs = torch.zeros((batch_size, self.max_length, self.hparams.frag_dim_embed))
-        dec_inputs[:, 0, :] = self.dataset.sos.repeat(batch_size, 1)
+        enc_inputs = predilled_tensor(dims=(B, M, H), fill_with=self.dataset.eos, fill_at=L)
+        dec_inputs = predilled_tensor(dims=(B, M, H), fill_with=self.dataset.sos, fill_at=0)
 
-        return Batch.from_data_list(x_frags), Batch.from_data_list(y_frags), enc_inputs, dec_inputs
+        return x_frag_batch, y_frag_batch, enc_inputs, dec_inputs
 
 
 class TranslationValDataLoader(TranslationDataLoaderMixin):
-    def collate(self, data_list):
-        x_frags = data_list
-        batch_size = len(x_frags)
+    def collate(self, data_list):        
+        frag_batch = collate_single(data_list)
         
-        cumsum = 0
-        for i, frag_x in enumerate(x_frags):
-            inc = (frag_x.frags_batch.max() + 1).item()
-            frag_x.frags_batch += cumsum
-            cumsum += inc
+        B = len(data_list)
+        M = self.dataset.max_length
+        H = self.hparams.frag_dim_embed
+        L = [m.length.item() for m in data_list]
         
-        lengths = [m.length.item() for m in x_frags]
-        enc_inputs = torch.zeros((batch_size, self.max_length, self.hparams.frag_dim_embed))
-        enc_inputs[:, lengths, :] = self.dataset.eos.repeat(batch_size, 1)
-        
-        dec_inputs = torch.zeros((batch_size, self.max_length, self.hparams.frag_dim_embed))
-        dec_inputs[:, 0, :] = self.dataset.sos.repeat(batch_size, 1)
+        enc_inputs = predilled_tensor(dims=(B, M, H), fill_with=self.dataset.eos, fill_at=L)
+        dec_inputs = predilled_tensor(dims=(B, M, H), fill_with=self.dataset.sos, fill_at=0)
 
-        return Batch.from_data_list(x_frags), enc_inputs, dec_inputs
+        return frag_batch, enc_inputs, dec_inputs
+    
+    
+class TranslationTestDataLoder(TranslationValDataLoader):
+    pass
