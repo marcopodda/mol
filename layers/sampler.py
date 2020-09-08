@@ -110,7 +110,7 @@ class Sampler:
         frags = frags.to(self.device)
         enc_inputs =  enc_inputs.to(self.device)
         dec_inputs = dec_inputs.to(self.device)
-        
+        print(frags.device)
         enc_hidden, enc_outputs = model.encode(frags, enc_inputs)
         batch_size = enc_outputs.size(0)
         
