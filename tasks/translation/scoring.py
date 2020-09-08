@@ -18,11 +18,16 @@ SR_KWARGS = {
 }
 
 
+def is_similar(x, y, similarity_thres):
+    return similarity(x, y) >= similarity_thres
+
+
+def is_improved(prop_fun, y, improvement_thres):
+    return prop_fun(y) >= improvement_thres
+
+
 def success_rate(x, y, prop_fun, similarity_thres, improvement_thres):
     sim, prop = similarity(x, y), prop_fun(y)
-    print(sim)
-    if prop is None:
-        return False
     return sim >= similarity_thres and prop >= improvement_thres
 
 
@@ -50,12 +55,16 @@ def score(output_dir, dataset_name, epoch=1):
     uniqueness_rate = len(unique_samples) / num_valid
 
     # success rate
-    kwargs = SR_KWARGS[dataset_name].copy()
-    sr = [success_rate(x, y, **kwargs) for (x, y) in valid_samples]
+    kw = SR_KWARGS[dataset_name].copy()
+    similar = [is_similar(x, y, kw["similarity_thres"]) for (x, y) in valid_samples]
+    improved = [is_improved(y, kw["prop_fun"], kw["improvement_thres"]) for (x, y) in valid_samples]
+    success = [x and y for (x, y) in zip(similar, improved)]
     
     return {
         "num_samples": len(samples),
-        "success_rate": sum(sr)/len(valid_samples),
+        "similar": len(similar) / num_valid,
+        "improved": len(improved) / num_valid,
+        "success_rate": sum(success) / num_valid,
         "valid": validity_rate,
         "unique": uniqueness_rate,
         "novel": novelty_rate,
