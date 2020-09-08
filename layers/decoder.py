@@ -41,7 +41,7 @@ class Decoder(nn.Module):
         
         # Combine embedded input word and last context, run through RNN
         rnn_input = torch.cat([x, context], dim=-1)
-        rnn_output, hidden = self.gru(F.relu(rnn_input), hidden)
+        rnn_output, hidden = self.gru(rnn_input, hidden)
 
         # Final output layer (next word prediction) using the RNN hidden state and context vector
         output = rnn_output.reshape(-1, rnn_output.size(2))

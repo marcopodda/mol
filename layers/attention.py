@@ -26,7 +26,7 @@ class Attention(nn.Module):
         hidden = hidden.transpose(1, 0)  # [B*T*H]
         attn_inputs = torch.cat([hidden, encoder_outputs], dim=2) # [B*T*2H]
         attn_outputs = self.attn(attn_inputs) # [B*T*2H]->[B*T*H]
-        energy = attn_outputs.transpose(1, 2) # [B*H*T]
+        energy = F.relu(attn_outputs).transpose(1, 2) # [B*H*T]
         v = self.v.repeat(encoder_outputs.size(0), 1).unsqueeze(1)  # [B*1*H]
         energy = torch.bmm(v, energy)  # [B*1*T]
         return energy.squeeze(1)  # [B*T]
