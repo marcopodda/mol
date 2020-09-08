@@ -21,7 +21,7 @@ def success_rate(x, y, prop_fun, similarity_thres, improvement_thres):
     sim, prop = similarity(x, y), prop_fun(y)
     if prop is None:
         return False
-    return prop >= improvement_thres # sim >= similarity_thres and prop >= improvement_thres
+    return sim >= similarity_thres and prop >= improvement_thres
 
 
 def score(output_dir, dataset_name, epoch=1):

@@ -63,30 +63,30 @@ def penalized_logp(mol, logP=None, SAS=None):
 def logp(mol):
     if isinstance(mol, str):
         mol = mol_from_smiles(mol)
-    return Crippen.MolLogP(mol) if mol else None
+    return Crippen.MolLogP(mol) if mol else 0.0
 
 
 def drd2(mol):
     if isinstance(mol, str):
         mol = mol_from_smiles(mol)
-    return drd2_scorer.get_score(mol) if mol else None
+    return drd2_scorer.get_score(mol) if mol else 0.0
 
 
 def mr(mol):
     if isinstance(mol, str):
         mol = mol_from_smiles(mol)
-    return Crippen.MolMR(mol) if mol else None
+    return Crippen.MolMR(mol) if mol else 0.0
 
 def mw(mol):
     if isinstance(mol, str):
         mol = mol_from_smiles(mol)
-    return Descriptors.MolWt(mol) if mol else None
+    return Descriptors.MolWt(mol) if mol else 0.0
 
 
 def qed(mol):
     if isinstance(mol, str):
         mol = mol_from_smiles(mol)
-    return QED.qed(mol) if mol else None
+    return QED.qed(mol) if mol else 0.0
 
 
 def get_fingerprint(mol):
