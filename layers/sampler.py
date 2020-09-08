@@ -110,13 +110,13 @@ class Sampler:
         
         batch_size = enc_outputs.size(0)
         
-        h = enc_hidden
-        o = enc_outputs
+        h = enc_hidden.to(self.device)
+        o = enc_outputs.to(self.device)
         x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1).to(self.device)
         c = torch.zeros((batch_size, 1, self.hparams.rnn_dim_state), device=self.device)
         
         sample, eos_found = [], True
-        samples = torch.zeros((batch_size, self.max_length))
+        samples = torch.zeros((batch_size, self.max_length), device=self.device)
         
         for it in range(self.max_length):
             logits, h, c, _ = model.decoder(x, h, o, c)
