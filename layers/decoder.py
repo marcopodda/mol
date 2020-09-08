@@ -48,7 +48,7 @@ class Decoder(nn.Module):
         logits = self.out(output).squeeze(1)
 
         # Return final output, hidden state, and attention weights (for visualization)
-        return logits, hidden, context, attn_weights
+        return logits, hidden, attn_weights
     
     def decode_with_attention(self, dec_inputs, enc_hidden, enc_outputs):
         B, S, V = dec_inputs.size()
@@ -57,8 +57,7 @@ class Decoder(nn.Module):
         outputs = []
         for i in range(S):
             x = dec_inputs[:, i, :].unsqueeze(1)
-            c = torch.zeros_like(enc_outputs[:,:1,:]) if i == 0 else c
-            logits, h, w = self(x, h, enc_outputs)
+            logits, h, w = self.forward(x, h, enc_outputs)
             outputs.append(logits.unsqueeze(1))
 
         outputs = torch.cat(outputs, dim=1)
