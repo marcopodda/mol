@@ -29,6 +29,7 @@ class Decoder(nn.Module):
                           # weight_dropout=rnn_dropout,
                           dropout=rnn_dropout)
         
+        self.proj = nn.Linear(dim_hidden * 2, dim_hidden)
         self.attn = Attention(dim_hidden=dim_hidden)
         self.out = nn.Linear(dim_hidden, dim_output)
 
