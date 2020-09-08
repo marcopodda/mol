@@ -97,6 +97,8 @@ def get_fingerprint(mol):
 
 def similarity(mol1, mol2):
     fp1 = get_fingerprint(mol1)
+    if mol2 is None:
+        return 0.0
     fp2 = get_fingerprint(mol2)
     return DataStructs.FingerprintSimilarity(fp1, fp2)
 
