@@ -80,8 +80,7 @@ class Sampler:
                     embedder=embedder, 
                     temp=temp,
                     batch_size=batch_size,
-                    greedy=greedy,
-                    num_samples=num_samples)
+                    greedy=greedy)
                 
                 batch_length = batch[-1].size(0)
                 start = idx * batch_size
