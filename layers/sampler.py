@@ -19,13 +19,16 @@ from core.utils.serialization import load_yaml, save_yaml
 
 
 class Sampler:
-    def __init__(self, model, dataset):
+    dataset_class = None
+    
+    def __init__(self, model, name):
         self.hparams = model.hparams
         self.model = model
         self.output_dir = model.output_dir
-        self.dataset = dataset
-        self.vocab = dataset.vocab
-        self.max_length = dataset.max_length
+        self.name = name
+        self.dataset = self.dataset_class(self.hparams, self.output_dir, name)
+        self.vocab = self.dataset.vocab
+        self.max_length = self.dataset.max_length
         
     def get_loader(self, batch_size=128, num_samples=None):
         raise NotImplementedError
@@ -105,7 +108,7 @@ class Sampler:
 
 
     def generate_batch(self, data, model, embedder, temp, batch_size, greedy):
-        frags, _, enc_inputs, dec_inputs = data
+        frags, enc_inputs, dec_inputs = data
         
         enc_hidden, enc_outputs = model.encode(frags, enc_inputs)
         batch_size = enc_outputs.size(0)

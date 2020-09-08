@@ -1,9 +1,12 @@
 import numpy as np
 from layers.sampler import Sampler
+from tasks.pretraining.dataset import PretrainingDataset
 from tasks.pretraining.loader import PretrainingDataLoader
 
 
 class PretrainingSampler(Sampler):
+    dataset_class = PretrainingDataset
+    
     def get_loader(self, batch_size=128, num_samples=None):
         loader = PretrainingDataLoader(self.hparams, self.dataset)
         if num_samples is None:

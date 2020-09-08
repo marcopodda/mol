@@ -16,18 +16,18 @@ from core.utils.os import get_or_create_dir
 from layers.model import Model
 from layers.wrapper import Wrapper
 from tasks import TRANSLATION, PRETRAINING
-from tasks.translation.dataset import TranslationDataset
-from tasks.translation.loader import TranslationDataLoader
+from tasks.translation.dataset import TranslationTrainDataset
+from tasks.translation.loader import TranslationTrainDataLoader
 from tasks.translation.sampler import TranslationSampler
 from tasks.pretraining.experiment import PretrainingWrapper
 
 
 class TranslationWrapper(Wrapper):
-    dataset_class = TranslationDataset
+    dataset_class = TranslationTrainDataset
 
     def prepare_data(self):
-        loader = TranslationDataLoader(self.hparams, self.dataset)
-        self.training_loader = loader.get_train()
+        loader = TranslationTrainDataLoader(self.hparams, self.dataset)
+        self.training_loader = loader()
 
 
 def freeze(layer):
@@ -86,8 +86,8 @@ def run_sampling(output_dir, dataset_name, epoch=None, temp=1.0, batch_size=1000
         
         if not sample_path.exists():
             print(f"processing {sample_path}...")
-            plw = TranslationWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
-            sampler = TranslationSampler(plw.model, plw.dataset)
+            wrapper = TranslationWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
+            sampler = TranslationSampler(wrapper.model, dataset_name)
             samples = sampler.run(temp=temp, batch_size=batch_size, greedy=greedy)
             save_yaml(samples, sample_path)
         

@@ -6,7 +6,7 @@ from core.datasets.utils import get_data, frag2data, fragslist2data, build_frag_
 from core.utils.serialization import load_numpy, save_numpy
 
 
-class TranslationDataset:
+class TranslationDatasetMixin:
     def __init__(self, hparams, output_dir, name):
         if isinstance(hparams, dict):
             hparams = Namespace(**hparams)
@@ -15,12 +15,13 @@ class TranslationDataset:
         self.output_dir = output_dir
         self.name = name
         
-        self.data, self.vocab = get_data(output_dir, name, hparams.num_samples)
-        self.max_length = self.data.length.max() + 1
+        data, self.vocab = get_data(output_dir, name, hparams.num_samples)
+        self.data = self.filter_data(data).reset_index(drop=True)
+        self.max_length = data.length.max() + 1
         
         self.sos = self._initialize_token("sos")
         self.eos = self._initialize_token("eos")
-    
+        
     def _initialize_token(self, name):
         path = self.output_dir / "DATA" / f"{name}_{self.hparams.frag_dim_embed}.dat"    
         if path.exists():
@@ -30,8 +31,27 @@ class TranslationDataset:
             save_numpy(token.numpy(), path)
         return token
 
+    def filter_data(self, data):
+        raise NotImplementedError
+    
     def __len__(self):
         return self.data.shape[0]
+    
+    def __getitem__(self, index):
+        mol_data_x = self.data.iloc[index]
+        frags_list_x = mol_data_x.frags
+        data_x = fragslist2data(frags_list_x)
+        data_x["seq"] = build_frag_sequence(frags_list_x, self.vocab, self.max_length)
+        
+        return data_x
+
+
+class TranslationTrainDataset(TranslationDatasetMixin):
+    def filter_data(self, data):
+        return data[(data.is_x==1) | (data.is_y==1)]
+    
+    def __len__(self):
+        return self.data[self.data.is_x==1].shape[0]
 
     def __getitem__(self, index):
         mol_data_x = self.data.iloc[index]
@@ -39,24 +59,19 @@ class TranslationDataset:
         data_x = fragslist2data(frags_list_x)
         data_x["seq"] = build_frag_sequence(frags_list_x, self.vocab, self.max_length)
         
-        if mol_data_x.is_x == 1:
-            target = self.data.smiles==mol_data_x.target
-            mol_data_y = self.data[target].iloc[0]
-            frags_list_y = mol_data_y.frags
-            data_y = fragslist2data(frags_list_y)
-            data_y["seq"] = build_frag_sequence(frags_list_y, self.vocab, self.max_length)
-            return data_x, data_y
-            
-        return data_x, data_x.clone()
+        target = self.data.smiles==mol_data_x.target
+        mol_data_y = self.data[target].iloc[0]
+        frags_list_y = mol_data_y.frags
+        data_y = fragslist2data(frags_list_y)
+        data_y["seq"] = build_frag_sequence(frags_list_y, self.vocab, self.max_length)
+        return data_x, data_y
+    
 
-    @property
-    def train_indices(self):
-        return self.data[self.data.is_x==1].index.tolist()
+class TranslationValDataset(TranslationDatasetMixin):
+    def filter_data(self, data):
+        return data[data.is_valid==1]
     
-    @property
-    def val_indices(self):
-        return self.data[self.data.is_valid==1].index.tolist()
-    
-    @property
-    def test_indices(self):
-        return self.data[self.data.is_test==1].index.tolist()
+
+class TranslationTestDataset(TranslationDatasetMixin):
+    def filter_data(self, data):
+        return data[data.is_test==1]

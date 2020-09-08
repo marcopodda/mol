@@ -84,8 +84,8 @@ def run_sampling(output_dir, dataset_name, epoch=None,  temp=1.0, batch_size=100
     
     if not sample_path.exists():
         print(f"processing {sample_path}...")
-        plw = PretrainingWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
-        sampler = PretrainingSampler(plw.model, plw.dataset)
+        wrapper = PretrainingWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
+        sampler = PretrainingSampler(wrapper.model, dataset_name)
         samples = sampler.run(temp=temp, batch_size=batch_size, greedy=greedy, num_samples=num_samples)
         save_yaml(samples, sample_path)
         
