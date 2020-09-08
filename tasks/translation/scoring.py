@@ -20,9 +20,10 @@ SR_KWARGS = {
 def success_rate(x, y, prop_fun, similarity_thres, improvement_thres):
     sim, prop = similarity(x, y), prop_fun(y)
     if similarity_thres is None:
-        print(prop, improvement_thres)
         return prop >= improvement_thres
     if improvement_thres is None:
+        if similarity_thres is None:
+            assert False
         return sim >= similarity_thres
     return sim >= similarity_thres and prop >= improvement_thres
 
@@ -51,14 +52,14 @@ def score(output_dir, dataset_name, epoch=1):
     uniqueness_rate = len(unique_samples) / num_valid
 
     # success rate
-    kwargs = deepcopy(SR_KWARGS[dataset_name])
+    kwargs = SR_KWARGS[dataset_name].copy()
     sr = [success_rate(x, y, **kwargs) for (x, y) in valid_samples]
     
-    kwargs = deepcopy(SR_KWARGS[dataset_name])
+    kwargs = SR_KWARGS[dataset_name].copy()
     kwargs["similarity_thres"] = None
     sr1 = [success_rate(x, y, **kwargs) for (x, y) in valid_samples]
     
-    kwargs = deepcopy(SR_KWARGS[dataset_name])
+    kwargs = SR_KWARGS[dataset_name].copy()
     kwargs["improvement_thres"] = None
     sr2 = [success_rate(x, y, **kwargs) for (x, y) in valid_samples]
     
