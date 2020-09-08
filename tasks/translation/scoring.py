@@ -19,9 +19,8 @@ SR_KWARGS = {
 
 def success_rate(x, y, prop_fun, similarity_thres, improvement_thres):
     sim, prop = similarity(x, y), prop_fun(y)
-    if prop_fun is None:
-        return False
     if similarity_thres is None:
+        print(prop, improvement_thres)
         return prop >= improvement_thres
     if improvement_thres is None:
         return sim >= similarity_thres
