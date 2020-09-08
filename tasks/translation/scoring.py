@@ -22,7 +22,7 @@ def is_similar(x, y, similarity_thres):
     return similarity(x, y) >= similarity_thres
 
 
-def is_improved(prop_fun, y, improvement_thres):
+def is_improved(y, prop_fun, improvement_thres):
     return prop_fun(y) >= improvement_thres
 
 
