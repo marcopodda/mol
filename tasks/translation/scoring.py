@@ -6,6 +6,7 @@ from copy import deepcopy
 
 from core.utils.serialization import load_yaml
 from core.mols.props import drd2, qed, logp, similarity
+from core.mols.utils import mol_from_smiles
 from tasks import TRANSLATION
 
 
@@ -35,7 +36,7 @@ def score(output_dir, dataset_name, epoch=1):
     num_samples = len(samples)
     
     # valid samples
-    valid_samples = [(x, y) for (x, y) in zip(ref, gen) if y]
+    valid_samples = [(x, y) for (x, y) in zip(ref, gen) if y and mol_from_smiles(y)]
     num_valid = len(valid_samples)
     validity_rate = num_valid / num_samples
     
