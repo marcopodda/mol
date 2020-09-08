@@ -40,7 +40,7 @@ class Decoder(nn.Module):
         context = attn_weights.bmm(enc_outputs) # B x 1 x N
         
         # Combine embedded input word and last context, run through RNN
-        rnn_input = torch.cat([x, prev_context], dim=-1)
+        rnn_input = torch.cat([x, context], dim=-1)
         rnn_output, hidden = self.gru(rnn_input, hidden)
 
         # Final output layer (next word prediction) using the RNN hidden state and context vector
