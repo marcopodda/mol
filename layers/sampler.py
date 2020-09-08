@@ -19,19 +19,19 @@ from core.utils.serialization import load_yaml, save_yaml
 
 
 class Sampler:
-    def __init__(self, model, dataset):
+    def __init__(self, model, dataset, device):
         self.hparams = model.hparams
         self.model = model
         self.output_dir = model.output_dir
         self.dataset = dataset
         self.vocab = dataset.vocab
         self.max_length = dataset.max_length
-    
+        self.device = device
+        
     def get_loader(self, batch_size=128, num_samples=None):
         raise NotImplementedError
         
     def get_embedder(self, model):
-        device = next(model.parameters()).device
         dataset = VocabDataset(self.vocab)
         loader = DataLoader(
             dataset=dataset, 
@@ -40,18 +40,18 @@ class Sampler:
             pin_memory=True, 
             collate_fn=lambda l: Batch.from_data_list(l),
             num_workers=self.hparams.num_workers)
-        gnn = model.embedder.gnn
+        gnn = model.embedder.gnn.to(self.device)
         
         tokens = torch.cat([
             torch.zeros_like(self.dataset.sos),
             self.dataset.sos,
             self.dataset.eos,
             torch.randn_like(self.dataset.sos)
-        ])
+        ]).to(self.device)
         
         embeddings = []
         for data in loader:
-            data = data.to(device)
+            data = data.to(self.device)
             x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
             embedding = gnn(x, edge_index, edge_attr, batch)
             embeddings.append(embedding)
@@ -63,7 +63,7 @@ class Sampler:
         return embedder
         
     def run(self, temp=1.0, batch_size=128, greedy=True, num_samples=None):
-        model = self.model
+        model = self.model.to(self.device)
         model.eval()
         
         samples = []
@@ -112,8 +112,8 @@ class Sampler:
         
         h = enc_hidden
         o = enc_outputs
-        x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1)
-        c = torch.zeros((batch_size, 1, self.hparams.rnn_dim_state), device=x.device)
+        x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1).to(self.device)
+        c = torch.zeros((batch_size, 1, self.hparams.rnn_dim_state), device=self.device)
         
         sample, eos_found = [], True
         samples = torch.zeros((batch_size, self.max_length))
