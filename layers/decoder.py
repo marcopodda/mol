@@ -30,10 +30,9 @@ class Decoder(nn.Module):
                           dropout=rnn_dropout)
         
         self.attn = Attention(dim_hidden=dim_hidden)
-        self.proj = nn.Linear(dim_hidden * 2, dim_hidden)
         self.out = nn.Linear(dim_hidden, dim_output)
 
-    def forward(self, x, hidden, enc_outputs, prev_context):
+    def forward(self, x, hidden, enc_outputs):
         # Note: we run this one step at a time
         # Calculate attention from current RNN state and all encoder outputs; apply to encoder outputs
         attn_weights = self.attn(hidden, enc_outputs)
@@ -44,7 +43,6 @@ class Decoder(nn.Module):
         rnn_output, hidden = self.gru(F.relu(rnn_input), hidden)
 
         # Final output layer (next word prediction) using the RNN hidden state and context vector
-        # output = self.proj(torch.cat([rnn_output, context], dim=-1))
         output = rnn_output.reshape(-1, rnn_output.size(2))
         logits = self.out(output).squeeze(1)
 
@@ -59,7 +57,7 @@ class Decoder(nn.Module):
         for i in range(S):
             x = dec_inputs[:, i, :].unsqueeze(1)
             c = torch.zeros_like(enc_outputs[:,:1,:]) if i == 0 else c
-            logits, h, c, w = self(x, h, enc_outputs, c)
+            logits, h, w = self(x, h, enc_outputs)
             outputs.append(logits.unsqueeze(1))
 
         outputs = torch.cat(outputs, dim=1)

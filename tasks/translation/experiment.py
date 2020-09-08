@@ -69,10 +69,8 @@ def run(args):
     trainer.fit(train_model)
         
 
-def run_sampling(output_dir, dataset_name, epoch=None, temp=1.0, batch_size=1000, greedy=True, gpu=0):
+def run_sampling(output_dir, dataset_name, epoch=None, temp=1.0, batch_size=1000, greedy=True):
     assert epoch >= 1
-    
-    device = torch.device(gpu) if torch.cuda.is_available() else "cpu"
     
     output_dir = Path(output_dir)
     task_dir = output_dir / TRANSLATION
@@ -89,7 +87,7 @@ def run_sampling(output_dir, dataset_name, epoch=None, temp=1.0, batch_size=1000
         if not sample_path.exists():
             print(f"processing {sample_path}...")
             plw = TranslationWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
-            sampler = TranslationSampler(plw.model, plw.dataset, device=device)
+            sampler = TranslationSampler(plw.model, plw.dataset)
             samples = sampler.run(temp=temp, batch_size=batch_size, greedy=greedy)
             save_yaml(samples, sample_path)
         

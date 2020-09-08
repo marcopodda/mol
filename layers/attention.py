@@ -17,17 +17,16 @@ class Attention(nn.Module):
 
     def forward(self, hidden, encoder_outputs):
         # encoder_outputs [B*T*H]
-        hidden = hidden[-1:]  # [1*B*H]
         seq_len = encoder_outputs.size(1)
-        h = hidden.repeat(seq_len, 1, 1)  # [T*B*H]
-        attn_energies = self.score(h, encoder_outputs)
+        hidden = hidden[-1:].repeat(seq_len, 1, 1)  # [T*B*H]
+        attn_energies = self.score(hidden, encoder_outputs)
         return F.softmax(attn_energies, dim=1).unsqueeze(1)
 
     def score(self, hidden, encoder_outputs):
         hidden = hidden.transpose(1, 0)  # [B*T*H]
         attn_inputs = torch.cat([hidden, encoder_outputs], dim=2) # [B*T*2H]
         attn_outputs = self.attn(attn_inputs) # [B*T*2H]->[B*T*H]
-        energy = F.relu(attn_outputs).transpose(1, 2) # [B*H*T]
+        energy = attn_outputs.transpose(1, 2) # [B*H*T]
         v = self.v.repeat(encoder_outputs.size(0), 1).unsqueeze(1)  # [B*1*H]
         energy = torch.bmm(v, energy)  # [B*1*T]
         return energy.squeeze(1)  # [B*T]
