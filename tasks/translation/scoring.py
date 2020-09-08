@@ -62,8 +62,8 @@ def score(output_dir, dataset_name, epoch=1):
     
     return {
         "num_samples": len(samples),
-        "similar": len(similar) / num_valid,
-        "improved": len(improved) / num_valid,
+        "similar": sum(similar) / num_valid,
+        "improved": sum(improved) / num_valid,
         "success_rate": sum(success) / num_valid,
         "valid": validity_rate,
         "unique": uniqueness_rate,
