@@ -1,3 +1,4 @@
+import numpy as np
 from argparse import Namespace
 
 import torch
@@ -64,7 +65,16 @@ class TranslationTrainDataset(TranslationDatasetMixin):
         frags_list_y = mol_data_y.frags
         data_y = fragslist2data(frags_list_y)
         data_y["seq"] = build_frag_sequence(frags_list_y, self.vocab, self.max_length)
-        return data_x, data_y
+        
+        indices = self.data.index.tolist()
+        indices.remove(index)
+        neg_index = np.random.choice(indices)
+        mol_data_z = self.data.iloc[neg_index]
+        frags_list_z = mol_data_z.frags
+        data_z = fragslist2data(frags_list_z)
+        data_z["seq"] = build_frag_sequence(frags_list_z, self.vocab, self.max_length)
+        
+        return data_x, data_y, data_z
     
 
 class TranslationValDataset(TranslationDatasetMixin):

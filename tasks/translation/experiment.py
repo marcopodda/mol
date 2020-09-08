@@ -13,21 +13,30 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 
 from core.utils.serialization import load_yaml, save_yaml
 from core.utils.os import get_or_create_dir
-from layers.model import Model
 from layers.wrapper import Wrapper
 from tasks import TRANSLATION, PRETRAINING
 from tasks.translation.dataset import TranslationTrainDataset
 from tasks.translation.loader import TranslationTrainDataLoader
+from tasks.translation.model import TranslationModel
 from tasks.translation.sampler import TranslationSampler
 from tasks.pretraining.experiment import PretrainingWrapper
 
 
 class TranslationWrapper(Wrapper):
     dataset_class = TranslationTrainDataset
+    model_class = TranslationModel
 
     def prepare_data(self):
         loader = TranslationTrainDataLoader(self.hparams, self.dataset)
         self.training_loader = loader()
+    
+    def training_step(self, batch, batch_idx):
+        (_, y, _), _, _ = batch
+        logits, hx, hy, hz = self.model(batch)
+        ce_loss = F.cross_entropy(logits, y.seq.view(-1), ignore_index=0)
+        tm_loss = F.triplet_margin_loss(hx, hy, hz)
+        logs = {"CE": ce_loss, "TM": tm_loss}
+        return {"loss": ce_loss + tm_loss, "logs": logs, "progress_bar": logs}
 
 
 def freeze(layer):

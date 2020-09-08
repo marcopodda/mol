@@ -12,6 +12,7 @@ from layers.model import Model
 
 class Wrapper(pl.LightningModule):
     dataset_class = None
+    model_class = Model
     
     def __init__(self, hparams, output_dir, name):
         super().__init__()
@@ -26,7 +27,7 @@ class Wrapper(pl.LightningModule):
         self.dataset = self.dataset_class(hparams, output_dir, name)
         self.max_length = self.dataset.max_length
 
-        self.model = Model(hparams, self.output_dir, len(self.dataset.vocab), self.max_length)
+        self.model = self.model_class(hparams, self.output_dir, len(self.dataset.vocab), self.max_length)
 
     def forward(self, data):
         return self.model(data)
