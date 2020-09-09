@@ -104,11 +104,12 @@ class Sampler:
     def generate_batch(self, data, model, embedder, temp, batch_size, greedy):
         frags, x_fps, enc_inputs, dec_inputs = data
         
-        _, enc_outputs = model.encode(frags, enc_inputs)
-        _, enc_hidden = model.get_decoder_hidden_state(x_fps)
+        enc_hidden, enc_outputs = model.encode(frags, enc_inputs)
+        _, autoenc_hidden = model.get_decoder_hidden_state(x_fps)
+        
         batch_size = enc_outputs.size(0)
         
-        h = enc_hidden
+        h = torch.cat([enc_hidden, autoenc_hidden], dim=-1)
         o = enc_outputs
         x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1)
         
