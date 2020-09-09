@@ -6,7 +6,6 @@ from torch import nn
 from torch.nn import functional as F
 
 from core.datasets.vocab import Tokens
-from layers.rnn import WeightDropGRU
 from layers.embedder import GNN
 from layers.attention import Attention
 
