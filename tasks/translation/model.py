@@ -47,9 +47,13 @@ class TranslationModel(nn.Module):
             max_length=max_length,
             rnn_dropout=hparams.rnn_dropout,
             num_layers = hparams.rnn_num_layers,
+            # dim input = dim_frag_embed + dim context (= dim_hidden)
             dim_input=hparams.frag_dim_embed+hparams.rnn_dim_state,
+            # dim hidden = dim_state * 2 (1 from autoencoder, 1 from encoder)
             dim_hidden=hparams.rnn_dim_state * 2,
-            dim_attention=hparams.rnn_dim_state,
+            # dim attention = dim_input + dim_hidden
+            dim_attention=hparams.frag_dim_embed+hparams.rnn_dim_state * 2,
+            dim_context=hparams.rnn_dim_state,
             dim_output=vocab_size + len(Tokens))
 
     def encode(self, batch, enc_inputs):

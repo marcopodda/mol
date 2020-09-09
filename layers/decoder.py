@@ -11,7 +11,7 @@ from layers.attention import Attention
 
 
 class Decoder(nn.Module):
-    def __init__(self, hparams, max_length, rnn_dropout, num_layers, dim_input, dim_hidden, dim_attention, dim_output):
+    def __init__(self, hparams, max_length, rnn_dropout, num_layers, dim_input, dim_hidden, dim_attention, dim_context, dim_output):
         super().__init__()
 
         self.max_length = max_length
@@ -30,7 +30,7 @@ class Decoder(nn.Module):
                           dropout=rnn_dropout)
 
         self.proj = nn.Linear(dim_hidden, dim_hidden)
-        self.attn = Attention(dim_hidden=dim_attention)
+        self.attn = Attention(dim_hidden=dim_attention, dim_context=dim_context)
         self.out = nn.Linear(dim_hidden, dim_output)
 
     def forward(self, x, hidden, enc_outputs):

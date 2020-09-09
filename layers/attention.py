@@ -6,12 +6,13 @@ from torch.nn import functional as F
 
 
 class Attention(nn.Module):
-    def __init__(self, dim_hidden):
+    def __init__(self, dim_hidden, dim_context):
         super().__init__()
 
         self.dim_hidden = dim_hidden
-        self.attn = nn.Linear(dim_hidden, dim_hidden)
-        self.v = nn.Parameter(torch.rand(dim_hidden))
+        self.dim_context = dim_context
+        self.attn = nn.Linear(dim_hidden, dim_context)
+        self.v = nn.Parameter(torch.rand(dim_context))
         stdv = 1. / math.sqrt(self.v.size(0))
         self.v.data.uniform_(-stdv, stdv)
 
