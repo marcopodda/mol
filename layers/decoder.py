@@ -22,7 +22,7 @@ class Decoder(nn.Module):
         self.num_layers = num_layers
         self.rnn_dropout = rnn_dropout
 
-        self.gru = nn.GRU(input_size=dim_input+(dim_hidden*2),
+        self.gru = nn.GRU(input_size=dim_input,
                           hidden_size=dim_hidden,
                           num_layers=num_layers,
                           batch_first=True,
