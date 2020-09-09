@@ -4,6 +4,7 @@ from argparse import Namespace
 import torch
 
 from core.datasets.utils import get_data, frag2data, fragslist2data, build_frag_sequence
+from core.mols.props import get_fingerprint
 from core.utils.serialization import load_numpy, save_numpy
 
 
@@ -43,8 +44,8 @@ class TranslationDatasetMixin:
         frags_list_x = mol_data_x.frags
         data_x = fragslist2data(frags_list_x)
         data_x["seq"] = build_frag_sequence(frags_list_x, self.vocab, self.max_length)
-        
-        return data_x
+        fingerprint_x =  torch.FloatTensor(get_fingerprint(mol_data_x.smiles)).view(1, -1)
+        return data_x, fingerprint_x
 
 
 class TranslationTrainDataset(TranslationDatasetMixin):
@@ -59,22 +60,16 @@ class TranslationTrainDataset(TranslationDatasetMixin):
         frags_list_x = mol_data_x.frags
         data_x = fragslist2data(frags_list_x)
         data_x["seq"] = build_frag_sequence(frags_list_x, self.vocab, self.max_length)
+        fingerprint_x = torch.FloatTensor(get_fingerprint(mol_data_x.smiles)).view(1, -1)
         
         target = self.data.smiles==mol_data_x.target
         mol_data_y = self.data[target].iloc[0]
         frags_list_y = mol_data_y.frags
         data_y = fragslist2data(frags_list_y)
         data_y["seq"] = build_frag_sequence(frags_list_y, self.vocab, self.max_length)
+        fingerprint_y = torch.FloatTensor(get_fingerprint(mol_data_y.smiles)).view(1, -1)
         
-        indices = self.data.index.tolist()
-        indices.remove(index)
-        neg_index = np.random.choice(indices)
-        mol_data_z = self.data.iloc[neg_index]
-        frags_list_z = mol_data_z.frags
-        data_z = fragslist2data(frags_list_z)
-        data_z["seq"] = build_frag_sequence(frags_list_z, self.vocab, self.max_length)
-        
-        return data_x, data_y, data_z
+        return data_x, fingerprint_x, data_y, fingerprint_y
     
 
 class TranslationValDataset(TranslationDatasetMixin):

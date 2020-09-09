@@ -28,44 +28,44 @@ class TranslationDataLoaderMixin:
 
 class TranslationTrainDataLoader(TranslationDataLoaderMixin):
     def collate(self, data_list):
-        x_frags, y_frags, z_frags = zip(*data_list)
+        frags_x, fps_x, frags_y, fps_y = zip(*data_list)
         
-        x_frag_batch = collate_single(x_frags)
-        y_frag_batch = collate_single(y_frags)
-        z_frag_batch = collate_single(z_frags)
+        frags_x_batch = collate_single(frags_x)
+        frags_y_batch = collate_single(frags_y)
         
-        B = len(x_frags)
+        B = len(frags_x)
         M = self.dataset.max_length
         H = self.hparams.frag_dim_embed
         
-        L = [m.length.item() for m in x_frags]
+        L = [m.length.item() for m in frags_x]
         x_enc_inputs = prefilled_tensor(dims=(B, M, H), fill_with=self.dataset.eos, fill_at=L)
         
-        
-        L = [m.length.item() for m in y_frags]
-        y_enc_inputs = prefilled_tensor(dims=(B, M, H), fill_with=self.dataset.eos, fill_at=L)
-        
-        L = [m.length.item() for m in z_frags]
-        z_enc_inputs = prefilled_tensor(dims=(B, M, H), fill_with=self.dataset.eos, fill_at=L)
+        x_fingerprints = torch.cat(fps_x, dim=0)
+        y_fingerprints = torch.cat(fps_y, dim=0)
         
         dec_inputs = prefilled_tensor(dims=(B, M, H), fill_with=self.dataset.sos, fill_at=0)
 
-        return (x_frag_batch, y_frag_batch, z_frag_batch), (x_enc_inputs, y_enc_inputs, z_enc_inputs), dec_inputs
+        return (frags_x_batch, frags_y_batch), (x_fingerprints, y_fingerprints), x_enc_inputs, dec_inputs
 
 
 class TranslationValDataLoader(TranslationDataLoaderMixin):
-    def collate(self, data_list):        
-        frag_batch = collate_single(data_list)
+    def collate(self, data_list):
+        frags_batch, fps_x = zip(*data_list)
+           
+        frags_x_batch = collate_single(frags_batch)
         
-        B = len(data_list)
+        B = len(frags_batch)
         M = self.dataset.max_length
         H = self.hparams.frag_dim_embed
-        L = [m.length.item() for m in data_list]
         
+        L = [m.length.item() for m in frags_batch]
         enc_inputs = prefilled_tensor(dims=(B, M, H), fill_with=self.dataset.eos, fill_at=L)
+        
+        x_fingerprints = torch.cat(fps_x, dim=0)
+        
         dec_inputs = prefilled_tensor(dims=(B, M, H), fill_with=self.dataset.sos, fill_at=0)
 
-        return frag_batch, enc_inputs, dec_inputs
+        return frags_x_batch, x_fingerprints, enc_inputs, dec_inputs
     
     
 class TranslationTestDataLoder(TranslationValDataLoader):

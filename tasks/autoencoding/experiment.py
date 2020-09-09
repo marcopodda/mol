@@ -23,10 +23,10 @@ from core.utils.serialization import save_yaml
 from core.utils.os import get_or_create_dir
 from layers.model import Model
 from layers.wrapper import Wrapper
+from layers.autoencoder import Autoencoder
 from tasks import AUTOENCODING
 from tasks.autoencoding.dataset import AutoencodingDataset
 from tasks.autoencoding.loader import AutoencodingDataLoader
-from tasks.autoencoding.model import Autoencoder
 
 
 class AutoencodingWrapper(pl.LightningModule):

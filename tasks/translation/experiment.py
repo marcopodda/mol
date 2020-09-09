@@ -14,12 +14,14 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from core.utils.serialization import load_yaml, save_yaml
 from core.utils.os import get_or_create_dir
 from layers.wrapper import Wrapper
-from tasks import TRANSLATION, PRETRAINING
+from tasks import TRANSLATION, PRETRAINING, AUTOENCODING
+from tasks.pretraining.experiment import PretrainingWrapper
+from tasks.autoencoding.experiment import AutoencodingWrapper
 from tasks.translation.dataset import TranslationTrainDataset
 from tasks.translation.loader import TranslationTrainDataLoader
 from tasks.translation.model import TranslationModel
 from tasks.translation.sampler import TranslationSampler
-from tasks.pretraining.experiment import PretrainingWrapper
+
 
 
 class TranslationWrapper(Wrapper):
@@ -29,14 +31,15 @@ class TranslationWrapper(Wrapper):
     def prepare_data(self):
         loader = TranslationTrainDataLoader(self.hparams, self.dataset)
         self.training_loader = loader()
+        print(self.model)
     
     def training_step(self, batch, batch_idx):
-        (_, y, _), _, _ = batch
-        logits, hx, hy, hz = self.model(batch)
+        (_, y), (_,y_fps), _, _ = batch
+        logits, y_hat_fps = self.model(batch)
         ce_loss = F.cross_entropy(logits, y.seq.view(-1), ignore_index=0)
-        tm_loss = F.triplet_margin_loss(hx, hy, hz)
-        logs = {"CE": ce_loss, "TM": tm_loss}
-        return {"loss": ce_loss + tm_loss, "logs": logs, "progress_bar": logs}
+        bce_loss = F.binary_cross_entropy(y_hat_fps, y_fps)
+        logs = {"CE": ce_loss, "BCE": bce_loss}
+        return {"loss": ce_loss + bce_loss, "logs": logs, "progress_bar": logs}
 
 
 def freeze(layer):
@@ -45,7 +48,21 @@ def freeze(layer):
     return layer
 
 
-def transfer(train_model, output_dir, args):
+def load_autoencoder(train_model, output_dir, args):
+    pretrain_dir = Path(args.pretrain_from)
+    pretrain_ckpt_dir = pretrain_dir / AUTOENCODING / "checkpoints"
+    pretrain_ckpt_path = sorted(pretrain_ckpt_dir.glob("*.ckpt"))[-1]
+    pretrainer = AutoencodingWrapper.load_from_checkpoint(
+        pretrain_ckpt_path.as_posix(), 
+        output_dir=pretrain_dir, 
+        name=args.dataset_name)
+    train_model.model.autoencoder = pretrainer.model
+    # train_model.model.encoder.gru = freeze(pretrainer.model.encoder.gru)
+    # train_model.model.decoder.gru = freeze(pretrainer.model.decoder.gru)
+    return train_model
+
+
+def load_embedder(train_model, output_dir, args):
     pretrain_dir = Path(args.pretrain_from)
     pretrain_ckpt_dir = pretrain_dir / PRETRAINING / "checkpoints"
     pretrain_ckpt_path = sorted(pretrain_ckpt_dir.glob("*.ckpt"))[-1]
@@ -74,7 +91,8 @@ def run(args):
         logger=logger,
         gpus=gpu)
     train_model = TranslationWrapper(hparams, output_dir, args.dataset_name)
-    train_model = transfer(train_model, output_dir, args)
+    train_model = load_autoencoder(train_model, output_dir, args)
+    train_model = load_embedder(train_model, output_dir, args)
     trainer.fit(train_model)
         
 

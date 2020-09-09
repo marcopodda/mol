@@ -42,19 +42,3 @@ class Autoencoder(nn.Module):
         hidden = self.encode(batch)
         output = self.decode(hidden)
         return torch.sigmoid(output), hidden
-        
-
-class AutoencoderModel(nn.Module):
-    def __init__(self, hparams, output_dir):
-        super().__init__()
-        
-        if isinstance(hparams, dict):
-            hparams = Namespace(**hparams)
-            
-        self.hparams = hparams
-        self.output_dir = output_dir
-        
-        self.autoencoder = Autoencoder(hparams, output_dir)
-    
-    def forward(self, batch):
-        return self.autoencoder(batch)
