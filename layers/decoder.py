@@ -22,13 +22,13 @@ class Decoder(nn.Module):
         self.num_layers = num_layers
         self.rnn_dropout = rnn_dropout
 
-        self.gru = nn.GRU(input_size=dim_input+dim_hidden,
+        self.gru = nn.GRU(input_size=dim_input+(dim_hidden*2),
                           hidden_size=dim_hidden,
                           num_layers=num_layers,
                           batch_first=True,
                           # weight_dropout=rnn_dropout,
                           dropout=rnn_dropout)
-        
+
         self.proj = nn.Linear(dim_hidden * 2, dim_hidden)
         self.attn = Attention(dim_hidden=dim_hidden)
         self.out = nn.Linear(dim_hidden, dim_output)
@@ -38,7 +38,7 @@ class Decoder(nn.Module):
         # Calculate attention from current RNN state and all encoder outputs; apply to encoder outputs
         attn_weights = self.attn(hidden, enc_outputs)
         context = attn_weights.bmm(enc_outputs) # B x 1 x N
-        
+
         # Combine embedded input word and last context, run through RNN
         rnn_input = torch.cat([x, context], dim=-1)
         rnn_output, hidden = self.gru(rnn_input, hidden)
@@ -49,11 +49,11 @@ class Decoder(nn.Module):
 
         # Return final output, hidden state, and attention weights (for visualization)
         return logits, hidden, attn_weights
-    
+
     def decode_with_attention(self, dec_inputs, enc_hidden, enc_outputs):
         B, S, V = dec_inputs.size()
         h = enc_hidden
-        
+
         outputs = []
         for i in range(S):
             x = dec_inputs[:, i, :].unsqueeze(1)

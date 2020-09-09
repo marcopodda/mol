@@ -10,7 +10,7 @@ class Attention(nn.Module):
         super().__init__()
 
         self.dim_hidden = dim_hidden
-        self.attn = nn.Linear(dim_hidden*2, dim_hidden)
+        self.attn = nn.Linear(dim_hidden, dim_hidden)
         self.v = nn.Parameter(torch.rand(dim_hidden))
         stdv = 1. / math.sqrt(self.v.size(0))
         self.v.data.uniform_(-stdv, stdv)
