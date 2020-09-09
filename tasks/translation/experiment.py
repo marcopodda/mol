@@ -32,7 +32,7 @@ class TranslationWrapper(Wrapper):
         loader = TranslationTrainDataLoader(self.hparams, self.dataset)
         self.training_loader = loader()
         print(self.model)
-    
+
     def training_step(self, batch, batch_idx):
         (_, y), (_,y_fps), _, _ = batch
         logits, y_hat_fps = self.model(batch)
@@ -53,8 +53,8 @@ def load_autoencoder(train_model, output_dir, args):
     pretrain_ckpt_dir = pretrain_dir / AUTOENCODING / "checkpoints"
     pretrain_ckpt_path = sorted(pretrain_ckpt_dir.glob("*.ckpt"))[-1]
     pretrainer = AutoencodingWrapper.load_from_checkpoint(
-        pretrain_ckpt_path.as_posix(), 
-        output_dir=pretrain_dir, 
+        pretrain_ckpt_path.as_posix(),
+        output_dir=pretrain_dir,
         name=args.dataset_name)
     train_model.model.autoencoder = pretrainer.model
     # train_model.model.encoder.gru = freeze(pretrainer.model.encoder.gru)
@@ -67,8 +67,8 @@ def load_embedder(train_model, output_dir, args):
     pretrain_ckpt_dir = pretrain_dir / PRETRAINING / "checkpoints"
     pretrain_ckpt_path = sorted(pretrain_ckpt_dir.glob("*.ckpt"))[-1]
     pretrainer = PretrainingWrapper.load_from_checkpoint(
-        pretrain_ckpt_path.as_posix(), 
-        output_dir=pretrain_dir, 
+        pretrain_ckpt_path.as_posix(),
+        output_dir=pretrain_dir,
         name=args.dataset_name)
     train_model.model.embedder = pretrainer.model.embedder
     # train_model.model.encoder.gru = freeze(pretrainer.model.encoder.gru)
@@ -91,31 +91,31 @@ def run(args):
         logger=logger,
         gpus=gpu)
     train_model = TranslationWrapper(hparams, output_dir, args.dataset_name)
-    train_model = load_autoencoder(train_model, output_dir, args)
-    train_model = load_embedder(train_model, output_dir, args)
+    # train_model = load_autoencoder(train_model, output_dir, args)
+    # train_model = load_embedder(train_model, output_dir, args)
     trainer.fit(train_model)
-        
+
 
 def run_sampling(output_dir, dataset_name, epoch=None, temp=1.0, batch_size=1000, greedy=True):
     assert epoch >= 1
-    
+
     output_dir = Path(output_dir)
     task_dir = output_dir / TRANSLATION
     ckpt_dir = task_dir / "checkpoints"
     samples_dir = get_or_create_dir(task_dir / "samples")
-    
+
     all_samples = []
     epoch = (epoch - 1) or "*"
-    
+
     for i, checkpoint_name in enumerate(ckpt_dir.glob(f"epoch={epoch}.ckpt")):
         index = (i + 1) if epoch == "*" else (epoch + 1)
         sample_path = samples_dir / f"samples_{index}.yml"
-        
+
         if not sample_path.exists():
             print(f"processing {sample_path}...")
             wrapper = TranslationWrapper.load_from_checkpoint(checkpoint_name.as_posix(), output_dir=output_dir, name=dataset_name)
             sampler = TranslationSampler(wrapper.model, dataset_name)
             samples = sampler.run(temp=temp, batch_size=batch_size, greedy=greedy)
             save_yaml(samples, sample_path)
-        
-        
+
+
