@@ -3,6 +3,7 @@ from pathlib import Path
 
 from core.config import Config
 from core.datasets.preprocess import run_preprocess
+from tasks.autoencoding.experiment import run as autoencode
 from tasks.pretraining.experiment import run as pretrain
 from tasks.translation.experiment import run as translate
 
@@ -34,6 +35,14 @@ def command_parser():
     sub_translate.add_argument("--debug", default=False, action="store_true", help="Debug mode.")
     sub_translate.add_argument("--gpu", default=1, help="GPU number.")
     sub_translate.set_defaults(command='translate')
+    
+    sub_autoencode = sub.add_parser('autoencode', help="Run a task.")
+    sub_autoencode.add_argument("--dataset-name", default="ZINC", help="Dataset name.")
+    sub_autoencode.add_argument("--config-file", default="config.yml", help="Config file.")
+    sub_autoencode.add_argument("--output-dir", default="RESULTS", help="Output folder.")
+    sub_autoencode.add_argument("--debug", default=False, action="store_true", help="Debug mode.")
+    sub_autoencode.add_argument("--gpu", default=1, help="GPU number.")
+    sub_autoencode.set_defaults(command='autoencode')
 
     return parser
 
@@ -44,6 +53,8 @@ if __name__ == "__main__":
 
     if args.command == "preprocess":
         run_preprocess(args.dataset_name)
+    elif args.command == "autoencode":
+        autoencode(args)
     elif args.command == "pretrain":
         pretrain(args)
     elif args.command == "translate":
