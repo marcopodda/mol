@@ -12,25 +12,26 @@ from layers.attention import Attention
 
 
 class Decoder(nn.Module):
-    def __init__(self, hparams, max_length, rnn_dropout, num_layers, dim_input, dim_hidden, dim_output):
+    def __init__(self, hparams, max_length, rnn_dropout, num_layers, dim_input, dim_hidden, dim_attention, dim_output):
         super().__init__()
 
         self.max_length = max_length
         self.dim_input = dim_input
         self.dim_hidden = dim_hidden
+        self.dim_attention = dim_attention
         self.dim_output = dim_output
         self.num_layers = num_layers
         self.rnn_dropout = rnn_dropout
 
         self.gru = nn.GRU(input_size=dim_input,
-                          hidden_size=dim_hidden*2,
+                          hidden_size=dim_hidden,
                           num_layers=num_layers,
                           batch_first=True,
                           # weight_dropout=rnn_dropout,
                           dropout=rnn_dropout)
 
-        self.proj = nn.Linear(dim_hidden * 2, dim_hidden)
-        self.attn = Attention(dim_hidden=dim_hidden * 2)
+        self.proj = nn.Linear(dim_hidden, dim_hidden)
+        self.attn = Attention(dim_hidden=dim_attention)
         self.out = nn.Linear(dim_hidden, dim_output)
 
     def forward(self, x, hidden, enc_outputs):
