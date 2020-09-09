@@ -49,7 +49,7 @@ class AutoencodingWrapper(pl.LightningModule):
         train_indices, val_indices = train_test_split(range(len(self.dataset)), test_size=0.1)
         
         train_loader = AutoencodingDataLoader(self.hparams, self.dataset, train_indices)
-        self.training_loader = train_loader(batch_size=52)
+        self.training_loader = train_loader(batch_size=512)
         
         val_loader = AutoencodingDataLoader(self.hparams, self.dataset, val_indices)
         self.validation_loader = val_loader(batch_size=512, shuffle=False)
