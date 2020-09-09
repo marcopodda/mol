@@ -48,7 +48,7 @@ class TranslationModel(nn.Module):
             rnn_dropout=hparams.rnn_dropout,
             num_layers = hparams.rnn_num_layers,
             dim_input=hparams.frag_dim_embed,
-            dim_hidden=hparams.rnn_dim_state,
+            dim_hidden=hparams.rnn_dim_state * 2,
             dim_output=vocab_size + len(Tokens))
 
     def encode(self, batch, enc_inputs):
@@ -67,10 +67,11 @@ class TranslationModel(nn.Module):
         x_batch, y_batch = batch_data
         x_fps, y_fps = batch_fps
         
-        _, x_enc_outputs = self.encode(x_batch, x_enc_inputs)
-        y_hat_fps, x_enc_hidden = self.get_decoder_hidden_state(x_fps)
+        enc_hidden, x_enc_outputs = self.encode(x_batch, x_enc_inputs)
+        y_hat_fps, hidden = self.get_decoder_hidden_state(x_fps)
+        dec_hidden = torch.cat([enc_hidden, hidden], dim=-1)
         
-        logits = self.decode(y_batch, x_enc_hidden, x_enc_outputs, dec_inputs)
+        logits = self.decode(y_batch, dec_hidden, x_enc_outputs, dec_inputs)
         return logits, y_hat_fps
     
     def get_decoder_hidden_state(self, x_fps):

@@ -17,7 +17,7 @@ class Autoencoder(nn.Module):
             
         self.hparams = hparams
         self.output_dir = output_dir
-        self.dim_hidden = hparams.frag_dim_embed
+        self.dim_hidden = hparams.rnn_dim_state
         
         assert self.dim_hidden < FINGERPRINT_DIM // 4
     
