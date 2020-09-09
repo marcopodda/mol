@@ -23,14 +23,14 @@ class Decoder(nn.Module):
         self.rnn_dropout = rnn_dropout
 
         self.gru = nn.GRU(input_size=dim_input,
-                          hidden_size=dim_hidden,
+                          hidden_size=dim_hidden*2,
                           num_layers=num_layers,
                           batch_first=True,
                           # weight_dropout=rnn_dropout,
                           dropout=rnn_dropout)
 
         self.proj = nn.Linear(dim_hidden * 2, dim_hidden)
-        self.attn = Attention(dim_hidden=dim_hidden)
+        self.attn = Attention(dim_hidden=dim_hidden * 2)
         self.out = nn.Linear(dim_hidden, dim_output)
 
     def forward(self, x, hidden, enc_outputs):
