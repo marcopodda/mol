@@ -22,13 +22,16 @@ pip install torch-spline-conv==latest+${CUDA_VERSION} -f https://pytorch-geometr
 pip install torch-geometric
 pip install pytorch-lightning
 
-# install rdkit
-conda install rdkit -c rdkit -y
-conda install molvs -c conda-forge -y
-
 # these dependencies seem to be needed
 # conda install -c omgarcia libgcc-6 -y
 # conda install gcc_linux-64 gxx_linux-64 -y
 
 # install additionatl packages
-conda install pyyaml seaborn ipython jupyter -y
+conda install scikit-learn pandas joblib networkx pyyaml seaborn ipython jupyter -y
+
+# additional pip packages
+pip install molsets
+
+# install rdkit
+conda install rdkit -c rdkit -y
+conda install molvs umap-learn -c conda-forge -y
