@@ -1,9 +1,6 @@
 from enum import Enum
-from collections import defaultdict
-
 import numpy as np
 import pandas as pd
-import torch
 
 
 class Tokens(Enum):

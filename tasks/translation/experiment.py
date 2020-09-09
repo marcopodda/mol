@@ -13,6 +13,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 
 from core.utils.serialization import load_yaml, save_yaml
 from core.utils.os import get_or_create_dir
+from layers.model import Model
 from layers.wrapper import Wrapper
 from tasks import TRANSLATION, PRETRAINING, AUTOENCODING
 from tasks.pretraining.experiment import PretrainingWrapper
@@ -21,6 +22,10 @@ from tasks.translation.dataset import TranslationTrainDataset
 from tasks.translation.loader import TranslationTrainDataLoader
 from tasks.translation.model import TranslationModel
 from tasks.translation.sampler import TranslationSampler
+
+
+class TranslationModel(Model):
+    denoise = False
 
 
 

@@ -6,21 +6,20 @@ from torch_geometric.nn.norm import BatchNorm
 from torch_geometric.utils import degree
 from torch_scatter import scatter_add
 
-from core.datasets.features import ATOM_FDIM, BOND_FDIM
 from layers.mlp import MLP
 
 
 class GNN(nn.Module):
-    def __init__(self, hparams, num_layers, dim_edge_embed, dim_hidden, dim_output):
+    def __init__(self, hparams, num_layers, dim_input, dim_edge_features, dim_edge_embed, dim_hidden, dim_output):
         super().__init__()
         self.hparams = hparams
         
-        self.dim_input = ATOM_FDIM
+        self.num_layers = num_layers
+        self.dim_input = dim_input
+        self.dim_edge_features = dim_edge_features
         self.dim_edge_embed = dim_edge_embed
         self.dim_hidden = dim_hidden
         self.dim_output = dim_output
-        
-        self.num_layers = num_layers
 
         self.convs = nn.ModuleList([])
         self.bns = nn.ModuleList([])
@@ -29,7 +28,8 @@ class GNN(nn.Module):
             dim_input = self.dim_input if i == 0 else self.dim_hidden
             
             edge_net = MLP(
-                dim_input=BOND_FDIM,
+                hparams=self.hparams,
+                dim_input=self.dim_edge_features,
                 dim_hidden=self.dim_edge_embed,
                 dim_output=dim_input * self.dim_hidden,
             )
@@ -62,22 +62,33 @@ class GNN(nn.Module):
         
         x = global_add_pool(x, batch) 
         nodes_per_graph = scatter_add(torch.ones_like(batch), batch).view(-1, 1)
-        output = self.readout(x) if self.dim_output != self.dim_hidden else x
+        
+        if self.readout is not None:
+            output = self.readout(x)
         
         return output / nodes_per_graph
         
 
-class GNNEmbedder(nn.Module):
-    def __init__(self, hparams, num_layers, dim_edge_embed, dim_hidden, dim_output):
+class Embedder(nn.Module):
+    def __init__(self, hparams, num_layers, dim_input, dim_edge_features, dim_edge_embed, dim_hidden, dim_output):
         super().__init__()
         self.hparams = hparams
         
+        self.num_layers = num_layers
+        self.dim_input = dim_input
+        self.dim_edge_features = dim_edge_features
+        self.dim_edge_embed = dim_edge_embed
+        self.dim_hidden = dim_hidden
+        self.dim_output = dim_output
+        
         self.gnn = GNN(
-            hparams=hparams,
-            num_layers=num_layers,
-            dim_edge_embed=dim_edge_embed,
-            dim_hidden=dim_hidden,
-            dim_output=dim_output)
+            hparams=self.hparams,
+            num_layers=self.num_layers,
+            dim_input=self.dim_input,
+            dim_edge_features=self.dim_edge_features,
+            dim_edge_embed=self.dim_edge_embed,
+            dim_hidden=self.dim_hidden,
+            dim_output=self.dim_output)
     
     def forward(self, data, mat, input=False):
         x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
@@ -86,8 +97,9 @@ class GNNEmbedder(nn.Module):
         
         cumsum = 0
         for i, l in enumerate(data.length):
-            offset = list(range(1, l+1)) if input is True else list(range(l))
-            mat[i,offset,:] = x[cumsum:cumsum+l,:]
+            offset = 1 if input is True else 0
+            seq_element = x[cumsum:cumsum+l,:]
+            mat[i,range(offset, offset+l),:] = seq_element
             cumsum += l
         
         return mat

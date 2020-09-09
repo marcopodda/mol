@@ -9,24 +9,23 @@ FINGERPRINT_DIM = 2048
 
 
 class Autoencoder(nn.Module):
-    def __init__(self, hparams, output_dir):
+    def __init__(self, hparams, dim_input, dim_hidden, noise_amount):
         super().__init__()
 
         if isinstance(hparams, dict):
             hparams = Namespace(**hparams)
 
         self.hparams = hparams
-        self.output_dir = output_dir
-        self.dim_hidden = hparams.rnn_dim_state
+        self.dim_input = dim_input
+        self.dim_hidden = dim_hidden
+        self.noise_amount = noise_amount
 
-        assert self.dim_hidden < FINGERPRINT_DIM // 4
-
-        self.input = nn.Linear(FINGERPRINT_DIM, FINGERPRINT_DIM // 2)
-        self.input2hidden = nn.Linear(FINGERPRINT_DIM // 2, FINGERPRINT_DIM // 4)
-        self.hidden2bottleneck = nn.Linear(FINGERPRINT_DIM // 4, self.dim_hidden)
-        self.bottleneck2hidden = nn.Linear(self.dim_hidden, FINGERPRINT_DIM // 4)
-        self.hidden2output = nn.Linear(FINGERPRINT_DIM // 4, FINGERPRINT_DIM // 2)
-        self.output = nn.Linear(FINGERPRINT_DIM // 2, FINGERPRINT_DIM)
+        self.input = nn.Linear(self.dim_input, self.dim_input // 2)
+        self.input2hidden = nn.Linear(self.dim_input // 2, self.dim_input // 4)
+        self.hidden2bottleneck = nn.Linear(self.dim_input // 4, self.dim_hidden)
+        self.bottleneck2hidden = nn.Linear(self.dim_hidden, self.dim_input // 4)
+        self.hidden2output = nn.Linear(self.dim_input // 4, self.dim_input // 2)
+        self.output = nn.Linear(self.dim_input // 2, self.dim_input)
 
     def encode(self, inputs):
         x = self.input(inputs)
@@ -38,8 +37,8 @@ class Autoencoder(nn.Module):
         x = self.hidden2output(F.relu(x))
         return self.output(F.relu(x))
 
-    def forward(self, batch, denoise=True):
-        if denoise is True:
+    def forward(self, batch, with_noise=True):
+        if with_noise is True:
             batch = self.add_noise(batch)
         hidden = self.encode(batch)
         output = self.decode(hidden)
@@ -47,6 +46,6 @@ class Autoencoder(nn.Module):
 
     def add_noise(self, batch):
         noisy_batch = batch.clone()
-        noise_mask = torch.rand_like(noisy_batch) <= self.hparams.autoencoder_noise
+        noise_mask = torch.rand_like(noisy_batch) <= self.noise_amount
         noisy_batch[noise_mask] = torch.logical_not(noisy_batch[noise_mask]).float()
         return noisy_batch

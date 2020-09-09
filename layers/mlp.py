@@ -5,8 +5,10 @@ from torch.nn import functional as F
 
 
 class MLP(nn.Module):
-    def __init__(self, dim_input, dim_hidden, dim_output, num_layers=1):
+    def __init__(self, hparams, dim_input, dim_hidden, dim_output, num_layers=1):
         super().__init__()
+        self.hparams = hparams
+        
         self.dim_input = dim_input
         self.dim_hidden = dim_hidden
         self.dim_output = dim_output

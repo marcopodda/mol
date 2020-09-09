@@ -11,7 +11,8 @@ from torch_geometric.data import Batch
 from rdkit import Chem
 from moses.utils import disable_rdkit_log, enable_rdkit_log
 
-from core.datasets.common import VocabDataset, VocabDataLoader
+from core.datasets.datasets import VocabDataset
+from core.datasets.loaders import VocabDataLoader
 from core.datasets.vocab import Tokens
 from core.mols.split import join_fragments
 from core.mols.props import similarity, drd2

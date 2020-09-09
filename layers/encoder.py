@@ -5,20 +5,20 @@ from layers.embedder import GNN
 
 
 class Encoder(nn.Module):
-    def __init__(self, hparams, rnn_dropout, num_layers, dim_input, dim_hidden):
+    def __init__(self, hparams, num_layers, dim_input, dim_state, dropout):
         super().__init__()
         self.hparams = hparams
-        self.dim_input = dim_input
-        self.dim_hidden = dim_hidden
+        
         self.num_layers = num_layers
-        self.rnn_dropout = rnn_dropout
+        self.dim_input = dim_input
+        self.dim_state = dim_state
+        self.dropout = dropout
 
-        self.gru = nn.GRU(input_size=dim_input,
-                          hidden_size=dim_hidden,
-                          num_layers=num_layers,
+        self.gru = nn.GRU(input_size=self.dim_input,
+                          hidden_size=self.dim_state,
+                          num_layers=self.num_layers,
                           batch_first=True,
-                          # weight_dropout=rnn_dropout,
-                          dropout=rnn_dropout,
+                          dropout=self.dropout,
                           bidirectional=True)
 
     def forward(self, x):
@@ -26,6 +26,6 @@ class Encoder(nn.Module):
         output, hidden = self.gru(x)
 
         batch_size = output.size(0)
-        hidden = hidden.view(self.num_layers, 2, batch_size, self.dim_hidden).sum(dim=1)
-        output = output[:,:,:self.dim_hidden] + output[:,:,self.dim_hidden:]
+        hidden = hidden.view(self.num_layers, 2, batch_size, self.dim_state).sum(dim=1)
+        output = output[:,:,:self.dim_state] + output[:,:,self.dim_state:]
         return output, hidden

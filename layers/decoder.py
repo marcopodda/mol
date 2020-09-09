@@ -11,32 +11,35 @@ from layers.attention import Attention
 
 
 class Decoder(nn.Module):
-    def __init__(self, hparams, max_length, rnn_dropout, num_layers, dim_input, dim_hidden, dim_attention, dim_context, dim_output):
+    def __init__(self, hparams, num_layers, dim_input, dim_state, dim_output, dim_attention_input, dim_attention_output, dropout):
         super().__init__()
-
-        self.max_length = max_length
-        self.dim_input = dim_input
-        self.dim_hidden = dim_hidden
-        self.dim_attention = dim_attention
-        self.dim_output = dim_output
+        self.hparams = hparams
+        
         self.num_layers = num_layers
-        self.rnn_dropout = rnn_dropout
+        self.dim_input = dim_input
+        self.dim_state = dim_state
+        self.dim_output = dim_output
+        self.dim_attention_input = dim_attention_input
+        self.dim_attention_output = dim_attention_output
+        self.dropout = dropout
 
-        self.gru = nn.GRU(input_size=dim_input,
-                          hidden_size=dim_hidden,
-                          num_layers=num_layers,
+        self.gru = nn.GRU(input_size=self.dim_input,
+                          hidden_size=self.dim_state,
+                          num_layers=self.num_layers,
                           batch_first=True,
-                          # weight_dropout=rnn_dropout,
-                          dropout=rnn_dropout)
+                          dropout=self.dropout)
 
-        self.proj = nn.Linear(dim_hidden, dim_hidden)
-        self.attn = Attention(dim_hidden=dim_attention, dim_context=dim_context)
-        self.out = nn.Linear(dim_hidden, dim_output)
+        self.attention = Attention(
+            hparams=self.hparams,
+            dim_input=self.dim_attention_input, 
+            dim_output=self.dim_attention_output)
+        
+        self.out = nn.Linear(self.dim_state, self.dim_output)
 
     def forward(self, x, hidden, enc_outputs):
         # Note: we run this one step at a time
         # Calculate attention from current RNN state and all encoder outputs; apply to encoder outputs
-        attn_weights = self.attn(hidden, enc_outputs)
+        attn_weights = self.attention(hidden, enc_outputs)
         context = attn_weights.bmm(enc_outputs) # B x 1 x N
 
         # Combine embedded input word and last context, run through RNN

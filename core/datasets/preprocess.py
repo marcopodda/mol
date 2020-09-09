@@ -1,31 +1,20 @@
-import ast
 import warnings
-from pathlib import Path
-
 import pandas as pd
 
 from joblib import Parallel, delayed
-
-from rdkit import Chem
 from molvs import standardize_smiles
 
+from core.datasets import clean as clean_functions
 from core.datasets.download import fetch_dataset
 from core.datasets.features import ATOM_FEATURES
-from core.datasets.utils import load_csv_data
-from core.datasets.vocab import get_vocab, populate_vocab
+from core.datasets.utils import load_dataset_info
+from core.datasets.vocab import populate_vocab
 from core.mols.props import get_props_data
 from core.mols.split import split_molecule
+from core.mols.utils import mol_from_smiles, mols_from_smiles
 from core.utils.os import get_or_create_dir, dir_is_empty
 from core.utils.misc import get_n_jobs
-from core.utils.serialization import load_yaml
-from core.datasets.settings import DATA_DIR, CONFIG_DIR
-
-import core.datasets.clean as clean_functions
-
-
-def get_dataset_info(name):
-    path = CONFIG_DIR / f'{name}.yml'
-    return load_yaml(path)
+from core.datasets.settings import DATA_DIR
 
 
 def filter_mol(mol, max_heavy_atoms=50, min_heavy_atoms=10):
@@ -38,12 +27,12 @@ def filter_mol(mol, max_heavy_atoms=50, min_heavy_atoms=10):
     return False
 
 
-def clean_molecule(smi):
+def clean_mol(smi):
     datadict = {}
 
     try:
         smi = standardize_smiles(smi)
-        mol = Chem.MolFromSmiles(smi)
+        mol = mol_from_smiles(smi)
         if filter_mol(mol):
             frags = split_molecule(mol)
             length = len(frags)
@@ -51,7 +40,7 @@ def clean_molecule(smi):
             if length > 1:
                 datadict.update(smiles=smi)
                 datadict.update(**get_props_data(mol))
-                datadict.update(frags=[Chem.MolToSmiles(f) for f in frags])
+                datadict.update(frags=mols_from_smiles(frags))
                 datadict.update(length=length)
     except Exception as e:
         pass
@@ -62,12 +51,12 @@ def clean_molecule(smi):
 
 def process_data(smiles, n_jobs):
     P = Parallel(n_jobs=n_jobs, verbose=1)
-    data = P(delayed(clean_molecule)(smi) for smi in smiles)
+    data = P(delayed(clean_mol)(smi) for smi in smiles)
     return pd.DataFrame(data).dropna().reset_index(drop=True)
     
 
 def run_preprocess(dataset_name):
-    info = get_dataset_info(dataset_name)
+    info = load_dataset_info(dataset_name)
     raw_dir = get_or_create_dir(DATA_DIR / dataset_name / "RAW")
 
     if not raw_dir.exists() or dir_is_empty(raw_dir):

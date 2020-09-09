@@ -30,6 +30,8 @@ ATOM_FDIM = sum(len(choices) + 1 for choices in ATOM_FEATURES.values()) # + 1
 BOND_FEATURES = {'stereo': [0, 1, 2, 3, 4, 5]}
 BOND_FDIM = 4  # 13
 
+FINGERPRINT_DIM = 2048
+
 
 def onek_encoding_unk(value, choices):
     """
