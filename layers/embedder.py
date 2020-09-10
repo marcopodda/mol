@@ -13,7 +13,7 @@ class GNN(nn.Module):
     def __init__(self, hparams, num_layers, dim_input, dim_edge_features, dim_edge_embed, dim_hidden, dim_output):
         super().__init__()
         self.hparams = hparams
-        
+
         self.num_layers = num_layers
         self.dim_input = dim_input
         self.dim_edge_features = dim_edge_features
@@ -23,26 +23,26 @@ class GNN(nn.Module):
 
         self.convs = nn.ModuleList([])
         self.bns = nn.ModuleList([])
-        
+
         for i in range(self.num_layers):
             dim_input = self.dim_input if i == 0 else self.dim_hidden
-            
+
             edge_net = MLP(
                 hparams=self.hparams,
                 dim_input=self.dim_edge_features,
                 dim_hidden=self.dim_edge_embed,
                 dim_output=dim_input * self.dim_hidden,
             )
-            
+
             conv = NNConv(
-                in_channels=dim_input, 
-                out_channels=self.dim_hidden, 
+                in_channels=dim_input,
+                out_channels=self.dim_hidden,
                 nn=edge_net,
                 root_weight=False,
                 bias=False)
-            
+
             self.convs.append(conv)
-            
+
             bn = nn.BatchNorm1d(self.dim_hidden, track_running_stats=False)
             self.bns.append(bn)
 
@@ -59,28 +59,28 @@ class GNN(nn.Module):
         for conv, bn in zip(self.convs, self.bns):
             x = conv(x, edge_index, edge_attr=edge_attr)
             x = bn(F.relu(x))
-        
-        x = global_add_pool(x, batch) 
+
+        output = global_add_pool(x, batch)
         nodes_per_graph = scatter_add(torch.ones_like(batch), batch).view(-1, 1)
-        
+
         if self.readout is not None:
             output = self.readout(x)
-        
+
         return output / nodes_per_graph
-        
+
 
 class Embedder(nn.Module):
     def __init__(self, hparams, num_layers, dim_input, dim_edge_features, dim_edge_embed, dim_hidden, dim_output):
         super().__init__()
         self.hparams = hparams
-        
+
         self.num_layers = num_layers
         self.dim_input = dim_input
         self.dim_edge_features = dim_edge_features
         self.dim_edge_embed = dim_edge_embed
         self.dim_hidden = dim_hidden
         self.dim_output = dim_output
-        
+
         self.gnn = GNN(
             hparams=self.hparams,
             num_layers=self.num_layers,
@@ -89,17 +89,17 @@ class Embedder(nn.Module):
             dim_edge_embed=self.dim_edge_embed,
             dim_hidden=self.dim_hidden,
             dim_output=self.dim_output)
-    
+
     def forward(self, data, mat, input=False):
         x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
-        
+
         x = self.gnn(x, edge_index, edge_attr, batch=data.frags_batch)
-        
+
         cumsum = 0
         for i, l in enumerate(data.length):
             offset = 1 if input is True else 0
             seq_element = x[cumsum:cumsum+l,:]
             mat[i,range(offset, offset+l),:] = seq_element
             cumsum += l
-        
+
         return mat
