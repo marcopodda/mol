@@ -1,5 +1,5 @@
 # unset $PYTHONPATH
-TORCH_VERSION=1.5.0
+TORCH_VERSION=1.6.0
 CUDA_VERSION=cu102
 PYTHON_VERSION=3.7.7
 
@@ -20,13 +20,12 @@ pip install torch-sparse==latest+${CUDA_VERSION} -f https://pytorch-geometric.co
 pip install torch-cluster==latest+${CUDA_VERSION} -f https://pytorch-geometric.com/whl/torch-${TORCH_VERSION}.html
 pip install torch-spline-conv==latest+${CUDA_VERSION} -f https://pytorch-geometric.com/whl/torch-${TORCH_VERSION}.html
 pip install torch-geometric
-pip install pytorch-lightning
 
 # these dependencies seem to be needed
 # conda install -c omgarcia libgcc-6 -y
 # conda install gcc_linux-64 gxx_linux-64 -y
 
-# install additionatl packages
+# install additional packages
 conda install scikit-learn pandas joblib networkx pyyaml seaborn ipython jupyter -y
 
 # additional pip packages
@@ -34,4 +33,4 @@ pip install molsets
 
 # install rdkit
 conda install rdkit -c rdkit -y
-conda install molvs umap-learn -c conda-forge -y
+conda install molvs pytorch-lightning umap-learn -c conda-forge -y
