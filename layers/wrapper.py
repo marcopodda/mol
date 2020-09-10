@@ -1,3 +1,4 @@
+import gc
 from argparse import Namespace
 
 import torch
@@ -53,11 +54,6 @@ class Wrapper(pl.LightningModule):
         return {"log": logs, "progress_bar": logs}
 
     def on_batch_end(self):
-        import gc
-        for obj in gc.get_objects():
-            try:
-                if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
-                    print(type(obj), obj.size())
-            except:
-                pass
+        gc.collect()
+        torch.cuda.empty_cache()
         return super().on_batch_end()
