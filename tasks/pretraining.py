@@ -30,8 +30,9 @@ class PretrainingWrapper(Wrapper):
 class PretrainingSampler(Sampler):
     def prepare_data(self):
         loader = EvalDataLoader(self.hparams, self.dataset)
-        num_samples = min(len(loader.indices), 30000)
+        num_samples = min(len(loader.indices), 1000)
         indices = sorted(np.random.choice(loader.indices, num_samples, replace=False))
+        # indices = self.dataset.data[self.dataset.data.is_valid==True]
         smiles = self.dataset.data.iloc[indices].smiles.tolist()
         return smiles, loader(batch_size=self.hparams.pretrain_batch_size, shuffle=False)
 
