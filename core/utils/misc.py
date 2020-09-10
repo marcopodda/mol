@@ -1,7 +1,6 @@
 import time
 import torch
 import multiprocessing
-import numpy as np
 
 
 def time_elapsed(start, end):

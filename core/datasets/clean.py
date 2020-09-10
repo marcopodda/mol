@@ -5,60 +5,60 @@ def _clean_translation_dataset(raw_dir, info):
     raw_data_path = raw_dir / "train_pairs.txt"
     raw_data = pd.read_csv(raw_data_path, names=["x", "y"], **info["parse_args"])
     length = raw_data.shape[0]
-    
+
     all_smiles, targets, is_x, is_y, is_valid, is_test = [], [], [], [], [], []
-    
+
     all_smiles += raw_data.x.tolist()
     targets += raw_data.y.tolist()
     is_x += [1] * length
     is_y += [0] * length
     is_valid += [0] * length
     is_test += [0] * length
-    
+
     all_smiles += raw_data.y.tolist()
     targets += ["*"] * length
     is_x += [0] * length
     is_y += [1] * length
     is_valid += [0] * length
     is_test += [0] * length
-    
+
     raw_data_path = raw_dir / "valid.txt"
     raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])
     length = raw_data.shape[0]
-    
+
     all_smiles += raw_data.smiles.tolist()
     targets += ["*"] * length
     is_x += [0] * length
     is_y += [0] * length
     is_valid += [1] * length
     is_test += [0] * length
-    
+
     raw_data_path = raw_dir / "test.txt"
     raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])
     length = raw_data.shape[0]
-    
+
     all_smiles += raw_data.smiles.tolist()
     targets += ["*"] * length
     is_x += [0] * length
     is_y += [0] * length
     is_valid += [0] * length
     is_test += [1] * length
-    
+
     return pd.DataFrame({
-        "smiles": all_smiles, 
-        "target": targets, 
-        "is_x": is_x, 
-        "is_y": is_y, 
-        "is_valid": is_valid, 
+        "smiles": all_smiles,
+        "target": targets,
+        "is_x": is_x,
+        "is_y": is_y,
+        "is_valid": is_valid,
         "is_test": is_test})
-    
-    
+
+
 def _fix_consistency(df):
-    x_data = df[df.is_x==1]
+    x_data = df[df.is_x == 1]
     exclude_list = []
     print("Fixing inconsistencies...", end=" ")
     for index, row in x_data.iterrows():
-        y_data = df[(df.smiles==row.target) & (df.is_y==1)]
+        y_data = df[(df.smiles == row.target) & (df.is_y == 1)]
         if y_data.shape[0] == 0:
             exclude_list.append(row.smiles)
     safe_data = df[~df.smiles.isin(exclude_list)]

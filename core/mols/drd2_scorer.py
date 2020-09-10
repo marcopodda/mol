@@ -1,15 +1,9 @@
 #!/usr/bin/env python
 import numpy as np
-from rdkit import Chem
 from rdkit import rdBase
 from rdkit.Chem import AllChem
-from rdkit import DataStructs
-from sklearn import svm
 import pickle
-import re
 import os.path as op
-
-from core.mols.utils import mol_from_smiles
 
 rdBase.DisableLog('rdApp.error')
 
@@ -43,7 +37,7 @@ def fingerprints_from_mol(mol):
     fp = AllChem.GetMorganFingerprint(mol, 3, useCounts=True, useFeatures=True)
     size = 2048
     nfp = np.zeros((1, size), np.int32)
-    for idx,v in fp.GetNonzeroElements().items():
+    for idx, v in fp.GetNonzeroElements().items():
         nidx = idx % size
         nfp[0, nidx] += int(v)
     return nfp

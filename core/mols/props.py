@@ -77,6 +77,7 @@ def mr(mol):
         mol = mol_from_smiles(mol)
     return Crippen.MolMR(mol) if mol else 0.0
 
+
 def mw(mol):
     if isinstance(mol, str):
         mol = mol_from_smiles(mol)
@@ -98,13 +99,13 @@ def get_fingerprint(mol):
 def similarity(mol1, mol2):
     if isinstance(mol1, str):
         mol1 = mol_from_smiles(mol1)
-        
+
     if isinstance(mol2, str):
         mol2 = mol_from_smiles(mol2)
-    
+
     if mol1 is None or mol2 is None:
         return 0.0
-    
+
     fp1 = get_fingerprint(mol1)
     fp2 = get_fingerprint(mol2)
     return DataStructs.FingerprintSimilarity(fp1, fp2)

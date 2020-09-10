@@ -1,10 +1,8 @@
-import time
 import operator
 from queue import PriorityQueue
 import numpy as np
 
 import torch
-from torch import nn
 from torch.nn import functional as F
 
 from core.datasets.vocab import Tokens
@@ -122,6 +120,5 @@ def beam_decode(decoder, hidden, max_length, beam_width=32):
 
         utterance = utterance[::-1]
         utterances.append(utterance)
-
 
     return np.array(utterances).reshape(-1).tolist()

@@ -1,16 +1,16 @@
 import torch
-from torch.utils.data import Subset, DataLoader as TorchDataLoader
+from torch.utils.data import DataLoader as TorchDataLoader
 from torch_geometric.data import Batch
 
 
 def collate_frags(data_list):
     cumsum = 0
-    
+
     for i, frag_x in enumerate(data_list):
         inc = (frag_x.frags_batch.max() + 1).item()
         frag_x.frags_batch += cumsum
         cumsum += inc
-        
+
     return Batch.from_data_list(data_list)
 
 
@@ -36,28 +36,28 @@ class BaseDataLoader:
             shuffle=shuffle,
             pin_memory=True,
             num_workers=self.hparams.num_workers)
-    
+
     def collate(self, data_list):
         raise NotImplementedError
-    
+
 
 class DataLoader(BaseDataLoader):
     def collate(self, data_list):
         frags_x, fps_x, frags_y, fps_y = zip(*data_list)
-        
+
         frags_x_batch = collate_frags(frags_x)
         frags_y_batch = collate_frags(frags_y)
-        
+
         B = len(frags_x)
         L = self.dataset.max_length
         D = self.hparams.frag_dim_embed
-        
+
         lengths = [m.length.item() for m in frags_x]
         x_enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos, fill_at=lengths)
-        
+
         x_fingerprints = torch.cat(fps_x, dim=0)
         y_fingerprints = torch.cat(fps_y, dim=0)
-        
+
         dec_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.sos, fill_at=0)
 
         return (frags_x_batch, frags_y_batch), (x_fingerprints, y_fingerprints), x_enc_inputs, dec_inputs
@@ -66,18 +66,18 @@ class DataLoader(BaseDataLoader):
 class EvalDataLoader(BaseDataLoader):
     def collate(self, data_list):
         frags_batch, fps_x = zip(*data_list)
-           
+
         frags_x_batch = collate_frags(frags_batch)
-        
+
         B = len(frags_batch)
         L = self.dataset.max_length
         D = self.hparams.frag_dim_embed
-        
+
         lengths = [m.length.item() for m in frags_batch]
         enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos, fill_at=lengths)
-        
+
         x_fingerprints = torch.cat(fps_x, dim=0)
-        
+
         dec_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.sos, fill_at=0)
 
         return frags_x_batch, x_fingerprints, enc_inputs, dec_inputs
@@ -87,7 +87,7 @@ class VocabDataLoader:
     def __init__(self, hparams, dataset):
         self.hparams = hparams
         self.dataset = dataset
-    
+
     def __call__(self, shuffle=False, batch_size=None):
         batch_size = batch_size or self.hparams.batch_size
         return DataLoader(

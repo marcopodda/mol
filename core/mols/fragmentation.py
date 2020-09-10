@@ -1,7 +1,7 @@
 from rdkit import Chem
 from rdkit.Chem import BRICS
 
-from core.mols.utils import mol_to_smiles, mols_to_smiles
+from core.mols.utils import mol_to_smiles
 
 
 DUMMY = Chem.MolFromSmiles('*')

@@ -59,4 +59,3 @@ class Config(Namespace):
 
     def save(self, path):
         save_yaml(self.__dict__, path)
-

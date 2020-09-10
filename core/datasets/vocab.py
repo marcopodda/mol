@@ -14,14 +14,23 @@ class Vocab:
     @classmethod
     def from_file(cls, filename):
         vocab = cls()
-        
+
         data = pd.read_csv(filename, index_col=0)
-        
+
         for idx, smi in data.smiles.iteritems():
             vocab._frag2idx[smi] = idx
             vocab._idx2frag[idx] = smi
-            
+
         vocab._freq = data.freqs.to_dict()
+        return vocab
+
+    @classmethod
+    def from_df(cls, df):
+        vocab = cls()
+
+        for _, frags in df.frags.iteritems():
+            [vocab.update(f) for f in frags]
+
         return vocab
 
     def __init__(self):
@@ -60,7 +69,7 @@ class Vocab:
         idx, smiles = zip(*self._idx2frag.items())
         freqs = list(self._freq.values())
         df = pd.DataFrame.from_dict({
-            "smiles": smiles, 
+            "smiles": smiles,
             "freqs": freqs})
         df.index = idx
         return df
@@ -75,24 +84,3 @@ class Vocab:
             freqs = ([0] * len(Tokens)) + freqs
         freqs = np.array(freqs, dtype=np.float) ** 0.75
         return freqs / freqs.sum()
-        
-
-def populate_vocab(df, n_jobs):
-    print("Create vocab...", end=" ")
-    vocab = Vocab()
-    
-    for _, frags in df.frags.iteritems():
-        [vocab.update(f) for f in frags]
-    print("Done.")
-    
-    return vocab
-
-
-def get_vocab(df, path):
-    vocab = Vocab.from_file(path)
-    new_vocab = Vocab()
-    
-    for _, frags in df.frags.iteritems():
-        [new_vocab.update(f) for f in frags]
-    
-    return new_vocab

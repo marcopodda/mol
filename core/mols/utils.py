@@ -30,4 +30,3 @@ def process_smiles(smiles):
         Chem.RemoveStereochemistry(mol)
         smi = mol_to_smiles(mol)
         yield mol, Chem.CanonSmiles(smi)
-

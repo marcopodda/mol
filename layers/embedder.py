@@ -1,9 +1,7 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torch_geometric.nn import NNConv, global_add_pool, Set2Set
-from torch_geometric.nn.norm import BatchNorm
-from torch_geometric.utils import degree
+from torch_geometric.nn import NNConv, global_add_pool
 from torch_scatter import scatter_add
 
 from layers.mlp import MLP
@@ -98,8 +96,8 @@ class Embedder(nn.Module):
         cumsum = 0
         for i, l in enumerate(data.length):
             offset = 1 if input is True else 0
-            seq_element = x[cumsum:cumsum+l,:]
-            mat[i,range(offset, offset+l),:] = seq_element
+            seq_element = x[cumsum:cumsum + l, :]
+            mat[i, range(offset, offset + l), :] = seq_element
             cumsum += l
 
         return mat

@@ -20,7 +20,7 @@ class Model(nn.Module):
             hparams = Namespace(**hparams)
 
         self.hparams = hparams
-           
+
         self.num_embeddings = vocab_size + len(Tokens)
         self.set_dimensions()
 
@@ -74,7 +74,7 @@ class Model(nn.Module):
 
         enc_hidden, x_enc_outputs = self.encode(x_batch, x_enc_inputs)
         y_hat_fps, hidden = self.get_decoder_hidden_state(x_fps)
-        
+
         if self.hparams.concat:
             hidden = torch.cat([enc_hidden, hidden], dim=-1)
 
@@ -85,7 +85,7 @@ class Model(nn.Module):
         y_hat_fps, x_enc_hidden = self.autoencoder(x_fps, with_noise=False)
         x_enc_hidden = x_enc_hidden.unsqueeze(0).repeat(self.hparams.rnn_num_layers, 1, 1)
         return y_hat_fps, x_enc_hidden
-    
+
     def set_dimensions(self):
         self.embedder_num_layers = self.hparams.gnn_num_layers
         self.embedder_dim_input = ATOM_FDIM
@@ -94,25 +94,23 @@ class Model(nn.Module):
         self.embedder_dim_edge_embed = self.hparams.gnn_dim_edge_embed
         self.embedder_dim_output = self.hparams.frag_dim_embed
         self.embedder_dropout = self.hparams.embedder_dropout
-        
+
         self.encoder_num_layers = self.hparams.rnn_num_layers
         self.encoder_dim_input = self.embedder_dim_output
         self.encoder_dim_state = self.hparams.rnn_dim_state
         self.encoder_dropout = self.hparams.rnn_dropout
-        
+
         self.autoencoder_dim_input = FINGERPRINT_DIM
         self.autoencoder_dim_hidden = self.encoder_dim_state
         self.autoencoder_noise_amount = self.hparams.autoencoder_noise
-        
+
         self.decoder_dim_state = self.encoder_dim_state
         if self.hparams.concat:
             self.decoder_dim_state += self.autoencoder_dim_hidden
-        
+
         self.decoder_num_layers = self.hparams.rnn_num_layers
         self.decoder_dim_input = self.encoder_dim_input + self.encoder_dim_state
         self.decoder_dim_attention_input = self.decoder_dim_state + self.encoder_dim_state
         self.decoder_dim_attention_output = self.decoder_dim_state
         self.decoder_dim_output = self.num_embeddings
         self.decoder_dropout = self.encoder_dropout
-        
-        

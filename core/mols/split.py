@@ -73,15 +73,14 @@ def create_chain(splits):
     """Build up a chain of fragments from a molecule.
        This is required so that a given list of fragments can be rebuilt into the same
        molecule as was given when splitting the molecule."""
-    
+
     splits_ids = np.asarray(
         [sorted([a.GetAtomicNum() for a in m.GetAtoms()
-              if a.GetAtomicNum() >= MOL_SPLIT_START]) for m in splits])
-    
+                 if a.GetAtomicNum() >= MOL_SPLIT_START]) for m in splits])
 
     splits_ids = \
         [sorted([a.GetAtomicNum() for a in m.GetAtoms()
-              if a.GetAtomicNum() >= MOL_SPLIT_START]) for m in splits]
+                 if a.GetAtomicNum() >= MOL_SPLIT_START]) for m in splits]
 
     splits2 = []
     mv = np.max(splits_ids)
@@ -91,8 +90,8 @@ def create_chain(splits):
     mols = []
 
     for i in range(len(splits_ids)):
-        l = splits_ids[i]
-        if l[0] == look_for[0] and len(l) == 1:
+        lu = splits_ids[i]
+        if lu[0] == look_for[0] and len(lu) == 1:
             mols.append(splits[i])
             splits2.append(splits_ids[i])
             splits_ids[i] = []
@@ -101,7 +100,7 @@ def create_chain(splits):
         sid = look_for.pop()
         join_order.append(sid)
         next_mol = [i for i in range(len(splits_ids))
-                      if sid in splits_ids[i]]
+                    if sid in splits_ids[i]]
 
         if len(next_mol) == 0:
             break
@@ -191,25 +190,25 @@ def join_fragments(fragments):
         if b[:-1] != pb:
             assert("Can't connect bonds")
 
-        pairs.append((p, j[-1] + offset,pb))
+        pairs.append((p, j[-1] + offset, pb))
 
         for x in j[:-1]:
             to_join.append(x + offset)
-        
+
         for x in r:
             del_atoms.append(x + offset)
-        
+
         bonds += b[:-1]
         offset += f.GetNumAtoms()
         new_mol = Chem.CombineMols(new_mol, f)
 
-    new_mol =  Chem.EditableMol(new_mol)
+    new_mol = Chem.EditableMol(new_mol)
 
     for a1, a2, b in pairs:
-        new_mol.AddBond(a1,a2, order=b)
+        new_mol.AddBond(a1, a2, order=b)
 
     # Remove atom with greatest number first:
     for s in sorted(del_atoms, reverse=True):
         new_mol.RemoveAtom(s)
-    
+
     return new_mol.GetMol()

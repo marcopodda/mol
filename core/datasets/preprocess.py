@@ -1,4 +1,3 @@
-import warnings
 import pandas as pd
 
 from joblib import Parallel, delayed
@@ -8,7 +7,7 @@ from core.datasets import clean as clean_functions
 from core.datasets.download import fetch_dataset
 from core.datasets.features import ATOM_FEATURES
 from core.datasets.utils import load_dataset_info
-from core.datasets.vocab import populate_vocab
+from core.datasets.vocab import Vocab
 from core.mols.props import get_props_data
 from core.mols.split import split_molecule
 from core.mols.utils import mol_from_smiles, mols_from_smiles
@@ -42,10 +41,10 @@ def clean_mol(smi):
                 datadict.update(**get_props_data(mol))
                 datadict.update(frags=mols_from_smiles(frags))
                 datadict.update(length=length)
-    except Exception as e:
+    except Exception:
         pass
         # print(f"Couldn't process {smi}:", e)
-       
+
     return datadict
 
 
@@ -53,7 +52,7 @@ def process_data(smiles, n_jobs):
     P = Parallel(n_jobs=n_jobs, verbose=1)
     data = P(delayed(clean_mol)(smi) for smi in smiles)
     return pd.DataFrame(data).dropna().reset_index(drop=True)
-    
+
 
 def run_preprocess(dataset_name):
     info = load_dataset_info(dataset_name)
@@ -76,5 +75,5 @@ def run_preprocess(dataset_name):
         cleaned_data = cleaned_data.dropna().reset_index(drop=True)
         cleaned_data.to_csv(processed_data_path)
         if not processed_vocab_path.exists():
-            vocab = populate_vocab(cleaned_data, n_jobs)
+            vocab = Vocab.from_df(cleaned_data)
             vocab.save(processed_vocab_path)

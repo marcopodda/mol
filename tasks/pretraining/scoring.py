@@ -1,4 +1,3 @@
-import numpy as np
 from pathlib import Path
 from moses import get_all_metrics
 
@@ -14,7 +13,7 @@ def convert_metrics_dict(metrics_dict):
 
 def reconstruction_accuracy(ref, gen):
     total = len(ref)
-    correct = sum([x==y for (x, y) in zip(ref, gen)])
+    correct = sum([x == y for (x, y) in zip(ref, gen)])
     return correct / total
 
 
@@ -23,11 +22,10 @@ def score(output_dir, dataset_name, epoch=1, n_jobs=40):
     samples_dir = output_dir / PRETRAINING / "samples"
     samples_path = samples_dir / f"samples_{epoch}.yml"
     samples = load_yaml(samples_path)
-    
+
     ref_samples = [s["ref"] for s in samples]
     gen_samples = [s["gen"] for s in samples]
-    
+
     scores = get_all_metrics(gen_samples, n_jobs=n_jobs)
     scores["rec"] = reconstruction_accuracy(ref_samples, gen_samples)
     return scores
-        

@@ -4,31 +4,30 @@ import torch
 from rdkit import Chem
 from rdkit.Chem import rdmolops
 
-from torch_geometric.utils import dense_to_sparse
 from core.mols.utils import mol_from_smiles
 
 
-ATOMS = [ "C", "N", "S", "O", "F", "Cl", "Br"]
+ATOMS = ["C", "N", "S", "O", "F", "Cl", "Br"]
 
 
 ATOM_FEATURES = {
-    'atomic_num': [6, 7, 8, 9, 16, 17, 35, 70, 71, 73, 74, 75, 76, 77, 78, 79, 81, 82, 83], # [6, 7, 8, 9, 16, 17, 35],
-    # 'degree': [0, 1, 2, 3, 4, 5],
-    # 'formal_charge': [-1, -2, 1, 2, 0],
-    # 'chiral_tag': [0, 1, 2, 3],
-    # 'num_Hs': [0, 1, 2, 3, 4],
-    # 'hybridization': [
-    #     Chem.rdchem.HybridizationType.SP,
-    #     Chem.rdchem.HybridizationType.SP2,
-    #     Chem.rdchem.HybridizationType.SP3,
-    #     Chem.rdchem.HybridizationType.SP3D,
-    #     Chem.rdchem.HybridizationType.SP3D2
-    # ],
+    'atomic_num': [6, 7, 8, 9, 16, 17, 35, 70, 71, 73, 74, 75, 76, 77, 78, 79, 81, 82, 83],  # [6, 7, 8, 9, 16, 17, 35],
+    'degree': [0, 1, 2, 3, 4, 5],
+    'formal_charge': [-1, -2, 1, 2, 0],
+    'chiral_tag': [0, 1, 2, 3],
+    'num_Hs': [0, 1, 2, 3, 4],
+    'hybridization': [
+        Chem.rdchem.HybridizationType.SP,
+        Chem.rdchem.HybridizationType.SP2,
+        Chem.rdchem.HybridizationType.SP3,
+        Chem.rdchem.HybridizationType.SP3D,
+        Chem.rdchem.HybridizationType.SP3D2
+    ],
 }
-ATOM_FDIM = sum(len(choices) + 1 for choices in ATOM_FEATURES.values()) # + 1
+ATOM_FDIM = sum(len(choices) + 1 for choices in ATOM_FEATURES.values())
 
 BOND_FEATURES = {'stereo': [0, 1, 2, 3, 4, 5]}
-BOND_FDIM = 4  # 13
+BOND_FDIM = 13
 
 FINGERPRINT_DIM = 2048
 
@@ -48,14 +47,14 @@ def onek_encoding_unk(value, choices):
     return encoding
 
 
-def get_atom_features(atom):   
+def get_atom_features(atom):
     features = onek_encoding_unk(atom.GetAtomicNum(), ATOM_FEATURES['atomic_num'])
-    # features += onek_encoding_unk(atom.GetTotalDegree(), ATOM_FEATURES['degree'])
-    # features += onek_encoding_unk(atom.GetFormalCharge(), ATOM_FEATURES['formal_charge'])
-    # features += onek_encoding_unk(int(atom.GetChiralTag()), ATOM_FEATURES['chiral_tag'])
-    # features += onek_encoding_unk(int(atom.GetTotalNumHs()), ATOM_FEATURES['num_Hs'])
-    # features += onek_encoding_unk(int(atom.GetHybridization()), ATOM_FEATURES['hybridization'])
-    # features += [1 if atom.GetIsAromatic() else 0]
+    features += onek_encoding_unk(atom.GetTotalDegree(), ATOM_FEATURES['degree'])
+    features += onek_encoding_unk(atom.GetFormalCharge(), ATOM_FEATURES['formal_charge'])
+    features += onek_encoding_unk(int(atom.GetChiralTag()), ATOM_FEATURES['chiral_tag'])
+    features += onek_encoding_unk(int(atom.GetTotalNumHs()), ATOM_FEATURES['num_Hs'])
+    features += onek_encoding_unk(int(atom.GetHybridization()), ATOM_FEATURES['hybridization'])
+    features += [1 if atom.GetIsAromatic() else 0]
     return features
 
 
@@ -66,60 +65,36 @@ def get_bond_features(bond):
         bt == Chem.rdchem.BondType.DOUBLE,
         bt == Chem.rdchem.BondType.TRIPLE,
         bt == Chem.rdchem.BondType.AROMATIC,
-        # bond.GetIsConjugated(),
-        # bond.IsInRing()
+        bond.GetIsConjugated(),
+        bond.IsInRing()
     ]
-    # fbond += onek_encoding_unk(int(bond.GetStereo()), BOND_FEATURES['stereo'])
+    fbond += onek_encoding_unk(int(bond.GetStereo()), BOND_FEATURES['stereo'])
     return fbond
-
-
-def get_features(mol):
-    A = rdmolops.GetAdjacencyMatrix(mol)
-    node_features, edge_index, edge_features = [], [], []
-
-    for idx in range(A.shape[0]):
-        atom = mol.GetAtomWithIdx(idx)
-        atom_features = get_atom_features(atom)
-        node_features.append(atom_features)
-
-    for bond in mol.GetBonds():
-        bond_features = get_bond_features(bond)
-        start, end = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
-        edge_index.append([start, end])
-        edge_index.append([end, start]) # add for reverse edge
-        edge_features.append(bond_features)
-        edge_features.append(bond_features)  # add for reverse edge
-
-    node_features = torch.Tensor(node_features)
-    edge_features = torch.Tensor(edge_features)
-    edge_index = torch.LongTensor(edge_index).t()
-    
-    return edge_index, node_features, edge_features
 
 
 def mol2nx(mol):
     if isinstance(mol, str):
         mol = mol_from_smiles(mol)
-        
+
     edge_index = []
 
     for bond in mol.GetBonds():
         start, end = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
         edge_index.append((start, end))
-        edge_index.append((end, start)) # add for reverse edge
-        
+        edge_index.append((end, start))  # add for reverse edge
+
     G = nx.DiGraph()
     G.add_edges_from(edge_index)
-    
+
     for bond in mol.GetBonds():
         bond_features = get_bond_features(bond)
         start, end = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
         G.edges[(start, end)]["edge_attr"] = [float(f) for f in bond_features]
         G.edges[(end, start)]["edge_attr"] = [float(f) for f in bond_features]
-    
+
     for node in G.nodes():
         atom = mol.GetAtomWithIdx(node)
         atom_features = get_atom_features(atom)
         G.nodes[node]["x"] = [float(f) for f in atom_features]
-    
+
     return G

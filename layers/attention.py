@@ -12,7 +12,7 @@ class Attention(nn.Module):
 
         self.dim_input = dim_input
         self.dim_output = dim_output
-        
+
         self.attn = nn.Linear(self.dim_input, self.dim_output)
         self.v = nn.Parameter(torch.rand(self.dim_output))
         stdv = 1. / math.sqrt(self.v.size(0))
@@ -27,9 +27,9 @@ class Attention(nn.Module):
 
     def score(self, hidden, encoder_outputs):
         hidden = hidden.transpose(1, 0)  # [B*T*H]
-        attn_inputs = torch.cat([hidden, encoder_outputs], dim=2) # [B*T*2H]
-        attn_outputs = self.attn(attn_inputs) # [B*T*2H]->[B*T*H]
-        energy = F.relu(attn_outputs).transpose(1, 2) # [B*H*T]
+        attn_inputs = torch.cat([hidden, encoder_outputs], dim=2)  # [B*T*2H]
+        attn_outputs = self.attn(attn_inputs)  # [B*T*2H]->[B*T*H]
+        energy = F.relu(attn_outputs).transpose(1, 2)  # [B*H*T]
         v = self.v.repeat(encoder_outputs.size(0), 1).unsqueeze(1)  # [B*1*H]
         energy = torch.bmm(v, energy)  # [B*1*T]
         return energy.squeeze(1)  # [B*T]

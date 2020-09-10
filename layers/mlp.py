@@ -1,5 +1,3 @@
-import numpy as np
-import torch
 from torch import nn
 from torch.nn import functional as F
 
@@ -8,7 +6,7 @@ class MLP(nn.Module):
     def __init__(self, hparams, dim_input, dim_hidden, dim_output, num_layers=1):
         super().__init__()
         self.hparams = hparams
-        
+
         self.dim_input = dim_input
         self.dim_hidden = dim_hidden
         self.dim_output = dim_output
@@ -17,7 +15,7 @@ class MLP(nn.Module):
         self.input_layer = nn.Linear(dim_input, dim_hidden)
 
         self.hidden_layers = nn.ModuleList([])
-        for l in range(num_layers):
+        for _ in range(num_layers):
             layer = nn.Linear(dim_hidden, dim_hidden)
             self.hidden_layers.append(layer)
 

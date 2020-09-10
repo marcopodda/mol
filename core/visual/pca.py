@@ -1,20 +1,14 @@
 import numpy as np
-import pandas as pd
 
-import torch
-
-import matplotlib as mpl
-import matplotlib.cm as cm
 from matplotlib import pyplot as plt
 
 from umap import UMAP
-from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
 
 import seaborn as sns
 from scipy.spatial.kdtree import KDTree
 
-from core.mols.props import qed, penalized_logp
+from core.mols.props import qed
 
 
 def get_similar(emb, vocab, idx, num_similar=3):
@@ -27,8 +21,8 @@ def get_similar(emb, vocab, idx, num_similar=3):
 
 def dotprod(emb, i, j):
     emb = emb[4:, :]
-    point1 = emb[i,:]
-    point2 = emb[j,:]
+    point1 = emb[i, :]
+    point2 = emb[j, :]
     return np.dot(point1, point2)
 
 

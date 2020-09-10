@@ -1,14 +1,11 @@
-import torch
 from torch import nn
-
-from layers.embedder import GNN
 
 
 class Encoder(nn.Module):
     def __init__(self, hparams, num_layers, dim_input, dim_state, dropout):
         super().__init__()
         self.hparams = hparams
-        
+
         self.num_layers = num_layers
         self.dim_input = dim_input
         self.dim_state = dim_state
@@ -27,5 +24,5 @@ class Encoder(nn.Module):
 
         batch_size = output.size(0)
         hidden = hidden.view(self.num_layers, 2, batch_size, self.dim_state).sum(dim=1)
-        output = output[:,:,:self.dim_state] + output[:,:,self.dim_state:]
+        output = output[:, :, :self.dim_state] + output[:, :, self.dim_state:]
         return output, hidden

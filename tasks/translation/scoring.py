@@ -1,8 +1,4 @@
-import numpy as np
 from pathlib import Path
-from argparse import Namespace
-from copy import deepcopy
-
 
 from core.utils.serialization import load_yaml
 from core.mols.props import drd2, qed, logp, similarity
@@ -36,20 +32,20 @@ def score(output_dir, dataset_name, epoch=1):
     samples_dir = output_dir / TRANSLATION / "samples"
     samples_filename = f"samples_{epoch}.yml"
     samples = load_yaml(samples_dir / samples_filename)
-    
+
     gen = [s["gen"] for s in samples]
     ref = [s["ref"] for s in samples]
     num_samples = len(samples)
-    
+
     # valid samples
     valid_samples = [(x, y) for (x, y) in zip(ref, gen) if y and mol_from_smiles(y)]
     num_valid = len(valid_samples)
     validity_rate = num_valid / num_samples
-    
+
     # novel samples
     novel_samples = [y not in ref for (x, y) in valid_samples]
     novelty_rate = len(novel_samples) / num_valid
-    
+
     # unique samples
     unique_samples = set([y for (x, y) in valid_samples])
     uniqueness_rate = len(unique_samples) / num_valid
@@ -59,7 +55,7 @@ def score(output_dir, dataset_name, epoch=1):
     similar = [is_similar(x, y, kw["similarity_thres"]) for (x, y) in valid_samples]
     improved = [is_improved(y, kw["prop_fun"], kw["improvement_thres"]) for (x, y) in valid_samples]
     success = [x and y for (x, y) in zip(similar, improved)]
-    
+
     return {
         "num_samples": len(samples),
         "similar": sum(similar) / num_valid,
@@ -70,7 +66,3 @@ def score(output_dir, dataset_name, epoch=1):
         "novel": novelty_rate,
         "scoring": dataset_name
     }
-    
-    
-        
-    

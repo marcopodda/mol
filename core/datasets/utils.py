@@ -8,10 +8,8 @@ from pathlib import Path
 import torch
 
 from core.datasets.settings import DATA_DIR, CONFIG_DIR
-from core.datasets.vocab import Vocab, Tokens, get_vocab
-from core.mols.utils import mol_from_smiles, mol_to_smiles
+from core.datasets.vocab import Vocab, Tokens
 from core.utils.os import get_or_create_dir
-from core.utils.misc import get_n_jobs
 from core.utils.serialization import load_yaml
 
 
@@ -37,7 +35,7 @@ def load_csv(path, convert=None, cast=None):
         index_col=0,
         converters=converters,
         dtype=cast)
-    
+
 
 def load_data(dest_dir, dataset_name, num_samples=None):
     dest_dir = Path(dest_dir)
@@ -58,8 +56,6 @@ def load_data(dest_dir, dataset_name, num_samples=None):
     dest_data_path = dest_dir / "data.csv"
     dest_vocab_path = dest_dir / "vocab.csv"
 
-    n_jobs = get_n_jobs()
-
     if dest_data_path.exists():
         data = load_csv(dest_data_path, convert=["frags"], cast={"length": int})
         vocab = Vocab.from_file(dest_vocab_path)
@@ -69,8 +65,8 @@ def load_data(dest_dir, dataset_name, num_samples=None):
                 data = data.sample(n=num_samples)
                 data = data.reset_index(drop=True)
             data.to_csv(dest_data_path)
-            
-            vocab = get_vocab(data, processed_vocab_path)
+
+            vocab = Vocab.from_df(data)
             vocab.save(dest_vocab_path)
     else:
         data = load_csv(processed_data_path, convert=["frags"], cast={"length": int})
@@ -78,8 +74,8 @@ def load_data(dest_dir, dataset_name, num_samples=None):
             data = data.sample(n=num_samples)
             data = data.reset_index(drop=True)
         data.to_csv(dest_data_path)
-        
-        vocab = get_vocab(data, processed_vocab_path)
+
+        vocab = Vocab.from_df(data)
         vocab.save(dest_vocab_path)
 
     data = load_csv(dest_data_path, convert=["frags"], cast={"length": int})
