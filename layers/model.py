@@ -75,11 +75,6 @@ class Model(nn.Module):
             hidden = torch.cat([enc_hidden, hidden], dim=-1)
 
         logits = self.decode(y_batch, hidden, x_enc_outputs, dec_inputs)
-        del batch
-        del hidden
-        del enc_hidden
-        del x_enc_outputs
-        del dec_inputs
         return logits, y_hat_fps
 
     def get_decoder_hidden_state(self, x_fps):
