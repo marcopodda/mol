@@ -64,7 +64,7 @@ class GNN(nn.Module):
 
         if self.readout is not None:
             output = self.readout(x)
-
+        print(output.size(), nodes_per_graph.size())
         return output / nodes_per_graph.view(-1, 1)
 
 
