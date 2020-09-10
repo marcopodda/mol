@@ -24,7 +24,7 @@ ATOM_FEATURES = {
         Chem.rdchem.HybridizationType.SP3D2
     ],
 }
-ATOM_FDIM = sum(len(choices) + 1 for choices in ATOM_FEATURES.values())
+ATOM_FDIM = sum(len(choices) + 1 for choices in ATOM_FEATURES.values()) + 1
 
 BOND_FEATURES = {'stereo': [0, 1, 2, 3, 4, 5]}
 BOND_FDIM = 13

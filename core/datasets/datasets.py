@@ -1,9 +1,10 @@
+import numpy as np
 import networkx as nx
 
 import torch
 from torch_geometric.utils import from_networkx
 
-from core.datasets.features import mol2nx
+from core.datasets.features import mol2nx, FINGERPRINT_DIM
 from core.datasets.utils import pad, load_data
 from core.datasets.vocab import Tokens
 from core.mols.utils import mol_from_smiles
@@ -12,6 +13,8 @@ from core.utils.serialization import load_numpy, save_numpy
 
 
 class BaseDataset:
+    corrupt = False
+
     def __init__(self, hparams, output_dir, dataset_name):
         self.hparams = hparams
         self.output_dir = output_dir
@@ -30,7 +33,9 @@ class BaseDataset:
             save_numpy(token.numpy(), path)
         return token
 
-    def _to_data(self, frags_smiles, is_target):
+    def _to_data(self, frags_smiles, is_target, add_noise=False):
+        if add_noise and self.corrupt:
+            frags_smiles = self._corrupt_seq(frags_smiles)
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]
         num_nodes = [f.number_of_nodes() for f in frag_graphs]
@@ -43,8 +48,10 @@ class BaseDataset:
             data["target"] = self._get_target_sequence(frags_smiles)
         return data
 
-    def _get_fingerprint(self, smiles):
-        fingerprint = get_fingerprint(smiles)
+    def _get_fingerprint(self, smiles, add_noise):
+        fingerprint = np.array(get_fingerprint(smiles), dtype=np.int)
+        if add_noise and self.corrupt:
+            fingerprint = self._corrupt_fingerprint(fingerprint)
         fingerprint_tx = torch.FloatTensor(fingerprint).view(1, -1)
         return fingerprint_tx
 
@@ -70,15 +77,47 @@ class BaseDataset:
 
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
-        data = self._to_data(mol_data.frags, is_target=False)
-        fingerprint = self._get_fingerprint(mol_data.smiles)
+        data = self._to_data(mol_data.frags, is_target=False, add_noise=True)
+        fingerprint = self._get_fingerprint(mol_data.smiles, add_noise=True)
         return data, fingerprint
 
     def get_target_data(self, index):
         mol_data = self.data.iloc[index]
-        data = self._to_data(mol_data.frags, is_target=True)
-        fingerprint = self._get_fingerprint(mol_data.smiles)
+        data = self._to_data(mol_data.frags, is_target=True, add_noise=False)
+        fingerprint = self._get_fingerprint(mol_data.smiles, add_noise=False)
         return data, fingerprint
+
+    def _sample_poisson(self, length, lam):
+        sample = np.random.poisson(lam)
+        while sample >= length - 1:
+            sample = np.random.poisson(lam)
+        return sample
+
+    def _corrupt_seq(self, seq):
+        seq = seq[:]
+        num_to_delete = min(1, self._sample_poisson(len(seq), lam=0.25))
+        delete_indices = np.random.choice(len(seq)-1, num_to_delete).tolist()
+        for delete_index in delete_indices:
+            seq.remove(seq[delete_index])
+
+        num_to_replace = self._sample_poisson(len(seq), lam=0.5)
+        replacement_indices = np.random.choice(len(seq)-1, num_to_replace).tolist()
+        for replacement_index in replacement_indices:
+            seq[replacement_index] = self.vocab.sample()
+
+        num_to_add = self._sample_poisson(len(seq), lam=0.5)
+        add_indices = np.random.choice(len(seq)-1, num_to_add).tolist()
+        for add_index in add_indices:
+            if len(seq) + 2 < self.max_length:
+                seq.insert(add_index, self.vocab.sample())
+
+        return seq
+
+    def _corrupt_fingerprint(self, fingerprint):
+        num_to_flip = np.random.poisson(8)
+        flip_indices = np.random.choice(FINGERPRINT_DIM-1, num_to_flip)
+        fingerprint[flip_indices] = np.logical_not(fingerprint[flip_indices])
+        return fingerprint
 
 
 class VocabDataset:

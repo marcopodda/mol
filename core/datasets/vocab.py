@@ -38,6 +38,8 @@ class Vocab:
         self._frag2idx = {}
         self._idx2frag = {}
 
+        self._unigram_prob = None
+
     def __getitem__(self, key):
         if isinstance(key, int):
             return self._idx2frag[key]
@@ -78,9 +80,15 @@ class Vocab:
         df = self.to_dataframe()
         df.to_csv(path)
 
-    def unigram_prob(self, use_tokens=False):
-        freqs = list(self._freq.values())
-        if use_tokens:
-            freqs = ([0] * len(Tokens)) + freqs
-        freqs = np.array(freqs, dtype=np.float) ** 0.75
-        return freqs / freqs.sum()
+    def sample(self):
+        num_words = len(self)
+        index = np.random.choice(num_words, p=self.unigram_prob)
+        return self[index]
+
+    @property
+    def unigram_prob(self):
+        if self._unigram_prob is None:
+            freqs = list(self._freq.values())
+            freqs = np.array(freqs, dtype=np.float) ** 0.75
+            self._unigram_prob = freqs / freqs.sum()
+        return self._unigram_prob

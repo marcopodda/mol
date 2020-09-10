@@ -13,13 +13,13 @@ from core.utils.os import get_or_create_dir
 from layers.model import Model
 from layers.wrapper import Wrapper
 from tasks import PRETRAINING
-from tasks.pretraining.dataset import PretrainingDataset
+from tasks.pretraining.dataset import PretrainingTrainDataset
 
 from .sampler import PretrainingSampler
 
 
 class PretrainingWrapper(Wrapper):
-    dataset_class = PretrainingDataset
+    dataset_class = PretrainingTrainDataset
     model_class = Model
 
     def prepare_data(self):

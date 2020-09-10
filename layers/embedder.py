@@ -59,12 +59,13 @@ class GNN(nn.Module):
             x = bn(F.relu(x))
 
         output = global_add_pool(x, batch)
-        nodes_per_graph = scatter_add(torch.ones_like(batch), batch).view(-1, 1)
+        nodes_per_graph = scatter_add(torch.ones_like(batch), batch)
+        nodes_per_graph = nodes_per_graph.repeat_interleave(nodes_per_graph.view(-1))
 
         if self.readout is not None:
             output = self.readout(x)
 
-        return output / nodes_per_graph
+        return output / nodes_per_graph.view(-1, 1)
 
 
 class Embedder(nn.Module):
