@@ -1,21 +1,16 @@
-from argparse import Namespace
-
 import torch
 from torch import nn
 from torch.nn import functional as F
 
+from core.hparams import HParams
 
 class Autoencoder(nn.Module):
-    def __init__(self, hparams, dim_input, dim_hidden, noise_amount):
+    def __init__(self, hparams, dim_input, dim_hidden):
         super().__init__()
 
-        if isinstance(hparams, dict):
-            hparams = Namespace(**hparams)
-
-        self.hparams = hparams
+        self.hparams = HParams.load(hparams)
         self.dim_input = dim_input
         self.dim_hidden = dim_hidden
-        self.noise_amount = noise_amount
 
         self.input = nn.Linear(self.dim_input, self.dim_input // 2)
         self.input2hidden = nn.Linear(self.dim_input // 2, self.dim_input // 4)
@@ -34,15 +29,7 @@ class Autoencoder(nn.Module):
         x = self.hidden2output(F.relu(x))
         return self.output(F.relu(x))
 
-    def forward(self, batch, with_noise=True):
-        if with_noise is True:
-            batch = self.add_noise(batch)
+    def forward(self, batch):
         hidden = self.encode(batch)
         output = self.decode(hidden)
         return torch.sigmoid(output), hidden
-
-    def add_noise(self, batch):
-        noisy_batch = batch.clone()
-        noise_mask = torch.rand_like(noisy_batch) <= self.noise_amount
-        noisy_batch[noise_mask] = torch.logical_not(noisy_batch[noise_mask]).float()
-        return noisy_batch

@@ -4,6 +4,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from core.hparams import HParams
 from core.datasets.vocab import Tokens
 from core.datasets.features import ATOM_FDIM, BOND_FDIM, FINGERPRINT_DIM
 from layers.embedder import Embedder
@@ -15,11 +16,7 @@ from layers.autoencoder import Autoencoder
 class Model(nn.Module):
     def __init__(self, hparams, vocab_size):
         super().__init__()
-
-        if isinstance(hparams, dict):
-            hparams = Namespace(**hparams)
-
-        self.hparams = hparams
+        self.hparams = HParams.load(hparams)
 
         self.num_embeddings = vocab_size + len(Tokens)
         self.set_dimensions()
@@ -43,8 +40,7 @@ class Model(nn.Module):
         self.autoencoder = Autoencoder(
             hparams=hparams,
             dim_input=self.autoencoder_dim_input,
-            dim_hidden=self.autoencoder_dim_hidden,
-            noise_amount=self.autoencoder_noise_amount)
+            dim_hidden=self.autoencoder_dim_hidden)
 
         self.decoder = Decoder(
             hparams=hparams,
@@ -82,7 +78,7 @@ class Model(nn.Module):
         return logits, y_hat_fps
 
     def get_decoder_hidden_state(self, x_fps):
-        y_hat_fps, x_enc_hidden = self.autoencoder(x_fps, with_noise=False)
+        y_hat_fps, x_enc_hidden = self.autoencoder(x_fps)
         x_enc_hidden = x_enc_hidden.unsqueeze(0).repeat(self.hparams.rnn_num_layers, 1, 1)
         return y_hat_fps, x_enc_hidden
 
@@ -102,7 +98,6 @@ class Model(nn.Module):
 
         self.autoencoder_dim_input = FINGERPRINT_DIM
         self.autoencoder_dim_hidden = self.encoder_dim_state
-        self.autoencoder_noise_amount = self.hparams.autoencoder_noise
 
         self.decoder_dim_state = self.encoder_dim_state
         if self.hparams.concat:

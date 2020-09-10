@@ -4,13 +4,14 @@ from torch.nn import functional as F
 from torch_geometric.nn import NNConv, global_add_pool
 from torch_scatter import scatter_add
 
+from core.hparams import HParams
 from layers.mlp import MLP
 
 
 class GNN(nn.Module):
     def __init__(self, hparams, num_layers, dim_input, dim_edge_features, dim_edge_embed, dim_hidden, dim_output):
         super().__init__()
-        self.hparams = hparams
+        self.hparams = HParams.load(hparams)
 
         self.num_layers = num_layers
         self.dim_input = dim_input
@@ -71,7 +72,7 @@ class GNN(nn.Module):
 class Embedder(nn.Module):
     def __init__(self, hparams, num_layers, dim_input, dim_edge_features, dim_edge_embed, dim_hidden, dim_output):
         super().__init__()
-        self.hparams = hparams
+        self.hparams = HParams.load(hparams)
 
         self.num_layers = num_layers
         self.dim_input = dim_input

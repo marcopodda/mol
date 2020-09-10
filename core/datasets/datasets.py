@@ -4,6 +4,7 @@ import networkx as nx
 import torch
 from torch_geometric.utils import from_networkx
 
+from core.hparams import HParams
 from core.datasets.features import mol2nx, FINGERPRINT_DIM
 from core.datasets.utils import pad, load_data
 from core.datasets.vocab import Tokens
@@ -16,7 +17,7 @@ class BaseDataset:
     corrupt = False
 
     def __init__(self, hparams, output_dir, dataset_name):
-        self.hparams = hparams
+        self.hparams = HParams.load(hparams)
         self.output_dir = output_dir
         self.dataset_name = dataset_name
 
@@ -118,6 +119,12 @@ class BaseDataset:
         flip_indices = np.random.choice(FINGERPRINT_DIM-1, num_to_flip)
         fingerprint[flip_indices] = np.logical_not(fingerprint[flip_indices])
         return fingerprint
+
+
+class EvalDataset(BaseDataset):
+    def __getitem__(self, index):
+        x_molecule, x_fingerprint = self.get_input_data(index)
+        return x_molecule, x_fingerprint
 
 
 class VocabDataset:

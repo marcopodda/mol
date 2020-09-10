@@ -1,11 +1,13 @@
 from torch import nn
 from torch.nn import functional as F
 
+from core.hparams import HParams
+
 
 class MLP(nn.Module):
     def __init__(self, hparams, dim_input, dim_hidden, dim_output, num_layers=1):
         super().__init__()
-        self.hparams = hparams
+        self.hparams = HParams.load(hparams)
 
         self.dim_input = dim_input
         self.dim_hidden = dim_hidden

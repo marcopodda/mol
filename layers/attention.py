@@ -4,11 +4,12 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from core.hparams import HParams
 
 class Attention(nn.Module):
     def __init__(self, hparams, dim_input, dim_output):
         super().__init__()
-        self.hparams = hparams
+        self.hparams = HParams.load(hparams)
 
         self.dim_input = dim_input
         self.dim_output = dim_output

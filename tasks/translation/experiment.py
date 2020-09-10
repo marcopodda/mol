@@ -8,37 +8,31 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 
+from core.datasets.datasets import BaseDataset, EvalDataset
+from core.datasets.loaders import EvalDataLoader
 from core.utils.serialization import load_yaml, save_yaml
 from core.utils.os import get_or_create_dir
 from layers.model import Model
 from layers.wrapper import Wrapper
+from layers.sampler import Sampler
 from tasks import TRANSLATION, PRETRAINING
 from tasks.pretraining.experiment import PretrainingWrapper
-from tasks.translation.dataset import TranslationTrainDataset
-from tasks.translation.loader import TranslationTrainDataLoader
-from tasks.translation.sampler import TranslationSampler
 
 
-class TranslationModel(Model):
-    pass
+class TranslationTrainDataset(BaseDataset):
+    corrupt = False
 
 
 class TranslationWrapper(Wrapper):
     dataset_class = TranslationTrainDataset
-    model_class = TranslationModel
 
-    def prepare_data(self):
-        loader = TranslationTrainDataLoader(self.hparams, self.dataset)
-        self.training_loader = loader()
-        print(self.model)
 
-    def training_step(self, batch, batch_idx):
-        (_, y), (_, y_fps), _, _ = batch
-        logits, y_hat_fps = self.model(batch)
-        ce_loss = F.cross_entropy(logits, y.seq.view(-1), ignore_index=0)
-        bce_loss = F.binary_cross_entropy(y_hat_fps, y_fps)
-        logs = {"CE": ce_loss, "BCE": bce_loss}
-        return {"loss": ce_loss + bce_loss, "logs": logs, "progress_bar": logs}
+class TranslationSampler(Sampler):
+    def get_loader(self):
+        indices = self.dataset.data[self.datast.data.is_val==1].index.tolist()
+        loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
+        smiles = self.dataset.data.iloc[indices].smiles.tolist()
+        return smiles, loader(batch_size=self.hparams.translate_batch_size, shuffle=False)
 
 
 def freeze(layer):
@@ -68,19 +62,19 @@ def run(args):
     logger = TensorBoardLogger(save_dir=output_dir / TRANSLATION, name="", version="logs")
     ckpt_callback = ModelCheckpoint(filepath=get_or_create_dir(output_dir / TRANSLATION / "checkpoints"), save_top_k=-1)
     trainer = pl.Trainer(
-        max_epochs=hparams.max_epochs,
+        max_epochs=hparams.translate_num_epochs,
         checkpoint_callback=ckpt_callback,
         progress_bar_refresh_rate=10,
         gradient_clip_val=hparams.clip_norm,
         fast_dev_run=args.debug,
         logger=logger,
         gpus=gpu)
-    train_model = TranslationWrapper(hparams, output_dir, args.dataset_name)
+    train_model = Wrapper(hparams, output_dir, args.dataset_name)
     # train_model = load_embedder(train_model, output_dir, args)
     trainer.fit(train_model)
 
 
-def run_sampling(output_dir, dataset_name, epoch=None, temp=1.0, batch_size=1000, greedy=True):
+def run_sampling(output_dir, dataset_name, epoch=None, temp=1.0, greedy=True):
     assert epoch >= 1
 
     output_dir = Path(output_dir)
@@ -96,10 +90,12 @@ def run_sampling(output_dir, dataset_name, epoch=None, temp=1.0, batch_size=1000
 
         if not sample_path.exists():
             print(f"processing {sample_path}...")
-            wrapper = TranslationWrapper.load_from_checkpoint(
+            model = TranslationWrapper.load_from_checkpoint(
                 checkpoint_path=checkpoint_name.as_posix(),
                 output_dir=output_dir,
-                name=dataset_name)
-            sampler = TranslationSampler(wrapper.model, dataset_name)
-            samples = sampler.run(temp=temp, batch_size=batch_size, greedy=greedy)
+                name=dataset_name).model
+            hparams = model.hparams
+            dataset = EvalDataset(hparams, output_dir, dataset_name)
+            sampler = TranslationSampler(hparams, model, dataset)
+            samples = sampler.run(temp=temp, greedy=greedy)
             save_yaml(samples, sample_path)

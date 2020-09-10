@@ -5,8 +5,9 @@ from torch.distributions import Categorical
 from rdkit import Chem
 # from moses.utils import disable_rdkit_log, enable_rdkit_log
 
+from core.hparams import HParams
 from core.datasets.datasets import VocabDataset
-from core.datasets.loaders import VocabDataLoader
+from core.datasets.loaders import EvalDataLoader, VocabDataLoader
 from core.datasets.vocab import Tokens
 from core.mols.split import join_fragments
 
@@ -14,16 +15,14 @@ from core.mols.split import join_fragments
 class Sampler:
     dataset_class = None
 
-    def __init__(self, model, name):
-        self.hparams = model.hparams
+    def __init__(self, hparams, model, dataset):
+        self.hparams = HParams.load(hparams)
         self.model = model
-        self.output_dir = model.output_dir
-        self.name = name
-        self.dataset = self.dataset_class(self.hparams, self.output_dir, name)
+        self.dataset = dataset
         self.vocab = self.dataset.vocab
         self.max_length = self.dataset.max_length
 
-    def get_loader(self, batch_size=128, num_samples=None):
+    def get_loader(self):
         raise NotImplementedError
 
     def get_embedder(self, model):
@@ -52,7 +51,7 @@ class Sampler:
         embedder = nn.Embedding.from_pretrained(embeddings)
         return embedder
 
-    def run(self, temp=1.0, batch_size=128, greedy=True, num_samples=None):
+    def run(self, temp=1.0, greedy=True):
         model = self.model
         model.eval()
 
@@ -61,7 +60,8 @@ class Sampler:
         with torch.no_grad():
             # prepare embeddings matrix
             embedder = self.get_embedder(model)
-            smiles, loader = self.get_loader(batch_size, num_samples)
+            smiles, loader = self.get_loader()
+            batch_size = loader.batch_size
 
             for idx, batch in enumerate(loader):
                 gens = self.generate_batch(
@@ -69,7 +69,6 @@ class Sampler:
                     model=model,
                     embedder=embedder,
                     temp=temp,
-                    batch_size=batch_size,
                     greedy=greedy)
 
                 batch_length = batch[-1].size(0)
@@ -93,7 +92,7 @@ class Sampler:
 
         return samples
 
-    def generate_batch(self, data, model, embedder, temp, batch_size, greedy):
+    def generate_batch(self, data, model, embedder, temp, greedy):
         frags, x_fps, enc_inputs, dec_inputs = data
 
         enc_hidden, enc_outputs = model.encode(frags, enc_inputs)
@@ -127,7 +126,7 @@ class Sampler:
 
             x = embedder(indexes)
             x = x.view(batch_size, 1, -1)
-        print(samples)
+
         frags = self.translate(samples)
         return frags
 

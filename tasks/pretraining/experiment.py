@@ -1,3 +1,5 @@
+import numpy as np
+import torch
 from pathlib import Path
 from argparse import Namespace
 
@@ -5,43 +7,47 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-import torch
-
-from core.datasets.loaders import DataLoader
+from core.hparams import HParams
+from core.datasets.datasets import BaseDataset, EvalDataset
+from core.datasets.loaders import TrainDataLoader, EvalDataLoader
 from core.utils.serialization import load_yaml, save_yaml
 from core.utils.os import get_or_create_dir
 from layers.model import Model
 from layers.wrapper import Wrapper
+from layers.sampler import Sampler
 from tasks import PRETRAINING
-from tasks.pretraining.dataset import PretrainingTrainDataset
 
-from .sampler import PretrainingSampler
+
+class PretrainingTrainDataset(BaseDataset):
+    corrupt = True
 
 
 class PretrainingWrapper(Wrapper):
     dataset_class = PretrainingTrainDataset
-    model_class = Model
+    pretrain = True
 
-    def prepare_data(self):
-        train_loader = DataLoader(self.hparams, self.dataset)
-        self.training_loader = train_loader(shuffle=True)
 
-    def train_dataloader(self):
-        return self.training_loader
+class PretrainingSampler(Sampler):
+    def get_loader(self):
+        loader = EvalDataLoader(self.hparams, self.dataset)
+        num_samples = min(len(loader.indices), 30000)
+        indices = sorted(np.random.choice(loader.indices, num_samples, replace=False))
+        smiles = self.dataset.data.iloc[indices].smiles.tolist()
+        return smiles, loader(batch_size=self.hparams.pretrain_batch_size, shuffle=False)
 
 
 def run(args):
     output_dir = Path(args.output_dir)
     pretrain_dir = output_dir / PRETRAINING
     gpu = args.gpu if torch.cuda.is_available() else None
-    hparams = Namespace(**load_yaml(args.config_file))
+    hparams = HParams.from_file(args.config_file)
     logger = TensorBoardLogger(save_dir=pretrain_dir, name="", version="logs")
     ckpt_dir = get_or_create_dir(pretrain_dir / "checkpoints")
     ckpt_callback = ModelCheckpoint(filepath=ckpt_dir, save_top_k=-1)
 
     train_model = PretrainingWrapper(hparams, output_dir, args.dataset_name)
     trainer = pl.Trainer(
-        max_epochs=hparams.max_epochs,
+        max_epochs=hparams.pretrain_num_epochs,
         checkpoint_callback=ckpt_callback,
         progress_bar_refresh_rate=10,
         gradient_clip_val=hparams.clip_norm,
@@ -51,7 +57,7 @@ def run(args):
     trainer.fit(train_model)
 
 
-def run_sampling(output_dir, dataset_name, epoch=None,  temp=1.0, batch_size=1000, greedy=True, num_samples=None):
+def run_sampling(output_dir, dataset_name, epoch=None,  temp=1.0, greedy=True):
     assert epoch >= 1
 
     output_dir = Path(output_dir)
@@ -64,10 +70,12 @@ def run_sampling(output_dir, dataset_name, epoch=None,  temp=1.0, batch_size=100
 
     if not sample_path.exists():
         print(f"processing {sample_path}...")
-        wrapper = PretrainingWrapper.load_from_checkpoint(
+        model = PretrainingWrapper.load_from_checkpoint(
             checkpoint_path=checkpoint_name.as_posix(),
             output_dir=output_dir,
-            name=dataset_name)
-        sampler = PretrainingSampler(wrapper.model, dataset_name)
-        samples = sampler.run(temp=temp, batch_size=batch_size, greedy=greedy, num_samples=num_samples)
+            name=dataset_name).model
+        hparams = model.hparams
+        dataset = EvalDataset(hparams, output_dir, dataset_name)
+        sampler = PretrainingSampler(hparams, model, dataset)
+        samples = sampler.run(temp=temp, greedy=greedy)
         save_yaml(samples, sample_path)

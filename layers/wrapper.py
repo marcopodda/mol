@@ -5,24 +5,24 @@ from torch.nn import functional as F
 from torch.optim import Adam
 import pytorch_lightning as pl
 
+from core.hparams import HParams
+from core.datasets.loaders import TrainDataLoader
+from layers.model import Model
+
 
 class Wrapper(pl.LightningModule):
     dataset_class = None
-    model_class = None
+    pretrain = None
 
     def __init__(self, hparams, output_dir, name):
         super().__init__()
-
-        if isinstance(hparams, dict):
-            hparams = Namespace(**hparams)
-
-        self.hparams = hparams
+        self.hparams = HParams.load(hparams)
 
         self.dataset = self.dataset_class(hparams, output_dir, name)
         self.vocab = self.dataset.vocab
         self.num_samples = len(self.dataset)
 
-        self.model = self.model_class(hparams, len(self.vocab))
+        self.model = Model(hparams, len(self.vocab))
 
     def forward(self, data):
         return self.model(data)
@@ -30,6 +30,11 @@ class Wrapper(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = Adam(self.parameters(), lr=self.hparams.lr)
         return optimizer
+
+    def prepare_data(self):
+        train_loader = TrainDataLoader(self.hparams, self.dataset)
+        batch_size = self.hparams.pretrain_batch_size if self.pretrain else self.hparams.translate_batch_size
+        self.training_loader = train_loader(batch_size=batch_size, shuffle=True)
 
     def train_dataloader(self):
         return self.training_loader

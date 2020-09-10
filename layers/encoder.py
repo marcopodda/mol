@@ -1,10 +1,11 @@
 from torch import nn
 
+from core.hparams import HParams
 
 class Encoder(nn.Module):
     def __init__(self, hparams, num_layers, dim_input, dim_state, dropout):
         super().__init__()
-        self.hparams = hparams
+        self.hparams = HParams.load(hparams)
 
         self.num_layers = num_layers
         self.dim_input = dim_input

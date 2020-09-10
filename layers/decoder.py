@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 
+from core.hparams import HParams
 from layers.attention import Attention
 
 
@@ -15,7 +16,7 @@ class Decoder(nn.Module):
                  dim_attention_output,
                  dropout):
         super().__init__()
-        self.hparams = hparams
+        self.hparams = HParams.load(hparams)
 
         self.num_layers = num_layers
         self.dim_input = dim_input

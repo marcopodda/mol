@@ -1,7 +1,8 @@
 import torch
-from torch.utils.data import DataLoader as TorchDataLoader
+from torch.utils.data import DataLoader as DataLoader
 from torch_geometric.data import Batch
 
+from core.hparams import HParams
 
 def collate_frags(data_list):
     cumsum = 0
@@ -22,14 +23,13 @@ def prefilled_tensor(dims, fill_with, fill_at):
 
 class BaseDataLoader:
     def __init__(self, hparams, dataset, indices=None):
-        self.hparams = hparams
+        self.hparams = HParams.load(hparams)
         self.dataset = dataset
         self.indices = indices or list(range(len(dataset)))
         self.max_length = self.dataset.max_length
 
-    def __call__(self, shuffle=False, batch_size=None):
-        batch_size = batch_size or self.hparams.batch_size
-        return TorchDataLoader(
+    def __call__(self, batch_size, shuffle=False):
+        return DataLoader(
             dataset=self.dataset,
             collate_fn=lambda b: self.collate(b),
             batch_size=batch_size,
@@ -41,7 +41,7 @@ class BaseDataLoader:
         raise NotImplementedError
 
 
-class DataLoader(BaseDataLoader):
+class TrainDataLoader(BaseDataLoader):
     def collate(self, data_list):
         frags_x, fps_x, frags_y, fps_y = zip(*data_list)
 
@@ -85,7 +85,7 @@ class EvalDataLoader(BaseDataLoader):
 
 class VocabDataLoader:
     def __init__(self, hparams, dataset):
-        self.hparams = hparams
+        self.hparams = HParams.load(hparams)
         self.dataset = dataset
 
     def __call__(self, shuffle=False, batch_size=None):
