@@ -1,4 +1,5 @@
 import gc
+import numpy as np
 from argparse import Namespace
 
 import torch
@@ -43,17 +44,11 @@ class Wrapper(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         (_, y), (_, y_fingerprints), _, _ = batch
         logits, y_fingerprints_rec = self.model(batch)
+
         ce_loss = F.cross_entropy(logits, y.target.view(-1), ignore_index=0)
-        bce_loss = 0 # F.binary_cross_entropy(y_fingerprints_rec, y_fingerprints)
-        logs = {"CE": ce_loss, "BCE": bce_loss}
-        return {"loss": ce_loss + bce_loss, "logs": logs, "progress_bar": logs}
+        bce_loss = F.binary_cross_entropy(y_fingerprints_rec, y_fingerprints)
 
-    def training_epoch_end(self, outputs):
-        train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
-        logs = {"tr_loss": train_loss_mean}
-        return {"log": logs, "progress_bar": logs}
-
-    # def on_batch_end(self):
-    #     gc.collect()
-    #     torch.cuda.empty_cache()
-    #     return super().on_batch_end()
+        result = pl.TrainResult(ce_loss + bce_loss)
+        result.log('CE', ce_loss, logger=False, prog_bar=False)
+        result.log('BCE', bce_loss, logger=False, prog_bar=False)
+        return result

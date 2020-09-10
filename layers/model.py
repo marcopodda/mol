@@ -68,19 +68,19 @@ class Model(nn.Module):
         x_batch, y_batch = batch_data
         x_fps, _ = batch_fps
 
-        hidden, x_enc_outputs = self.encode(x_batch, x_enc_inputs)
-        y_hat_fps, autoenc_hidden = self.get_decoder_hidden_state(x_fps)
+        # embed fragment sequence
+        enc_hidden, x_enc_outputs = self.encode(x_batch, x_enc_inputs)
+
+        # autoencode fingerprint
+        y_hat_fps, autoenc_hidden = self.autoencoder(x_fps)
+        hidden = autoenc_hidden.unsqueeze(0).repeat(self.hparams.rnn_num_layers, 1, 1)
 
         if self.hparams.concat:
-            hidden = torch.cat([autoenc_hidden, hidden], dim=-1)
+            hidden = torch.cat([hidden, enc_hidden], dim=-1)
 
+        # decode fragment sequence
         logits = self.decode(y_batch, hidden, x_enc_outputs, dec_inputs)
         return logits, y_hat_fps
-
-    def get_decoder_hidden_state(self, x_fps):
-        y_hat_fps, x_enc_hidden = self.autoencoder(x_fps)
-        x_enc_hidden = x_enc_hidden.unsqueeze(0).repeat(self.hparams.rnn_num_layers, 1, 1)
-        return y_hat_fps, x_enc_hidden
 
     def set_dimensions(self):
         self.embedder_num_layers = self.hparams.gnn_num_layers
