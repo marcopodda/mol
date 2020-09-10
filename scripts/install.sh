@@ -1,9 +1,8 @@
-# unset $PYTHONPATH
+# RUN WITH SOURCE, not BASH!!!
+
 TORCH_VERSION=1.6.0
 CUDA_VERSION=cu102
-PYTHON_VERSION=3.7.7
-
-# RUN WITH SOURCE, not BASH!!!
+PYTHON_VERSION=3.7
 
 # create venv
 conda create --name chem python=${PYTHON_VERSION} -y && conda activate chem
