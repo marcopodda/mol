@@ -1,8 +1,8 @@
 import argparse
 
 from core.datasets.preprocess import run_preprocess
-from tasks.pretraining.experiment import run as pretrain
-from tasks.translation.experiment import run as translate
+from tasks.pretraining import run as pretrain
+from tasks.translation import run as translate
 
 from rdkit import rdBase
 rdBase.DisableLog("rdApp.*")
