@@ -5,9 +5,6 @@ from torch import nn
 from torch.nn import functional as F
 
 
-FINGERPRINT_DIM = 2048
-
-
 class Autoencoder(nn.Module):
     def __init__(self, hparams, dim_input, dim_hidden, noise_amount):
         super().__init__()
