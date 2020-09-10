@@ -16,7 +16,7 @@ from layers.model import Model
 from layers.wrapper import Wrapper
 from layers.sampler import Sampler
 from tasks import TRANSLATION, PRETRAINING
-from tasks.pretraining.experiment import PretrainingWrapper
+from tasks.pretraining import PretrainingWrapper
 
 
 class TranslationTrainDataset(BaseDataset):
