@@ -51,3 +51,13 @@ class Wrapper(pl.LightningModule):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
         logs = {"tr_loss": train_loss_mean}
         return {"log": logs, "progress_bar": logs}
+
+    def on_batch_end(self):
+        import gc
+        for obj in gc.get_objects():
+            try:
+                if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
+                    print(type(obj), obj.size())
+            except:
+                pass
+        return super().on_batch_end()
