@@ -52,36 +52,6 @@ class Model(nn.Module):
             dim_attention_output=self.decoder_dim_attention_output,
             dropout=self.decoder_dropout)
 
-    def encode(self, batch, enc_inputs):
-        enc_inputs = self.embedder(batch, enc_inputs, input=False)
-        enc_inputs = F.dropout(enc_inputs, p=self.embedder_dropout, training=self.training)
-        enc_outputs, enc_hidden = self.encoder(enc_inputs)
-        return enc_hidden, enc_outputs
-
-    def decode(self, batch, enc_hidden, enc_outputs, dec_inputs):
-        dec_inputs = self.embedder(batch, dec_inputs, input=True)
-        dec_inputs = F.dropout(dec_inputs, p=self.embedder_dropout, training=self.training)
-        return self.decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
-
-    def forward(self, batch):
-        batch_data, batch_fps, x_enc_inputs, dec_inputs = batch
-        x_batch, y_batch = batch_data
-        x_fps, _ = batch_fps
-
-        # embed fragment sequence
-        enc_hidden, x_enc_outputs = self.encode(x_batch, x_enc_inputs)
-
-        # autoencode fingerprint
-        y_hat_fps, autoenc_hidden = self.autoencoder(x_fps)
-        hidden = autoenc_hidden.unsqueeze(0).repeat(self.hparams.rnn_num_layers, 1, 1)
-
-        if self.hparams.concat:
-            hidden = torch.cat([hidden, enc_hidden], dim=-1)
-
-        # decode fragment sequence
-        logits = self.decode(y_batch, hidden, x_enc_outputs, dec_inputs)
-        return logits, y_hat_fps
-
     def set_dimensions(self):
         self.embedder_num_layers = self.hparams.gnn_num_layers
         self.embedder_dim_input = ATOM_FDIM
@@ -109,3 +79,33 @@ class Model(nn.Module):
         self.decoder_dim_attention_output = self.decoder_dim_state
         self.decoder_dim_output = self.num_embeddings
         self.decoder_dropout = self.encoder_dropout
+
+    def encode(self, batch, enc_inputs):
+        enc_inputs = self.embedder(batch, enc_inputs, input=False)
+        enc_inputs = F.dropout(enc_inputs, p=self.embedder_dropout, training=self.training)
+        enc_outputs, enc_hidden = self.encoder(enc_inputs)
+        return enc_hidden, enc_outputs
+
+    def decode(self, batch, enc_hidden, enc_outputs, dec_inputs):
+        dec_inputs = self.embedder(batch, dec_inputs, input=True)
+        dec_inputs = F.dropout(dec_inputs, p=self.embedder_dropout, training=self.training)
+        return self.decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
+
+    def forward(self, batch):
+        batch_data, batch_fps, x_enc_inputs, dec_inputs = batch
+        x_batch, y_batch = batch_data
+        x_fps, _ = batch_fps
+
+        # embed fragment sequence
+        enc_hidden, x_enc_outputs = self.encode(x_batch, x_enc_inputs)
+
+        # autoencode fingerprint
+        y_hat_fps, autoenc_hidden = self.autoencoder(x_fps)
+        hidden = autoenc_hidden.unsqueeze(0).repeat(self.decoder_num_layers, 1, 1)
+
+        if self.hparams.concat:
+            hidden = torch.cat([hidden, enc_hidden], dim=-1)
+
+        # decode fragment sequence
+        logits = self.decode(y_batch, hidden, x_enc_outputs, dec_inputs)
+        return logits, y_hat_fps
