@@ -1,9 +1,11 @@
 from pathlib import Path
 
+from moses import get_all_metrics
+
 from core.utils.serialization import load_yaml
 from core.mols.props import drd2, qed, logp, similarity
 from core.mols.utils import mol_from_smiles
-from tasks import TRANSLATION
+from tasks import PRETRAINING, TRANSLATION
 
 
 SR_KWARGS = {
@@ -28,9 +30,10 @@ def success_rate(x, y, prop_fun, similarity_thres, improvement_thres):
     return sim >= similarity_thres and prop >= improvement_thres
 
 
-def score(output_dir, dataset_name, epoch=1):
-    output_dir = Path(output_dir)
-    samples_dir = output_dir / "pretraining" / "samples"
+def score(results_dir, epoch=1):
+    results_dir = Path(results_dir)
+    dataset_name = results_dir.parts[-2]
+    samples_dir = results_dir / "samples"
     samples_filename = f"samples_{epoch}.yml"
     samples = load_yaml(samples_dir / samples_filename)
 
@@ -67,3 +70,22 @@ def score(output_dir, dataset_name, epoch=1):
         "novel": novelty_rate,
         "scoring": dataset_name
     }
+
+
+def convert_metrics_dict(metrics_dict):
+    for k in metrics_dict.keys():
+        metrics_dict[k] = float(metrics_dict[k])
+    return metrics_dict
+
+
+def moses_score(results_dir, epoch=1, n_jobs=40):
+    results_dir = Path(results_dir)
+    samples_dir = results_dir / "samples"
+    samples_path = samples_dir / f"samples_{epoch}.yml"
+    samples = load_yaml(samples_path)
+
+    ref_samples = [s["ref"] for s in samples]
+    gen_samples = [s["gen"] for s in samples]
+
+    scores = get_all_metrics(gen_samples, n_jobs=n_jobs)
+    return convert_metrics_dict(scores)

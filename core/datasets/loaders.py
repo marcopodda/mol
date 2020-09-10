@@ -8,7 +8,7 @@ def collate_frags(data_list):
     cumsum = 0
 
     for i, frag_x in enumerate(data_list):
-        inc = (frag_x.frags_batch.max() + 1).item()
+        inc = (frag_x.frags_batch.numel() + 1)
         frag_x.frags_batch += cumsum
         cumsum += inc
 
@@ -52,7 +52,7 @@ class TrainDataLoader(BaseDataLoader):
         L = self.dataset.max_length
         D = self.hparams.frag_dim_embed
 
-        lengths = [m.length.item() for m in frags_x]
+        lengths = [m.length for m in frags_x]
         x_enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos, fill_at=lengths)
 
         x_fingerprints = torch.cat(fps_x, dim=0)

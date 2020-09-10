@@ -29,7 +29,7 @@ class TranslationWrapper(Wrapper):
 
 class TranslationSampler(Sampler):
     def get_loader(self):
-        indices = self.dataset.data[self.datast.data.is_val==1].index.tolist()
+        indices = self.dataset.data[self.dataset.data.is_valid==1].index.tolist()
         loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
         smiles = self.dataset.data.iloc[indices].smiles.tolist()
         return smiles, loader(batch_size=self.hparams.translate_batch_size, shuffle=False)
@@ -69,7 +69,7 @@ def run(args):
         fast_dev_run=args.debug,
         logger=logger,
         gpus=gpu)
-    train_model = Wrapper(hparams, output_dir, args.dataset_name)
+    train_model = TranslationWrapper(hparams, output_dir, args.dataset_name)
     # train_model = load_embedder(train_model, output_dir, args)
     trainer.fit(train_model)
 
