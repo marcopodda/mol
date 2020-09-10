@@ -19,7 +19,7 @@ from tasks import PRETRAINING
 
 
 class PretrainingTrainDataset(BaseDataset):
-    corrupt = True
+    corrupt = False
 
 
 class PretrainingWrapper(Wrapper):
