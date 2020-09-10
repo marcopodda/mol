@@ -68,11 +68,11 @@ class Model(nn.Module):
         x_batch, y_batch = batch_data
         x_fps, _ = batch_fps
 
-        enc_hidden, x_enc_outputs = self.encode(x_batch, x_enc_inputs)
-        y_hat_fps, hidden = self.get_decoder_hidden_state(x_fps)
+        hidden, x_enc_outputs = self.encode(x_batch, x_enc_inputs)
+        y_hat_fps, autoenc_hidden = self.get_decoder_hidden_state(x_fps)
 
         if self.hparams.concat:
-            hidden = torch.cat([enc_hidden, hidden], dim=-1)
+            hidden = torch.cat([autoenc_hidden, hidden], dim=-1)
 
         logits = self.decode(y_batch, hidden, x_enc_outputs, dec_inputs)
         return logits, y_hat_fps
