@@ -58,17 +58,14 @@ class GNN(nn.Module):
             x = conv(x, edge_index, edge_attr=edge_attr)
             x = bn(F.relu(x))
 
-        print(scatter_add(torch.ones_like(batch), batch).size())
-        output = global_add_pool(x, batch)
-        print(output.size())
         nodes_per_graph = scatter_add(torch.ones_like(batch), batch)
-        print(nodes_per_graph.size())
         nodes_per_graph = nodes_per_graph.repeat_interleave(nodes_per_graph.view(-1))
+        output = global_add_pool(x / nodes_per_graph.view(-1), batch)
 
         if self.readout is not None:
             output = self.readout(x)
-        print(output.size(), nodes_per_graph.size())
-        return output / nodes_per_graph.view(-1, 1)
+
+        return output
 
 
 class Embedder(nn.Module):
