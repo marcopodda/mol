@@ -60,6 +60,7 @@ class GNN(nn.Module):
 
         output = global_add_pool(x, batch)
         nodes_per_graph = scatter_add(torch.ones_like(batch), batch)
+        print(nodes_per_graph.size())
         nodes_per_graph = nodes_per_graph.repeat_interleave(nodes_per_graph.view(-1))
 
         if self.readout is not None:
