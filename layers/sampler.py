@@ -52,7 +52,7 @@ class Sampler:
         return embedder
 
     def run(self, temp=1.0, greedy=True):
-        model = self.model
+        model = self.model.to("cpu")
         model.eval()
 
         samples = []
