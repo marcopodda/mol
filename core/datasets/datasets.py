@@ -16,9 +16,9 @@ from core.utils.serialization import load_numpy, save_numpy
 class BaseDataset:
     corrupt = False
 
-    def __init__(self, hparams, output_dir, dataset_name):
+    def __init__(self, hparams, root_dir, dataset_name):
         self.hparams = HParams.load(hparams)
-        self.output_dir = output_dir
+        self.root_dir = root_dir
         self.dataset_name = dataset_name
 
         self.data, self.vocab, self.max_length = self.get_data()
@@ -26,7 +26,7 @@ class BaseDataset:
         self.eos = self._initialize_token("eos")
 
     def _initialize_token(self, name):
-        path = self.output_dir / "DATA" / f"{name}_{self.hparams.frag_dim_embed}.dat"
+        path = self.root_dir / "DATA" / f"{name}_{self.hparams.frag_dim_embed}.dat"
         if path.exists():
             token = torch.FloatTensor(load_numpy(path))
         else:
@@ -70,7 +70,7 @@ class BaseDataset:
         return x_molecule, x_fingerprint, y_molecule, y_fingerprint
 
     def get_data(self):
-        path = self.output_dir
+        path = self.root_dir
         name = self.dataset_name
         num_samples = self.hparams.num_samples
         data, vocab, max_length = load_data(path, name, num_samples)

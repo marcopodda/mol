@@ -18,7 +18,7 @@ def command_parser():
 
     sub_pretrain = sub.add_parser('pretrain', help="Pretrain.")
     sub_pretrain.add_argument("--dataset-name", default="ZINC", help="Dataset name.")
-    sub_pretrain.add_argument("--config-file", default="config.yml", help="Config file.")
+    sub_pretrain.add_argument("--hparams-file", default="hparams.yml", help="HParams file.")
     sub_pretrain.add_argument("--output-dir", default="RESULTS", help="Output folder.")
     sub_pretrain.add_argument("--debug", default=False, action="store_true", help="Debug mode.")
     sub_pretrain.add_argument("--gpu", default=1, help="GPU number.")
@@ -27,7 +27,7 @@ def command_parser():
     sub_translate = sub.add_parser('translate', help="Run a task.")
     sub_translate.add_argument("--pretrain-from", default="moses", help="Dataset name.")
     sub_translate.add_argument("--dataset-name", default="ZINC", help="Dataset name.")
-    sub_translate.add_argument("--config-file", default="config.yml", help="Config file.")
+    sub_translate.add_argument("--hparams-file", default="hparams.yml", help="HParams file.")
     sub_translate.add_argument("--output-dir", default="RESULTS", help="Output folder.")
     sub_translate.add_argument("--debug", default=False, action="store_true", help="Debug mode.")
     sub_translate.add_argument("--gpu", default=1, help="GPU number.")

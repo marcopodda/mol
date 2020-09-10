@@ -1,5 +1,4 @@
 from pathlib import Path
-from argparse import Namespace
 
 import torch
 from torch.nn import functional as F
@@ -8,6 +7,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 
+from core.hparams import HParams
 from core.datasets.datasets import BaseDataset, EvalDataset
 from core.datasets.loaders import EvalDataLoader
 from core.utils.serialization import load_yaml, save_yaml
@@ -22,14 +22,29 @@ from tasks.pretraining import PretrainingWrapper
 class TranslationTrainDataset(BaseDataset):
     corrupt = False
 
+    def __len__(self):
+        return self.data[self.data.is_x==True].shape[0]
+
+    def get_data(self):
+        data, vocab, max_length = super().get_data()
+        data = data[data.is_train==True]
+        return data, vocab, max_length
+
+    def get_target_data(self, index):
+        smiles = self.data.iloc[index].target
+        mol_data = self.data[self.data.smiles==smiles].iloc[0]
+        data = self._to_data(mol_data.frags, is_target=True, add_noise=False)
+        fingerprint = self._get_fingerprint(mol_data.smiles, add_noise=False)
+        return data, fingerprint
+
 
 class TranslationWrapper(Wrapper):
     dataset_class = TranslationTrainDataset
 
 
 class TranslationSampler(Sampler):
-    def get_loader(self):
-        indices = self.dataset.data[self.dataset.data.is_valid==1].index.tolist()
+    def prepare_data(self):
+        indices = self.dataset.data[self.dataset.data.is_val==True].index.tolist()
         loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
         smiles = self.dataset.data.iloc[indices].smiles.tolist()
         return smiles, loader(batch_size=self.hparams.translate_batch_size, shuffle=False)
@@ -41,13 +56,13 @@ def freeze(layer):
     return layer
 
 
-def load_embedder(train_model, output_dir, args):
+def load_embedder(train_model, root_dir, args):
     pretrain_dir = Path(args.pretrain_from)
     pretrain_ckpt_dir = pretrain_dir / PRETRAINING / "checkpoints"
     pretrain_ckpt_path = sorted(pretrain_ckpt_dir.glob("*.ckpt"))[-1]
     pretrainer = PretrainingWrapper.load_from_checkpoint(
         pretrain_ckpt_path.as_posix(),
-        output_dir=pretrain_dir,
+        root_dir=pretrain_dir,
         name=args.dataset_name)
     train_model.model.embedder = pretrainer.model.embedder
     # train_model.model.encoder.gru = freeze(pretrainer.model.encoder.gru)
@@ -56,11 +71,11 @@ def load_embedder(train_model, output_dir, args):
 
 
 def run(args):
-    output_dir = Path(args.output_dir)
+    root_dir = Path(args.root_dir)
     gpu = args.gpu if torch.cuda.is_available() else None
-    hparams = Namespace(**load_yaml(args.config_file))
-    logger = TensorBoardLogger(save_dir=output_dir / TRANSLATION, name="", version="logs")
-    ckpt_callback = ModelCheckpoint(filepath=get_or_create_dir(output_dir / TRANSLATION / "checkpoints"), save_top_k=-1)
+    hparams = HParams.from_file(args.config_file)
+    logger = TensorBoardLogger(save_dir=root_dir / TRANSLATION, name="", version="logs")
+    ckpt_callback = ModelCheckpoint(filepath=get_or_create_dir(root_dir / TRANSLATION / "checkpoints"), save_top_k=-1)
     trainer = pl.Trainer(
         max_epochs=hparams.translate_num_epochs,
         checkpoint_callback=ckpt_callback,
@@ -69,33 +84,29 @@ def run(args):
         fast_dev_run=args.debug,
         logger=logger,
         gpus=gpu)
-    train_model = TranslationWrapper(hparams, output_dir, args.dataset_name)
-    # train_model = load_embedder(train_model, output_dir, args)
+    train_model = TranslationWrapper(hparams, root_dir, args.dataset_name)
+    # train_model = load_embedder(train_model, root_dir, args)
     trainer.fit(train_model)
 
 
-def run_sampling(output_dir, dataset_name, epoch=None, temp=1.0, greedy=True):
-    assert epoch >= 1
+def run_sampling(root_dir, dataset_name, epoch=0, temp=1.0, greedy=True):
+    root_dir = Path(root_dir)
+    task_dir = root_dir / TRANSLATION
 
-    output_dir = Path(output_dir)
-    task_dir = output_dir / TRANSLATION
     ckpt_dir = task_dir / "checkpoints"
+    ckpt_path = ckpt_dir / f"epoch={epoch}.ckpt"
+
     samples_dir = get_or_create_dir(task_dir / "samples")
+    sample_path = samples_dir / f"samples_{epoch}.yml"
 
-    epoch = (epoch - 1) or "*"
-
-    for i, checkpoint_name in enumerate(ckpt_dir.glob(f"epoch={epoch}.ckpt")):
-        index = (i + 1) if epoch == "*" else (epoch + 1)
-        sample_path = samples_dir / f"samples_{index}.yml"
-
-        if not sample_path.exists():
-            print(f"processing {sample_path}...")
-            model = TranslationWrapper.load_from_checkpoint(
-                checkpoint_path=checkpoint_name.as_posix(),
-                output_dir=output_dir,
-                name=dataset_name).model
-            hparams = model.hparams
-            dataset = EvalDataset(hparams, output_dir, dataset_name)
-            sampler = TranslationSampler(hparams, model, dataset)
-            samples = sampler.run(temp=temp, greedy=greedy)
-            save_yaml(samples, sample_path)
+    if not sample_path.exists():
+        print(f"processing {sample_path}...")
+        model = TranslationWrapper.load_from_checkpoint(
+            checkpoint_path=ckpt_path.as_posix(),
+            root_dir=root_dir,
+            name=dataset_name).model
+        hparams = model.hparams
+        dataset = EvalDataset(hparams, root_dir, dataset_name)
+        sampler = TranslationSampler(hparams, model, dataset)
+        samples = sampler.run(temp=temp, greedy=greedy)
+        save_yaml(samples, sample_path)

@@ -22,7 +22,7 @@ class Sampler:
         self.vocab = self.dataset.vocab
         self.max_length = self.dataset.max_length
 
-    def get_loader(self):
+    def prepare_data(self):
         raise NotImplementedError
 
     def get_embedder(self, model):
@@ -60,7 +60,7 @@ class Sampler:
         with torch.no_grad():
             # prepare embeddings matrix
             embedder = self.get_embedder(model)
-            smiles, loader = self.get_loader()
+            smiles, loader = self.prepare_data()
             batch_size = loader.batch_size
 
             for idx, batch in enumerate(loader):
