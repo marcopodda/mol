@@ -53,7 +53,7 @@ class Wrapper(pl.LightningModule):
         logs = {"tr_loss": train_loss_mean}
         return {"log": logs, "progress_bar": logs}
 
-    def on_batch_end(self):
-        gc.collect()
-        torch.cuda.empty_cache()
-        return super().on_batch_end()
+    # def on_batch_end(self):
+    #     gc.collect()
+    #     torch.cuda.empty_cache()
+    #     return super().on_batch_end()
