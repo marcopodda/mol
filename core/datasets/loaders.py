@@ -35,7 +35,7 @@ class BaseDataLoader:
             batch_size=batch_size,
             shuffle=shuffle,
             pin_memory=True,
-            num_workers=0) #self.hparams.num_workers)
+            num_workers=self.hparams.num_workers)
 
     def collate(self, data_list):
         raise NotImplementedError
