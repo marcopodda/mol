@@ -49,6 +49,6 @@ class Wrapper(pl.LightningModule):
         bce_loss = F.binary_cross_entropy(y_fingerprints_rec, y_fingerprints)
 
         result = pl.TrainResult(ce_loss + bce_loss)
-        result.log('CE', ce_loss, logger=False, prog_bar=False)
-        result.log('BCE', bce_loss, logger=False, prog_bar=False)
+        result.log('CE', ce_loss, prog_bar=True)
+        result.log('BCE', bce_loss, prog_bar=True)
         return result
