@@ -101,11 +101,11 @@ class Model(nn.Module):
 
         # autoencode fingerprint
         y_hat_fps, autoenc_hidden = self.autoencoder(x_fps)
-        hidden = autoenc_hidden.unsqueeze(0).repeat(self.decoder_num_layers, 1, 1)
+        dec_hidden = autoenc_hidden.unsqueeze(0).repeat(self.decoder_num_layers, 1, 1)
 
         if self.hparams.concat:
-            hidden = torch.cat([hidden, enc_hidden], dim=-1)
+            dec_hidden = torch.cat([dec_hidden, enc_hidden], dim=-1)
 
         # decode fragment sequence
-        logits = self.decode(y_batch, hidden, x_enc_outputs, dec_inputs)
+        logits = self.decode(y_batch, dec_hidden, x_enc_outputs, dec_inputs)
         return logits, y_hat_fps
