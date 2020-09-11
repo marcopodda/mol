@@ -1,7 +1,7 @@
 import argparse
 
 from core.datasets.preprocess import run_preprocess
-from tasks.pretraining import run as pretrain
+from tasks.pretraining import PretrainingTaskRunner
 from tasks.translation import run as translate
 
 from rdkit import rdBase
@@ -17,6 +17,7 @@ def command_parser():
     sub_preprocess.set_defaults(command='preprocess')
 
     sub_pretrain = sub.add_parser('pretrain', help="Pretrain.")
+    sub_pretrain.add_argument("--exp-name", default="Experiment", help="Experiment name.")
     sub_pretrain.add_argument("--dataset-name", default="ZINC", help="Dataset name.")
     sub_pretrain.add_argument("--hparams-file", default="hparams.yml", help="HParams file.")
     sub_pretrain.add_argument("--root-dir", default="RESULTS", help="Output folder.")
@@ -25,7 +26,8 @@ def command_parser():
     sub_pretrain.set_defaults(command='pretrain')
 
     sub_translate = sub.add_parser('translate', help="Run a task.")
-    sub_translate.add_argument("--pretrain-from", default="moses", help="Dataset name.")
+    sub_translate.add_argument("--exp-name", default="Experiment", help="Experiment name.")
+    sub_translate.add_argument("--pretrain-path", help="Pretraining experiment path.")
     sub_translate.add_argument("--dataset-name", default="ZINC", help="Dataset name.")
     sub_translate.add_argument("--hparams-file", default="hparams.yml", help="HParams file.")
     sub_translate.add_argument("--root-dir", default="RESULTS", help="Output folder.")
@@ -43,6 +45,7 @@ if __name__ == "__main__":
     if args.command == "preprocess":
         run_preprocess(args.dataset_name)
     elif args.command == "pretrain":
-        pretrain(args)
+        task_runner = PretrainingTaskRunner.from_args(args)
+        task_runner.train()
     elif args.command == "translate":
         translate(args)

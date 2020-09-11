@@ -18,6 +18,7 @@ from layers.wrapper import Wrapper
 from layers.sampler import Sampler
 from tasks import TRANSLATION, PRETRAINING
 from tasks.pretraining import PretrainingWrapper
+from tasks.runner import TaskRunner
 
 
 class TranslationTrainDataset(TrainDataset):
@@ -40,6 +41,36 @@ class TranslationSampler(Sampler):
         loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
         smiles = self.dataset.data.iloc[indices].smiles.tolist()
         return smiles, loader(batch_size=self.hparams.translate_batch_size, shuffle=False)
+
+
+class TranslationTaskRunner(TaskRunner):
+    def __init__(self, task, exp_name, pretrain_exp_path, root_dir, dataset_name, hparams, gpu, debug):
+        super().__init__(
+            task=task,
+            exp_name=exp_name,
+            root_dir=root_dir,
+            dataset_name=dataset_name,
+            hparams=hparams,
+            gpu=gpu,
+            debug=debug
+        )
+
+        self.pretrain_exp_path = None
+        if pretrain_exp_path is not None:
+            self.pretrain_exp_path = Path(pretrain_exp_path)
+
+    def post_init_wrapper(self, wrapper):
+        pretrain_ckpt_dir = self.pretrain_exp_path / "checkpoints"
+        pretrain_ckpt_path = sorted(pretrain_ckpt_dir.glob("*.ckpt"))[-1]
+        pretrainer = PretrainingWrapper.load_from_checkpoint(
+            pretrain_ckpt_path.as_posix(),
+            root_dir=self.dirs.pretrain.parent.parent,
+            dataset_name=self.pretrain_exp_path.parts[-2])
+        wrapper.model.embedder = pretrainer.model.embedder
+        wrapper.model.autoencoder = pretrainer.model.autoencoder
+        # wrapper.model.encoder.gru = pretrainer.model.encoder.gru
+        # wrapper.model.decoder.gru = pretrainer.model.decoder.gru
+        return wrapper
 
 
 def freeze(layer):
@@ -83,7 +114,10 @@ def run(args):
         fast_dev_run=args.debug,
         logger=logger,
         gpus=gpu)
-    train_model = TranslationWrapper(hparams, root_dir, args.dataset_name)
+    train_model = TranslationWrapper(
+        hparams=hparams,
+        root_dir=root_dir,
+        dataset_name=args.dataset_name)
     train_model = transfer_weights(train_model, root_dir, args)
     trainer.fit(train_model)
 
