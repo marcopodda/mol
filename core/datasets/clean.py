@@ -58,20 +58,11 @@ def _clean_translation_dataset(raw_dir, info):
         "is_test": is_test})
 
 
-def _check_consistency(df, row):
-    y_data = df[(df.smiles == row.target) & (df.is_y == 1)]
-    return (row.smiles, y_data.shape[0] == 0)
-
-
 def _fix_consistency(df):
     n_jobs = get_n_jobs()
-    x_data = df[df.is_x == 1]
-    print("Fixing inconsistencies...", end=" ")
-    P = Parallel(n_jobs=n_jobs, verbose=1)
-    consistency_list = P(delayed(_check_consistency)(df, r) for (_, r) in x_data.iterrows())
-    exclude_list = [item[0] for item in consistency_list if item[1]]
+    x_data = df[df.is_x == True]
+    exclude_list = x_data[~x_data.smiles.isin(x_data.target)].smiles
     safe_data = df[~df.smiles.isin(exclude_list)]
-    print("Done.")
     return safe_data.reset_index(drop=True)
 
 
