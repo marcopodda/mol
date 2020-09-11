@@ -115,7 +115,7 @@ class BaseDataset:
 
 
 class TrainDataset(BaseDataset):
-    corrupt_input = True
+    corrupt_input = False
 
     def get_data(self):
         data, vocab, max_length = super().get_data()

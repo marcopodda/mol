@@ -11,6 +11,7 @@ from core.hparams import HParams
 from core.datasets.datasets import TrainDataset, EvalDataset
 from core.datasets.loaders import EvalDataLoader
 from core.utils.serialization import load_yaml, save_yaml
+from core.utils.misc import get_latest_checkpoint_path, freeze
 from core.utils.os import get_or_create_dir
 from core.utils.scoring import score
 from layers.model import Model
@@ -97,7 +98,7 @@ class TranslationTaskRunner(TaskRunner):
     def post_init_wrapper(self, wrapper):
         if self.pretrain_path is not None:
             pretrain_ckpt_dir = self.pretrain_path / "checkpoints"
-            pretrain_ckpt_path = sorted(pretrain_ckpt_dir.glob("*.ckpt"))[-1]
+            pretrain_ckpt_path = get_latest_checkpoint_path(pretrain_ckpt_dir)
             pretrainer = PretrainingWrapper.load_from_checkpoint(
                 pretrain_ckpt_path.as_posix(),
                 root_dir=self.pretrain_path.parent.parent,

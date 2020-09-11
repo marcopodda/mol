@@ -20,3 +20,9 @@ def freeze(layer):
     for param in layer.parameters():
         param.requires_grad = False
     return layer
+
+
+def get_latest_checkpoint_path(ckpt_dir):
+    last_checkpoint = len(list(ckpt_dir.glob("*.ckpt"))) - 1
+    ckpt_path = list(ckpt_dir.glob(f"epoch={last_checkpoint}.ckpt"))[0]
+    return ckpt_path
