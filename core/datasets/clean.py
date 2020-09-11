@@ -1,8 +1,5 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split as split
-from joblib import Parallel, delayed
-
-from core.utils.misc import get_n_jobs
 
 
 def _clean_translation_dataset(raw_dir, info):
@@ -59,7 +56,6 @@ def _clean_translation_dataset(raw_dir, info):
 
 
 def _fix_consistency(df):
-    n_jobs = get_n_jobs()
     x_data = df[df.is_x == True]
     exclude_list = x_data[~x_data.smiles.isin(x_data.target)].smiles
     safe_data = df[~df.smiles.isin(exclude_list)]
