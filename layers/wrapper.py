@@ -34,8 +34,8 @@ class Wrapper(pl.LightningModule):
         return optimizer
 
     def prepare_data(self):
-        indices = self.dataset.data[self.dataset.data.is_train==True].index.tolist()
-        train_loader = TrainDataLoader(self.hparams, self.dataset, indices=indices)
+        # indices = self.dataset.data[self.dataset.data.is_train==True].index.tolist()
+        train_loader = TrainDataLoader(self.hparams, self.dataset) # , indices=indices)
         batch_size = self.hparams.pretrain_batch_size if self.pretrain else self.hparams.translate_batch_size
         self.training_loader = train_loader(batch_size=batch_size, shuffle=True)
 
