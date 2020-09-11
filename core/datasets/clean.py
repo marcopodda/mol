@@ -72,6 +72,7 @@ def _postprocess_translation_dataset(cleaned_data, raw_data):
     cleaned_data["target"] = raw_data.target
     cleaned_data["is_x"] = raw_data.is_x
     cleaned_data["is_y"] = raw_data.is_y
+    cleaned_data["is_train"] = raw_data.is_train
     cleaned_data["is_val"] = raw_data.is_val
     cleaned_data["is_test"] = raw_data.is_test
     return _fix_consistency(cleaned_data)
