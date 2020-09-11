@@ -67,7 +67,7 @@ class Model(nn.Module):
         self.encoder_dropout = self.hparams.rnn_dropout
 
         self.autoencoder_dim_input = FINGERPRINT_DIM
-        self.autoencoder_dim_hidden = self.encoder_dim_state
+        self.autoencoder_dim_hidden = self.hparams.autoencoder_dim_hidden
 
         self.decoder_dim_state = self.encoder_dim_state
         if self.hparams.concat:
