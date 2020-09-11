@@ -13,8 +13,8 @@ SR_KWARGS = {
     "ZINC": {"prop_fun": drd2, "similarity_thres": 0.4, "improvement_thres": 0.5},
     "drd2": {"prop_fun": drd2, "similarity_thres": 0.4, "improvement_thres": 0.5},
     "qed": {"prop_fun": qed, "similarity_thres": 0.4, "improvement_thres": 0.9},
-    "logp4": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 1.2},
-    "logp6": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 1.2},
+    "logp04": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 1.2},
+    "logp06": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 1.2},
 }
 
 

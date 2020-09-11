@@ -107,19 +107,19 @@ def postprocess_drd2(cleaned_data, raw_data):
     return _postprocess_translation_dataset(cleaned_data, raw_data)
 
 
-def clean_logp4(raw_dir, info):
+def clean_logp04(raw_dir, info):
     return _clean_translation_dataset(raw_dir, info)
 
 
-def postprocess_logp4(cleaned_data, raw_data):
+def postprocess_logp04(cleaned_data, raw_data):
     return _postprocess_translation_dataset(cleaned_data, raw_data)
 
 
-def clean_logp6(raw_dir, info):
+def clean_logp06(raw_dir, info):
     return _clean_translation_dataset(raw_dir, info)
 
 
-def postprocess_logp6(cleaned_data, raw_data):
+def postprocess_logp06(cleaned_data, raw_data):
     return _postprocess_translation_dataset(cleaned_data, raw_data)
 
 
