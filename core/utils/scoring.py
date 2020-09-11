@@ -30,9 +30,8 @@ def success_rate(x, y, prop_fun, similarity_thres, improvement_thres):
     return sim >= similarity_thres and prop >= improvement_thres
 
 
-def score(results_dir, epoch=0):
+def score(results_dir, dataset_name, epoch=0):
     results_dir = Path(results_dir)
-    dataset_name = results_dir.parts[-2]
     samples_dir = results_dir / "samples"
     samples_filename = f"samples_{epoch}.yml"
     samples = load_yaml(samples_dir / samples_filename)
