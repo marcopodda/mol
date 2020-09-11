@@ -21,7 +21,7 @@ class BaseDataset:
         self.hparams = HParams.load(hparams)
         self.dataset_name = dataset_name
 
-        self.data, self.vocab, self.max_length = self.get_data()
+        self.data, self.vocab, self.max_length = self.get_dataset()
         self.sos = self._initialize_token("sos")
         self.eos = self._initialize_token("eos")
 
@@ -69,7 +69,7 @@ class BaseDataset:
         y_molecule, y_fingerprint = self.get_target_data(index)
         return x_molecule, x_fingerprint, y_molecule, y_fingerprint
 
-    def get_data(self):
+    def get_dataset(self):
         data, vocab, max_length = load_data(self.dataset_name)
         return data, vocab, max_length
 
@@ -115,10 +115,10 @@ class BaseDataset:
 
 
 class TrainDataset(BaseDataset):
-    corrupt_input = False
+    corrupt_input = True
 
-    def get_data(self):
-        data, vocab, max_length = super().get_data()
+    def get_dataset(self):
+        data, vocab, max_length = super().get_dataset()
         data = data[data.is_train==True].reset_index(drop=True)
         return data, vocab, max_length
 
@@ -126,8 +126,8 @@ class TrainDataset(BaseDataset):
 class EvalDataset(BaseDataset):
     corrupt_input = False
 
-    def get_data(self):
-        data, vocab, max_length = super().get_data()
+    def get_dataset(self):
+        data, vocab, max_length = super().get_dataset()
         data = data[data.is_val==True].reset_index(drop=True)
         return data, vocab, max_length
 
