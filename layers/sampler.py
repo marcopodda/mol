@@ -96,11 +96,13 @@ class Sampler:
         frags, x_fps, enc_inputs, dec_inputs = data
 
         enc_hidden, enc_outputs = model.encode(frags, enc_inputs)
-        _, autoenc_hidden = model.get_decoder_hidden_state(x_fps)
-
         batch_size = enc_outputs.size(0)
 
-        h = torch.cat([enc_hidden, autoenc_hidden], dim=-1)
+        _, autoenc_hidden = model.autoencoder(x_fps)
+        h = autoenc_hidden.unsqueeze(0).repeat(self.hparams.rnn_num_layers, 1, 1)
+
+        if self.hparams.concat:
+            h = torch.cat([h, enc_hidden], dim=-1)
         o = enc_outputs
         x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1)
 

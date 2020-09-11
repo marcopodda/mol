@@ -30,7 +30,7 @@ def success_rate(x, y, prop_fun, similarity_thres, improvement_thres):
     return sim >= similarity_thres and prop >= improvement_thres
 
 
-def score(results_dir, epoch=1):
+def score(results_dir, epoch=0):
     results_dir = Path(results_dir)
     dataset_name = results_dir.parts[-2]
     samples_dir = results_dir / "samples"
@@ -78,7 +78,7 @@ def convert_metrics_dict(metrics_dict):
     return metrics_dict
 
 
-def moses_score(results_dir, epoch=1, n_jobs=40):
+def moses_score(results_dir, epoch=0, n_jobs=40):
     results_dir = Path(results_dir)
     samples_dir = results_dir / "samples"
     samples_path = samples_dir / f"samples_{epoch}.yml"
