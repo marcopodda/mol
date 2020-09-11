@@ -1,5 +1,8 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split as split
+from joblib import Parallel, delayed
+
+from core.utils.misc import get_n_jobs
 
 
 def _clean_translation_dataset(raw_dir, info):
@@ -55,14 +58,18 @@ def _clean_translation_dataset(raw_dir, info):
         "is_test": is_test})
 
 
+def _check_consistency(df, row):
+    y_data = df[(df.smiles == row.target) & (df.is_y == 1)]
+    return (row.smiles, y_data.shape[0] == 0)
+
+
 def _fix_consistency(df):
+    n_jobs = get_n_jobs()
     x_data = df[df.is_x == 1]
-    exclude_list = []
     print("Fixing inconsistencies...", end=" ")
-    for index, row in x_data.iterrows():
-        y_data = df[(df.smiles == row.target) & (df.is_y == 1)]
-        if y_data.shape[0] == 0:
-            exclude_list.append(row.smiles)
+    P = Parallel(n_jobs=n_jobs, verbose=1)
+    consistency_list = P(delayed(_check_consistency)(df, r) for (_, r) in x_data.iterrows())
+    exclude_list = [item[0] for item in consistency_list if item[1]]
     safe_data = df[~df.smiles.isin(exclude_list)]
     print("Done.")
     return safe_data.reset_index(drop=True)
