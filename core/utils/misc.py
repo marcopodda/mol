@@ -14,3 +14,9 @@ def get_n_jobs():
 
 def cuda_if_available():
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def freeze(layer):
+    for param in layer.parameters():
+        param.requires_grad = False
+    return layer
