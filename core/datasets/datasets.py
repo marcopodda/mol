@@ -88,34 +88,25 @@ class BaseDataset:
         fingerprint = self._get_fingerprint(mol_data.smiles, add_noise=False)
         return data, fingerprint
 
-    def _sample_poisson(self, length, lam):
-        sample = np.random.poisson(lam)
-        while sample >= length - 1:
-            sample = np.random.poisson(lam)
-        return sample
-
     def _corrupt_seq(self, seq):
-        seq = seq[:]
-        num_to_delete = min(1, self._sample_poisson(len(seq), lam=0.25))
-        delete_indices = np.random.choice(len(seq)-1, num_to_delete).tolist()
-        for delete_index in delete_indices:
+        num_to_delete = int(np.round(np.random.rand()))
+        if num_to_delete == 1:
+            delete_index = np.random.choice(len(seq)-1)
             seq.remove(seq[delete_index])
 
-        num_to_replace = self._sample_poisson(len(seq), lam=0.5)
-        replacement_indices = np.random.choice(len(seq)-1, num_to_replace).tolist()
-        for replacement_index in replacement_indices:
+        num_to_replace = int(np.round(np.random.rand()))
+        if num_to_delete == 0 and num_to_replace == 1:
+            replacement_index = np.random.choice(len(seq)-1)
             seq[replacement_index] = self.vocab.sample()
 
-        num_to_add = self._sample_poisson(len(seq), lam=0.5)
-        add_indices = np.random.choice(len(seq)-1, num_to_add).tolist()
-        for add_index in add_indices:
-            if len(seq) + 2 < self.max_length:
-                seq.insert(add_index, self.vocab.sample())
+        if num_to_delete == 0 and num_to_replace == 0:
+            add_index = np.random.choice(len(seq)-1)
+            seq.insert(add_index, self.vocab.sample())
 
         return seq
 
     def _corrupt_fingerprint(self, fingerprint):
-        num_to_flip = np.random.poisson(8)
+        num_to_flip = int(np.clip(34 * np.random.randn() - 14, a_min=1, a_max=None))
         flip_indices = np.random.choice(FINGERPRINT_DIM-1, num_to_flip)
         fingerprint[flip_indices] = np.logical_not(fingerprint[flip_indices])
         return fingerprint

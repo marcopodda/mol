@@ -67,8 +67,14 @@ def run(args):
     root_dir = Path(args.root_dir)
     gpu = args.gpu if torch.cuda.is_available() else None
     hparams = HParams.from_file(args.hparams_file)
-    logger = TensorBoardLogger(save_dir=root_dir / TRANSLATION, name="", version="logs")
-    ckpt_callback = ModelCheckpoint(filepath=get_or_create_dir(root_dir / TRANSLATION / "checkpoints"), save_top_k=-1)
+    task_dir = root_dir / TRANSLATION
+    logger = TensorBoardLogger(
+        save_dir=task_dir,
+        version="logs",
+        name="")
+    ckpt_callback = ModelCheckpoint(
+        filepath=get_or_create_dir(task_dir / "checkpoints"),
+        save_top_k=-1)
     trainer = pl.Trainer(
         max_epochs=hparams.translate_num_epochs,
         checkpoint_callback=ckpt_callback,
