@@ -41,7 +41,7 @@ def run(args):
     root_dir = Path(args.root_dir)
     pretrain_dir = root_dir / PRETRAINING
     gpu = args.gpu if torch.cuda.is_available() else None
-    hparams = HParams.from_file(args.config_file)
+    hparams = HParams.from_file(args.hparams_file)
     logger = TensorBoardLogger(save_dir=pretrain_dir, name="", version="logs")
     ckpt_dir = get_or_create_dir(pretrain_dir / "checkpoints")
     ckpt_callback = ModelCheckpoint(filepath=ckpt_dir, save_top_k=-1)

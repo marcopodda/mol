@@ -74,7 +74,7 @@ def transfer_weights(train_model, root_dir, args):
 def run(args):
     root_dir = Path(args.root_dir)
     gpu = args.gpu if torch.cuda.is_available() else None
-    hparams = HParams.from_file(args.config_file)
+    hparams = HParams.from_file(args.hparams_file)
     logger = TensorBoardLogger(save_dir=root_dir / TRANSLATION, name="", version="logs")
     ckpt_callback = ModelCheckpoint(filepath=get_or_create_dir(root_dir / TRANSLATION / "checkpoints"), save_top_k=-1)
     trainer = pl.Trainer(
