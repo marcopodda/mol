@@ -29,7 +29,7 @@ class PretrainingWrapper(Wrapper):
 
 class PretrainingSampler(Sampler):
     def prepare_data(self):
-        indices = sorted(np.random.choice(len(self.dataset), 1000, replace=False))
+        indices = np.random.choice(len(self.dataset), 1000, replace=False)
         loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
         # num_samples = min(len(loader.indices), 1000)
         # indices = self.dataset.data[self.dataset.data.is_valid==True]
