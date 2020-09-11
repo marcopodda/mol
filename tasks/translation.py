@@ -28,9 +28,7 @@ class TranslationTrainDataset(TrainDataset):
         return self.data[self.data.is_x==True].shape[0]
 
     def get_target_data(self, index):
-        print(index, len(self.data))
         smiles = self.data.iloc[index].target
-        print(smiles,  self.data[self.data.smiles==smiles].shape)
         mol_data = self.data[self.data.smiles==smiles].iloc[0]
         data = self._to_data(mol_data.frags, is_target=True, add_noise=False)
         fingerprint = self._get_fingerprint(mol_data.smiles, add_noise=False)
