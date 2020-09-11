@@ -9,6 +9,7 @@ from tasks import PRETRAINING, TRANSLATION
 
 
 SR_KWARGS = {
+    "moses": {"prop_fun": drd2, "similarity_thres": 0.4, "improvement_thres": 0.5},
     "ZINC": {"prop_fun": drd2, "similarity_thres": 0.4, "improvement_thres": 0.5},
     "drd2": {"prop_fun": drd2, "similarity_thres": 0.4, "improvement_thres": 0.5},
     "qed": {"prop_fun": qed, "similarity_thres": 0.4, "improvement_thres": 0.9},
