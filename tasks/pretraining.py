@@ -78,4 +78,4 @@ def run_sampling(root_dir, dataset_name, epoch=0, temp=1.0, greedy=True):
 def sample_and_score(root_dir, dataset_name, epoch=0, temp=1.0, greedy=True):
     root_dir = Path(root_dir)
     run_sampling(root_dir, dataset_name, epoch=epoch, temp=temp, greedy=greedy)
-    score(root_dir / PRETRAINING, dataset_name, epoch=epoch)
+    return score(root_dir / PRETRAINING, dataset_name, epoch=epoch)
