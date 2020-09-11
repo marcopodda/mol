@@ -86,7 +86,6 @@ class BaseDataset:
         return data, fingerprint
 
     def _corrupt_seq(self, seq):
-        print(seq)
         changed = False
 
         num_to_add = int(np.round(np.random.rand()))
@@ -105,7 +104,7 @@ class BaseDataset:
             replacement_index = np.random.choice(len(seq)-1)
             seq[replacement_index] = self.vocab.sample(uniform=False)
             changed = True
-        print(seq)
+
         return seq
 
     def _corrupt_fingerprint(self, fingerprint):
