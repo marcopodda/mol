@@ -56,7 +56,7 @@ def freeze(layer):
     return layer
 
 
-def load_embedder(train_model, root_dir, args):
+def transfer_weights(train_model, root_dir, args):
     pretrain_dir = Path(args.pretrain_from)
     pretrain_ckpt_dir = pretrain_dir / PRETRAINING / "checkpoints"
     pretrain_ckpt_path = sorted(pretrain_ckpt_dir.glob("*.ckpt"))[-1]
@@ -65,8 +65,9 @@ def load_embedder(train_model, root_dir, args):
         root_dir=pretrain_dir,
         name=args.dataset_name)
     train_model.model.embedder = pretrainer.model.embedder
-    # train_model.model.encoder.gru = freeze(pretrainer.model.encoder.gru)
-    # train_model.model.decoder.gru = freeze(pretrainer.model.decoder.gru)
+    train_model.model.autoencoder = pretrainer.model.autoencoder
+    # train_model.model.encoder.gru = pretrainer.model.encoder.gru
+    # train_model.model.decoder.gru = pretrainer.model.decoder.gru
     return train_model
 
 
@@ -85,7 +86,7 @@ def run(args):
         logger=logger,
         gpus=gpu)
     train_model = TranslationWrapper(hparams, root_dir, args.dataset_name)
-    # train_model = load_embedder(train_model, root_dir, args)
+    train_model = transfer_weights(train_model, root_dir, args)
     trainer.fit(train_model)
 
 
