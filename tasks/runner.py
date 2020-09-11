@@ -11,8 +11,8 @@ class TaskRunner:
         self.task = args.command
         self.dataset_name = dataset_name
         self.hparams = HParams.from_file(args.hparams_file)
-        self.debug = args.debug
         self.gpu = args.gpu if torch.cuda.is_available() else None
+        self.debug = args.debug
 
         # directories
         root_dir = get_or_create_dir(args.root_dir)

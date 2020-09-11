@@ -25,8 +25,10 @@ class BaseDataLoader:
     def __init__(self, hparams, dataset, indices=None):
         self.hparams = HParams.load(hparams)
         self.dataset = dataset
-        self.indices = indices or list(range(len(dataset)))
         self.max_length = self.dataset.max_length
+        if indices is None:
+            indices = list(range(len(dataset)))
+        self.indices = indices
 
     def __call__(self, batch_size, shuffle=False):
         return DataLoader(
