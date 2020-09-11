@@ -94,7 +94,7 @@ class VocabDataLoader:
     def __call__(self, shuffle=False, batch_size=None):
         batch_size = batch_size or self.hparams.batch_size
         return DataLoader(
-            dataset=self.dataset,
+            dataset=dataset,
             collate_fn=lambda b: Batch.from_data_list(b),
             batch_size=batch_size,
             shuffle=shuffle,
