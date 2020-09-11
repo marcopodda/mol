@@ -37,10 +37,8 @@ def load_csv(path, convert=None, cast=None):
         dtype=cast)
 
 
-def load_data(dest_dir, dataset_name):
-    dest_dir = Path(dest_dir)
-
-    processed_dir = DATA_DIR / dataset_name / "PROCESSED"
+def load_data(dataset_name):
+    processed_dir = DATA_DIR / dataset_name
     processed_data_path = processed_dir / "data.csv"
     processed_vocab_path = processed_dir / "vocab.csv"
 
@@ -48,21 +46,11 @@ def load_data(dest_dir, dataset_name):
         print("Preprocess your dataset first!")
         exit(1)
 
+    data = load_csv(processed_data_path, convert=["frags"], cast={"length": int})
+
     if not processed_vocab_path.exists():
         print("Create the vocabulary first!")
         exit(1)
 
-    dest_dir = get_or_create_dir(dest_dir / "DATA")
-    dest_data_path = dest_dir / "data.csv"
-    dest_vocab_path = dest_dir / "vocab.csv"
-
-    data_path = dest_data_path if dest_data_path.exists() else processed_data_path
-    data = load_csv(data_path, convert=["frags"], cast={"length": int})
-
-    if dest_vocab_path.exists():
-        vocab = Vocab.from_file(dest_vocab_path)
-    else:
-        vocab = Vocab.from_df(data)
-        vocab.save(dest_vocab_path)
-
+    vocab = Vocab.from_file(processed_vocab_path)
     return data, vocab, data.length.max() + 1

@@ -6,6 +6,7 @@ from torch_geometric.utils import from_networkx
 
 from core.hparams import HParams
 from core.datasets.features import mol2nx, FINGERPRINT_DIM
+from core.datasets.settings import DATA_DIR
 from core.datasets.utils import pad, load_data
 from core.datasets.vocab import Tokens
 from core.mols.utils import mol_from_smiles
@@ -16,9 +17,8 @@ from core.utils.serialization import load_numpy, save_numpy
 class BaseDataset:
     corrupt = False
 
-    def __init__(self, hparams, root_dir, dataset_name):
+    def __init__(self, hparams, dataset_name):
         self.hparams = HParams.load(hparams)
-        self.root_dir = root_dir
         self.dataset_name = dataset_name
 
         self.data, self.vocab, self.max_length = self.get_data()
@@ -26,7 +26,7 @@ class BaseDataset:
         self.eos = self._initialize_token("eos")
 
     def _initialize_token(self, name):
-        path = self.root_dir / "DATA" / f"{name}_{self.hparams.frag_dim_embed}.dat"
+        path = DATA_DIR / self.dataset_name / f"{name}_{self.hparams.frag_dim_embed}.dat"
         if path.exists():
             token = torch.FloatTensor(load_numpy(path))
         else:
@@ -70,9 +70,7 @@ class BaseDataset:
         return x_molecule, x_fingerprint, y_molecule, y_fingerprint
 
     def get_data(self):
-        path = self.root_dir
-        name = self.dataset_name
-        data, vocab, max_length = load_data(path, name)
+        data, vocab, max_length = load_data(self.dataset_name)
         return data, vocab, max_length
 
     def get_input_data(self, index):

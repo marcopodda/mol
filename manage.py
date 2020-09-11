@@ -2,7 +2,8 @@ import argparse
 
 from core.datasets.preprocess import run_preprocess
 from tasks.pretraining import PretrainingTaskRunner
-from tasks.translation import run as translate
+from tasks.translation import TranslationTaskRunner
+# from tasks.translation import run as translate
 
 from rdkit import rdBase
 rdBase.DisableLog("rdApp.*")
@@ -48,4 +49,5 @@ if __name__ == "__main__":
         task_runner = PretrainingTaskRunner.from_args(args)
         task_runner.train()
     elif args.command == "translate":
-        translate(args)
+        task_runner = TranslationTaskRunner.from_args(args)
+        task_runner.train()

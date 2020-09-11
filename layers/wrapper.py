@@ -21,7 +21,8 @@ class Wrapper(pl.LightningModule):
         super().__init__()
         self.hparams = HParams.load(hparams)
 
-        self.dataset = self.dataset_class(hparams, root_dir, dataset_name)
+        data_dir = root_dir.parent.parent / "data"
+        self.dataset = self.dataset_class(hparams, dataset_name)
         self.vocab = self.dataset.vocab
         self.num_samples = len(self.dataset)
 

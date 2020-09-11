@@ -61,7 +61,7 @@ def run_preprocess(dataset_name):
     if not raw_dir.exists() or dir_is_empty(raw_dir):
         fetch_dataset(info, dest_dir=raw_dir)
 
-    processed_dir = get_or_create_dir(DATA_DIR / dataset_name / "PROCESSED")
+    processed_dir = get_or_create_dir(DATA_DIR / dataset_name)
     processed_data_path = processed_dir / "data.csv"
     processed_vocab_path = processed_dir / "vocab.csv"
 

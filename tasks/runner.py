@@ -8,8 +8,8 @@ from core.utils.os import get_or_create_dir
 from core.utils.serialization import save_yaml, load_yaml
 
 import pytorch_lightning as pl
-from pytorch_lightning.logging import TensorBoardLogger
-from pytorch_lightning.checkpoint import ModelCheckpoint
+from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 class TaskRunner:
     dataset_class = None
@@ -35,9 +35,9 @@ class TaskRunner:
             task=args.command,
             exp_name=args.exp_name,
             root_dir=args.root_dir,
-            dataset_name=dataset_name,
+            dataset_name=args.dataset_name,
             hparams=HParams.from_file(args.hparams_file),
-            gpu=args.gpu if torch.cuda.is_available() else None
+            gpu=args.gpu if torch.cuda.is_available() else None,
             debug=args.debug)
 
     def __init__(self, task, exp_name, root_dir, dataset_name, hparams, gpu, debug):
@@ -53,14 +53,12 @@ class TaskRunner:
     def setup_dirs(self, root_dir):
         root_dir = get_or_create_dir(root_dir)
         base_dir = get_or_create_dir(root_dir / self.dataset_name)
-        data_dir = get_or_create_dir(base_dir / "DATA")
         task_dir = get_or_create_dir(base_dir / self.task)
         exp_dir = get_or_create_dir(task_dir / self.exp_name)
 
         dirs = Namespace(
             root=get_or_create_dir(root_dir),
             base=get_or_create_dir(base_dir),
-            data=get_or_create_dir(data_dir),
             task=get_or_create_dir(task_dir),
             exp=get_or_create_dir(exp_dir),
             ckpt=get_or_create_dir(exp_dir / "checkpoints"),
@@ -75,8 +73,8 @@ class TaskRunner:
 
         wrapper = self.wrapper_class(
             hparams=self.hparams,
-            root_dir=self.dirs.base,
-            name=self.dataset_name)
+            root_dir=self.dirs.exp,
+            dataset_name=self.dataset_name)
 
         wrapper = self.post_init_wrapper(wrapper)
 
@@ -108,7 +106,6 @@ class TaskRunner:
 
             dataset = self.dataset_class(
                 hparams=self.hparams,
-                root_dir=self.dirs.base,
                 dataset_name=self.dataset_name)
 
             sampler = self.sampler_class(
@@ -130,4 +127,4 @@ class TaskRunner:
             "gpu": self.gpu,
             "debug": self.debug
         }
-        save_yaml(config, self.dirs.base / "config.yml")
+        save_yaml(config, self.dirs.exp / "config.yml")
