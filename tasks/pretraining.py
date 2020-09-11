@@ -8,7 +8,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 
 from core.hparams import HParams
-from core.datasets.datasets import BaseDataset, EvalDataset
+from core.datasets.datasets import TrainDataset, EvalDataset
 from core.datasets.loaders import TrainDataLoader, EvalDataLoader
 from core.utils.serialization import load_yaml, save_yaml
 from core.utils.os import get_or_create_dir
@@ -18,12 +18,7 @@ from layers.sampler import Sampler
 from tasks import PRETRAINING
 
 
-class PretrainingTrainDataset(BaseDataset):
-    corrupt = True
-
-
 class PretrainingWrapper(Wrapper):
-    dataset_class = PretrainingTrainDataset
     pretrain = True
 
 
@@ -31,8 +26,6 @@ class PretrainingSampler(Sampler):
     def prepare_data(self):
         indices = np.random.choice(len(self.dataset), 1000, replace=False)
         loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
-        # num_samples = min(len(loader.indices), 1000)
-        # indices = self.dataset.data[self.dataset.data.is_valid==True]
         smiles = self.dataset.data.iloc[indices].smiles.tolist()
         return smiles, loader(batch_size=self.hparams.pretrain_batch_size, shuffle=False)
 

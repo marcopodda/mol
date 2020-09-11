@@ -121,7 +121,23 @@ class BaseDataset:
         return fingerprint
 
 
+class TrainDataset(BaseDataset):
+    corrupt = True
+
+    def get_data(self):
+        data, vocab, max_length = super().get_data()
+        data = data[data.is_train==True].reset_index(drop=True)
+        return data, vocab, max_length
+
+
 class EvalDataset(BaseDataset):
+    corrupt = False
+
+    def get_data(self):
+        data, vocab, max_length = super().get_data()
+        data = data[data.is_val==True].reset_index(drop=True)
+        return data, vocab, max_length
+
     def __getitem__(self, index):
         x_molecule, x_fingerprint = self.get_input_data(index)
         return x_molecule, x_fingerprint

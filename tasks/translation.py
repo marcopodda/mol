@@ -8,7 +8,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 
 from core.hparams import HParams
-from core.datasets.datasets import BaseDataset, EvalDataset
+from core.datasets.datasets import TrainDataset, EvalDataset
 from core.datasets.loaders import EvalDataLoader
 from core.utils.serialization import load_yaml, save_yaml
 from core.utils.os import get_or_create_dir
@@ -19,17 +19,7 @@ from tasks import TRANSLATION, PRETRAINING
 from tasks.pretraining import PretrainingWrapper
 
 
-class TranslationTrainDataset(BaseDataset):
-    corrupt = False
-
-    def __len__(self):
-        return self.data[self.data.is_x==True].shape[0]
-
-    def get_data(self):
-        data, vocab, max_length = super().get_data()
-        data = data[data.is_train==True].reset_index(drop=True)
-        return data, vocab, max_length
-
+class TranslationTrainDataset(TrainDataset):
     def get_target_data(self, index):
         smiles = self.data.iloc[index].target
         mol_data = self.data[self.data.smiles==smiles].iloc[0]
@@ -39,6 +29,7 @@ class TranslationTrainDataset(BaseDataset):
 
 
 class TranslationWrapper(Wrapper):
+    pretrain = False
     dataset_class = TranslationTrainDataset
 
 

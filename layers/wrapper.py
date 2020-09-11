@@ -8,13 +8,14 @@ from torch.optim import Adam
 import pytorch_lightning as pl
 
 from core.hparams import HParams
+from core.datasets.datasets import TrainDataset
 from core.datasets.loaders import TrainDataLoader
 from layers.model import Model
 
 
 class Wrapper(pl.LightningModule):
-    dataset_class = None
-    pretrain = None
+    pretrain = True
+    dataset_class = TrainDataset
 
     def __init__(self, hparams, root_dir, name):
         super().__init__()
@@ -34,8 +35,7 @@ class Wrapper(pl.LightningModule):
         return optimizer
 
     def prepare_data(self):
-        # indices = self.dataset.data[self.dataset.data.is_train==True].index.tolist()
-        train_loader = TrainDataLoader(self.hparams, self.dataset) # , indices=indices)
+        train_loader = TrainDataLoader(self.hparams, self.dataset)
         batch_size = self.hparams.pretrain_batch_size if self.pretrain else self.hparams.translate_batch_size
         self.training_loader = train_loader(batch_size=batch_size, shuffle=True)
 
