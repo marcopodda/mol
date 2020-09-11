@@ -50,7 +50,7 @@ def _clean_translation_dataset(raw_dir, info):
         "target": targets,
         "is_x": is_x,
         "is_y": is_y,
-        "is_train": [x and y for (x, y) in zip(is_x, is_y)],
+        "is_train": [x or y for (x, y) in zip(is_x, is_y)],
         "is_val": is_val,
         "is_test": is_test})
 
