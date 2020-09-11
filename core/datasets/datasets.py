@@ -15,7 +15,7 @@ from core.utils.serialization import load_numpy, save_numpy
 
 
 class BaseDataset:
-    corrupt = None
+    corrupt_input = None
 
     def __init__(self, hparams, dataset_name):
         self.hparams = HParams.load(hparams)
@@ -35,8 +35,8 @@ class BaseDataset:
         return token
 
     def _to_data(self, frags_smiles, is_target):
-        if self.corrupt and not is_target:
-            frags_smiles = self._corrupt_seq(frags_smiles)
+        if self.corrupt_input and not is_target:
+            frags_smiles = self._corrupt_input_seq(frags_smiles)
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]
         num_nodes = [f.number_of_nodes() for f in frag_graphs]
@@ -51,8 +51,8 @@ class BaseDataset:
 
     def _get_fingerprint(self, smiles, is_target):
         fingerprint = np.array(get_fingerprint(smiles), dtype=np.int)
-        if not is_target and self.corrupt:
-            fingerprint = self._corrupt_fingerprint(fingerprint)
+        if not is_target and self.corrupt_input:
+            fingerprint = self._corrupt_input_fingerprint(fingerprint)
         fingerprint_tx = torch.FloatTensor(fingerprint).view(1, -1)
         return fingerprint_tx
 
@@ -85,7 +85,7 @@ class BaseDataset:
         fingerprint = self._get_fingerprint(mol_data.smiles, is_target=True)
         return data, fingerprint
 
-    def _corrupt_seq(self, seq):
+    def _corrupt_input_seq(self, seq):
         changed = False
 
         num_to_add = int(np.round(np.random.rand()))
@@ -107,7 +107,7 @@ class BaseDataset:
 
         return seq
 
-    def _corrupt_fingerprint(self, fingerprint):
+    def _corrupt_input_fingerprint(self, fingerprint):
         num_to_flip = int(np.clip(34 * np.random.randn() - 14, a_min=1, a_max=None))
         flip_indices = np.random.choice(FINGERPRINT_DIM-1, num_to_flip)
         fingerprint[flip_indices] = np.logical_not(fingerprint[flip_indices])
@@ -115,7 +115,7 @@ class BaseDataset:
 
 
 class TrainDataset(BaseDataset):
-    corrupt = True
+    corrupt_input = True
 
     def get_data(self):
         data, vocab, max_length = super().get_data()
@@ -124,7 +124,7 @@ class TrainDataset(BaseDataset):
 
 
 class EvalDataset(BaseDataset):
-    corrupt = False
+    corrupt_input = False
 
     def get_data(self):
         data, vocab, max_length = super().get_data()

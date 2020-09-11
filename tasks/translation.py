@@ -22,7 +22,7 @@ from tasks.runner import TaskRunner
 
 
 class TranslationTrainDataset(TrainDataset):
-    corrupt = False
+    corrupt_input = False
 
     def __len__(self):
         return self.data[self.data.is_x==True].shape[0]
