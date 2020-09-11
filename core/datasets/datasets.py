@@ -88,19 +88,24 @@ class BaseDataset:
         return data, fingerprint
 
     def _corrupt_seq(self, seq):
-        num_to_delete = int(np.round(np.random.rand()))
-        if num_to_delete == 1:
-            delete_index = np.random.choice(len(seq)-1)
-            seq.remove(seq[delete_index])
+        changed = False
 
-        num_to_replace = int(np.round(np.random.rand()))
-        if num_to_delete == 0 and num_to_replace == 1:
-            replacement_index = np.random.choice(len(seq)-1)
-            seq[replacement_index] = self.vocab.sample()
-
-        if num_to_delete == 0 and num_to_replace == 0:
+        num_to_add = int(np.round(np.random.rand()))
+        if num_to_add == 1 and len(seq) + 2 <= self.max_length:
             add_index = np.random.choice(len(seq)-1)
             seq.insert(add_index, self.vocab.sample())
+            changed = True
+
+        num_to_delete = int(np.round(np.random.rand()))
+        if changed is False and num_to_delete == 1:
+            delete_index = np.random.choice(len(seq)-1)
+            seq.remove(seq[delete_index])
+            changed = True
+
+        if changed is False:
+            replacement_index = np.random.choice(len(seq)-1)
+            seq[replacement_index] = self.vocab.sample(uniform=True)
+            changed = True
 
         return seq
 
