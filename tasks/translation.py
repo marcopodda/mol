@@ -12,6 +12,7 @@ from core.datasets.datasets import TrainDataset, EvalDataset
 from core.datasets.loaders import EvalDataLoader
 from core.utils.serialization import load_yaml, save_yaml
 from core.utils.os import get_or_create_dir
+from core.utils.scoring import score
 from layers.model import Model
 from layers.wrapper import Wrapper
 from layers.sampler import Sampler
@@ -102,3 +103,8 @@ def run_sampling(root_dir, dataset_name, epoch=0, temp=1.0, greedy=True):
         sampler = TranslationSampler(hparams, model, dataset)
         samples = sampler.run(temp=temp, greedy=greedy)
         save_yaml(samples, sample_path)
+
+
+def sample_and_score(root_dir, dataset_name, epoch=0, temp=1.0, greedy=True):
+    run_sampling(root_dir, dataset_name, epoch=epoch, temp=temp, greedy=greedy)
+    score(root_dir / TRANSLATION, dataset_name, epoch=epoch)
