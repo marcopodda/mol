@@ -68,7 +68,6 @@ def run_preprocess(dataset_name):
 
     if not processed_data_path.exists():
         with warnings.catch_warnings():
-            warnings.filterwarnings('ignore')
             n_jobs = get_n_jobs()
             clean_fn = getattr(clean_functions, f"clean_{dataset_name}")
             data = clean_fn(raw_dir, info)
@@ -80,3 +79,4 @@ def run_preprocess(dataset_name):
             if not processed_vocab_path.exists():
                 vocab = Vocab.from_df(cleaned_data)
                 vocab.save(processed_vocab_path)
+            warnings.filterwarnings('ignore')
