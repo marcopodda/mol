@@ -72,8 +72,7 @@ class BaseDataset:
     def get_data(self):
         path = self.root_dir
         name = self.dataset_name
-        num_samples = self.hparams.num_samples
-        data, vocab, max_length = load_data(path, name, num_samples)
+        data, vocab, max_length = load_data(path, name)
         return data, vocab, max_length
 
     def get_input_data(self, index):

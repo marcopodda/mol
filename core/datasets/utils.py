@@ -37,7 +37,7 @@ def load_csv(path, convert=None, cast=None):
         dtype=cast)
 
 
-def load_data(dest_dir, dataset_name, num_samples=None):
+def load_data(dest_dir, dataset_name):
     dest_dir = Path(dest_dir)
 
     processed_dir = DATA_DIR / dataset_name / "PROCESSED"
@@ -56,28 +56,13 @@ def load_data(dest_dir, dataset_name, num_samples=None):
     dest_data_path = dest_dir / "data.csv"
     dest_vocab_path = dest_dir / "vocab.csv"
 
-    if dest_data_path.exists():
-        data = load_csv(dest_data_path, convert=["frags"], cast={"length": int})
+    data_path = dest_data_path if dest_data_path.exists() else processed_data_path
+    data = load_csv(data_path, convert=["frags"], cast={"length": int})
+
+    if dest_vocab_path.exists():
         vocab = Vocab.from_file(dest_vocab_path)
-        if num_samples is not None and num_samples != data.shape[0]:
-            warnings.warn(f"Got num samples: {num_samples} != data size: {data.shape[0]}. Overriding.")
-            if num_samples is not None:
-                data = data.sample(n=num_samples)
-                data = data.reset_index(drop=True)
-            data.to_csv(dest_data_path)
-
-            vocab = Vocab.from_df(data)
-            vocab.save(dest_vocab_path)
     else:
-        data = load_csv(processed_data_path, convert=["frags"], cast={"length": int})
-        if num_samples is not None:
-            data = data.sample(n=num_samples)
-            data = data.reset_index(drop=True)
-        data.to_csv(dest_data_path)
-
         vocab = Vocab.from_df(data)
         vocab.save(dest_vocab_path)
 
-    data = load_csv(dest_data_path, convert=["frags"], cast={"length": int})
-    vocab = Vocab.from_file(dest_vocab_path)
     return data, vocab, data.length.max() + 1

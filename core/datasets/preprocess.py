@@ -10,7 +10,7 @@ from core.datasets.utils import load_dataset_info
 from core.datasets.vocab import Vocab
 from core.mols.props import get_props_data
 from core.mols.split import split_molecule
-from core.mols.utils import mol_from_smiles, mols_from_smiles
+from core.mols.utils import mol_from_smiles, mols_to_smiles
 from core.utils.os import get_or_create_dir, dir_is_empty
 from core.utils.misc import get_n_jobs
 from core.datasets.settings import DATA_DIR
@@ -39,7 +39,7 @@ def clean_mol(smi):
             if length > 1:
                 datadict.update(smiles=smi)
                 datadict.update(**get_props_data(mol))
-                datadict.update(frags=mols_from_smiles(frags))
+                datadict.update(frags=mols_to_smiles(frags))
                 datadict.update(length=length)
     except Exception:
         pass
@@ -51,7 +51,7 @@ def clean_mol(smi):
 def process_data(smiles, n_jobs):
     P = Parallel(n_jobs=n_jobs, verbose=1)
     data = P(delayed(clean_mol)(smi) for smi in smiles)
-    return pd.DataFrame(data).dropna().reset_index(drop=True)
+    return pd.DataFrame(data, dtype=object).dropna().reset_index(drop=True)
 
 
 def run_preprocess(dataset_name):

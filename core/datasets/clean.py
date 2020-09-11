@@ -82,8 +82,8 @@ def _assign_splits(df):
     train_indices, val_indices = split(range(num_samples), test_size=0.1)
     df["is_train"] = False
     df["is_val"] = False
-    df.is_train.iloc[train_indices] = True
-    df.is_val.iloc[val_indices] = True
+    df.loc[train_indices, "is_train"] = True
+    df.loc[val_indices, "is_val"] = True
     return df
 
 
