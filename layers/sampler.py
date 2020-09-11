@@ -109,7 +109,7 @@ class Sampler:
         samples = torch.zeros((batch_size, self.max_length), device=h.device)
 
         for it in range(self.max_length):
-            logits, h, _ = model.decoder(x, h, o)
+            logits, h, _ = model.decoder.decode_with_attention(x, h, o)
 
             if greedy:
                 probs = torch.log_softmax(logits, dim=-1)

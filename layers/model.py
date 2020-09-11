@@ -89,15 +89,15 @@ class Model(nn.Module):
     def decode(self, batch, enc_hidden, enc_outputs, dec_inputs):
         dec_inputs = self.embedder(batch, dec_inputs, input=True)
         dec_inputs = F.dropout(dec_inputs, p=self.embedder_dropout, training=self.training)
-        return self.decoder.decode_with_attention(dec_inputs, enc_hidden, enc_outputs)
+        return self.decoder(dec_inputs, enc_hidden, enc_outputs)
 
     def forward(self, batch):
-        batch_data, batch_fps, x_enc_inputs, dec_inputs = batch
+        batch_data, batch_fps, enc_inputs, dec_inputs = batch
         x_batch, y_batch = batch_data
         x_fps, _ = batch_fps
 
         # embed fragment sequence
-        enc_hidden, x_enc_outputs = self.encode(x_batch, x_enc_inputs)
+        enc_hidden, enc_outputs = self.encode(x_batch, enc_inputs)
 
         # autoencode fingerprint
         y_hat_fps, autoenc_hidden = self.autoencoder(x_fps)
@@ -107,5 +107,5 @@ class Model(nn.Module):
             dec_hidden = torch.cat([dec_hidden, enc_hidden], dim=-1)
 
         # decode fragment sequence
-        logits = self.decode(y_batch, dec_hidden, x_enc_outputs, dec_inputs)
+        logits = self.decode(y_batch, dec_hidden, enc_outputs, dec_inputs)
         return logits, y_hat_fps

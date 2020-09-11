@@ -39,7 +39,7 @@ class Decoder(nn.Module):
 
         self.out = nn.Linear(self.dim_state, self.dim_output)
 
-    def forward(self, x, hidden, enc_outputs):
+    def decode_with_attention(self, x, hidden, enc_outputs):
         # Note: we run this one step at a time
         # Calculate attention from current RNN state and all encoder outputs; apply to encoder outputs
         attn_weights = self.attention(hidden, enc_outputs)
@@ -56,14 +56,14 @@ class Decoder(nn.Module):
         # Return final output, hidden state, and attention weights (for visualization)
         return logits, hidden, attn_weights
 
-    def decode_with_attention(self, dec_inputs, enc_hidden, enc_outputs):
+    def forward(self, dec_inputs, enc_hidden, enc_outputs):
         B, S, V = dec_inputs.size()
         h = enc_hidden
 
         outputs = []
         for i in range(S):
             x = dec_inputs[:, i, :].unsqueeze(1)
-            logits, h, w = self.forward(x, h, enc_outputs)
+            logits, h, w = self.decode_with_attention(x, h, enc_outputs)
             outputs.append(logits.unsqueeze(1))
 
         outputs = torch.cat(outputs, dim=1)

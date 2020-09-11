@@ -15,7 +15,7 @@ from core.utils.serialization import load_numpy, save_numpy
 
 
 class BaseDataset:
-    corrupt = False
+    corrupt = None
 
     def __init__(self, hparams, dataset_name):
         self.hparams = HParams.load(hparams)
@@ -34,8 +34,8 @@ class BaseDataset:
             save_numpy(token.numpy(), path)
         return token
 
-    def _to_data(self, frags_smiles, is_target, add_noise=False):
-        if add_noise and self.corrupt:
+    def _to_data(self, frags_smiles, is_target):
+        if self.corrupt and not is_target:
             frags_smiles = self._corrupt_seq(frags_smiles)
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]
@@ -49,9 +49,9 @@ class BaseDataset:
             data["target"] = self._get_target_sequence(frags_smiles)
         return data
 
-    def _get_fingerprint(self, smiles, add_noise):
+    def _get_fingerprint(self, smiles, is_target):
         fingerprint = np.array(get_fingerprint(smiles), dtype=np.int)
-        if add_noise and self.corrupt:
+        if not is_target and self.corrupt:
             fingerprint = self._corrupt_fingerprint(fingerprint)
         fingerprint_tx = torch.FloatTensor(fingerprint).view(1, -1)
         return fingerprint_tx
@@ -75,17 +75,18 @@ class BaseDataset:
 
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
-        data = self._to_data(mol_data.frags, is_target=False, add_noise=True)
-        fingerprint = self._get_fingerprint(mol_data.smiles, add_noise=True)
+        data = self._to_data(mol_data.frags, is_target=False)
+        fingerprint = self._get_fingerprint(mol_data.smiles, is_target=False)
         return data, fingerprint
 
     def get_target_data(self, index):
         mol_data = self.data.iloc[index]
-        data = self._to_data(mol_data.frags, is_target=True, add_noise=False)
-        fingerprint = self._get_fingerprint(mol_data.smiles, add_noise=False)
+        data = self._to_data(mol_data.frags, is_target=True)
+        fingerprint = self._get_fingerprint(mol_data.smiles, is_target=True)
         return data, fingerprint
 
     def _corrupt_seq(self, seq):
+        print(seq)
         changed = False
 
         num_to_add = int(np.round(np.random.rand()))
@@ -102,9 +103,9 @@ class BaseDataset:
 
         if changed is False:
             replacement_index = np.random.choice(len(seq)-1)
-            seq[replacement_index] = self.vocab.sample(uniform=True)
+            seq[replacement_index] = self.vocab.sample(uniform=False)
             changed = True
-
+        print(seq)
         return seq
 
     def _corrupt_fingerprint(self, fingerprint):
