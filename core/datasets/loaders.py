@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import DataLoader as DataLoader
+from torch.utils.data import DataLoader, Subset
 from torch_geometric.data import Batch
 
 from core.hparams import HParams
@@ -31,6 +31,7 @@ class BaseDataLoader:
         self.indices = indices
 
     def __call__(self, batch_size, shuffle=False):
+        dataset = Subset(self.dataset, self.indices)
         return DataLoader(
             dataset=self.dataset,
             collate_fn=lambda b: self.collate(b),
