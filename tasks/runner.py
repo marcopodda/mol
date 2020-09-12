@@ -93,7 +93,7 @@ class TaskRunner:
     def post_init_wrapper(self, wrapper):
         return wrapper
 
-    def sample(self, epoch=0, temp=1.0, greedy=True):
+    def eval(self, epoch=0, temp=1.0, greedy=True):
         ckpt_path = self.dirs.ckpt / f"epoch={epoch}.ckpt"
         samples_path = self.dirs.samples / f"samples_{epoch}.yml"
 
