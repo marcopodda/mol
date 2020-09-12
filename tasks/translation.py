@@ -55,9 +55,9 @@ class TranslationTaskRunner(TaskRunner):
     sampler_class = TranslationSampler
 
     @classmethod
-    def load(cls, root_dir):
-        root_dir = Path(root_dir)
-        config = load_yaml(root_dir / "config.yml")
+    def load(cls, exp_dir):
+        exp_dir = Path(exp_dir)
+        config = load_yaml(exp_dir / "config.yml")
         return cls(
             task=config["task"],
             exp_name=config["exp_name"],
