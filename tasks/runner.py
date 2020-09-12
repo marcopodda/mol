@@ -94,7 +94,7 @@ class TaskRunner:
         return wrapper
 
     def sample(self, epoch=0, temp=1.0, greedy=True):
-        ckpt_path = self.dirs.ckpt_dir / f"epoch={epoch}.ckpt"
+        ckpt_path = self.dirs.ckpt / f"epoch={epoch}.ckpt"
         samples_path = self.dirs.samples / f"samples_{epoch}.yml"
 
         if not samples_path.exists():
@@ -103,7 +103,7 @@ class TaskRunner:
             model = self.wrapper_class.load_from_checkpoint(
                 checkpoint_path=ckpt_path.as_posix(),
                 root_dir=self.dirs.base,
-                name=self.dataset_name).model
+                dataset_name=self.dataset_name).model
 
             dataset = self.dataset_class(
                 hparams=self.hparams,
