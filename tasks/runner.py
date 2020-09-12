@@ -123,6 +123,7 @@ class TaskRunner:
         config = {
             "task": self.task,
             "exp_name": self.exp_name,
+            "root_dir": self.dirs.root.as_posix(),
             "dataset_name": self.dataset_name,
             "hparams": self.hparams.__dict__,
             "gpu": self.gpu,

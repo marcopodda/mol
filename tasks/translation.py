@@ -112,9 +112,10 @@ class TranslationTaskRunner(TaskRunner):
     def dump(self):
         config = {
             "task": self.task,
+            "root_dir": self.dirs.root.as_posix(),
             "exp_name": self.exp_name,
             "dataset_name": self.dataset_name,
-            "pretrain_path": self.pretrain_path,
+            "pretrain_path": self.pretrain_path.as_posix(),
             "hparams": self.hparams.__dict__,
             "gpu": self.gpu,
             "debug": self.debug
