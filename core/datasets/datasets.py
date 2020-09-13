@@ -88,23 +88,19 @@ class BaseDataset:
         return data, fingerprint
 
     def _corrupt_input_seq(self, seq):
-        changed = False
         targets = [self.vocab[f] for f in seq]
 
-        if np.random.rand() > 0.5:
+        if np.random.rand() > 0.5 and len(seq) > 2:
             delete_index = np.random.choice(len(seq)-1)
             seq.pop(delete_index)
-            changed = True
 
         if np.random.rand() > 0.5:
             replace_index = np.random.choice(len(seq)-1)
-            seq[replace_index] = self.vocab.sample(uniform=True)
-            changed = True
+            seq[replace_index] = self.vocab.sample()
 
         if np.random.rand() > 0.5 and len(seq) + 2 <= self.max_length:
             add_index = np.random.choice(len(seq)-1)
-            seq.insert(add_index, self.vocab.sample(uniform=True))
-            changed = True
+            seq.insert(add_index, self.vocab.sample())
 
         return seq, pad(targets + [Tokens.EOS.value], length=self.max_length)
 
