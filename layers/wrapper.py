@@ -51,7 +51,7 @@ class Wrapper(pl.LightningModule):
         bce_loss = F.binary_cross_entropy(y_fingerprints_rec, y_fingerprints)
 
         if "denoise_targets" in x_seqs:
-            bce_loss2 = F.binary_cross_entropy(torch.sigmoid(enc_logits), x_seqs.denoise_targets)
+            bce_loss2 = F.cross_entropy(enc_logits, x_seqs.denoise_targets.view(-1), ignore_index=0)
             bce_loss += bce_loss2
 
         result = pl.TrainResult(ce_loss + bce_loss)

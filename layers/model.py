@@ -37,7 +37,7 @@ class Model(nn.Module):
             dim_input=self.encoder_dim_input,
             dim_state=self.encoder_dim_state,
             dropout=self.encoder_dropout,
-            seq_length=self.seq_length)
+            seq_length=vocab_size)
 
         self.autoencoder = Autoencoder(
             hparams=hparams,
@@ -103,11 +103,11 @@ class Model(nn.Module):
 
         # autoencode fingerprint
         y_hat_fps, autoenc_hidden = self.autoencoder(x_fps)
-        dec_hidden = autoenc_hidden.unsqueeze(0).repeat(self.decoder_num_layers, 1, 1)
+        h = autoenc_hidden.unsqueeze(0).repeat(self.decoder_num_layers, 1, 1)
 
         if self.hparams.concat:
-            dec_hidden = torch.cat([dec_hidden, enc_hidden], dim=-1)
+            h = torch.cat([h, enc_hidden], dim=-1)
 
         # decode fragment sequence
-        logits = self.decode(y_batch, dec_hidden, enc_outputs, dec_inputs)
+        logits = self.decode(y_batch, h, enc_outputs, dec_inputs)
         return logits, enc_logits, y_hat_fps

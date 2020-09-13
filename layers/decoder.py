@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from torch.nn import functional as F
 
 from core.hparams import HParams
 from layers.attention import Attention
@@ -51,14 +52,13 @@ class Decoder(nn.Module):
 
         # Final output layer (next word prediction) using the RNN hidden state and context vector
         output = rnn_output.reshape(-1, rnn_output.size(2))
-        logits = self.out(output).squeeze(1)
+        logits = self.out(F.relu(output)).squeeze(1)
 
         # Return final output, hidden state, and attention weights (for visualization)
         return logits, hidden, attn_weights
 
-    def forward(self, dec_inputs, enc_hidden, enc_outputs):
-        B, S, V = dec_inputs.size()
-        h = enc_hidden
+    def forward(self, dec_inputs, h, enc_outputs):
+        _, S, _ = dec_inputs.size()
 
         outputs = []
         for i in range(S):

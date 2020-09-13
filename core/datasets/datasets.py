@@ -89,31 +89,36 @@ class BaseDataset:
 
     def _corrupt_input_seq(self, seq):
         changed = False
+        last = len(self.vocab)
+
+        targets = torch.zeros((self.max_length,), dtype=torch.long)
 
         num_to_add = int(np.round(np.random.rand()))
         if num_to_add == 1 and len(seq) + 2 <= self.max_length:
             add_index = np.random.choice(len(seq)-1)
-            seq.insert(add_index, self.vocab.sample())
-            targets = torch.zeros((1, self.max_length))
-            targets[0, add_index] = 1
+            seq.insert(add_index, self.vocab.sample(uniform=True))
+            frag = seq[add_index]
+            index = self.vocab[frag]
+            targets[add_index] = index
             changed = True
 
         num_to_delete = int(np.round(np.random.rand()))
         if changed is False and num_to_delete == 1:
             delete_index = np.random.choice(len(seq)-1)
-            seq.remove(seq[delete_index])
-            targets = torch.zeros((1, self.max_length))
-            targets[0, delete_index] = 1
+            frag = seq.pop(delete_index)
+            index = self.vocab[frag]
+            targets[delete_index] = index
             changed = True
 
         if changed is False:
             replace_index = np.random.choice(len(seq)-1)
+            frag = seq[replace_index]
+            index = self.vocab[frag]
+            targets[replace_index] = index
             seq[replace_index] = self.vocab.sample(uniform=True)
-            targets = torch.zeros((1, self.max_length))
-            targets[0, replace_index] = 1
             changed = True
 
-        return seq, targets
+        return seq, targets.view(1, -1)
 
     def _corrupt_input_fingerprint(self, fingerprint):
         num_to_flip = int(np.clip(34 * np.random.randn() - 14, a_min=1, a_max=None))
