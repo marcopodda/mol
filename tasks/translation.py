@@ -107,6 +107,7 @@ class TranslationTaskRunner(TaskRunner):
             wrapper.model.encoder.gru = pretrainer.model.encoder.gru
             wrapper.model.decoder.gru = pretrainer.model.decoder.gru
             wrapper.freeze()
+            wrapper.model.decoder.out.requires_grad = True
         return wrapper
 
     def dump(self):
