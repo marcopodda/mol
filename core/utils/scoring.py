@@ -50,7 +50,7 @@ def score(exp_dir, dataset_name, epoch=0):
     validity_rate = num_valid / num_samples
 
     # novel samples
-    data, _ = load_data(dataset_name)
+    data, _, _ = load_data(dataset_name)
     training_set = data[data.is_train==True].smiles.tolist()
     novel_samples = [y not in training_set for (_, y) in valid_samples]
     novelty_rate = len(novel_samples) / num_valid
