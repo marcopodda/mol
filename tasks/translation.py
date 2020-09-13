@@ -102,15 +102,10 @@ class TranslationTaskRunner(TaskRunner):
                 pretrain_ckpt_path.as_posix(),
                 root_dir=self.pretrain_path.parent.parent,
                 dataset_name=self.pretrain_path.parts[-3])
-            wrapper.model.embedder = freeze(pretrainer.model.embedder)
-            wrapper.model.autoencoder = freeze(pretrainer.model.autoencoder)
-            wrapper.model.encoder.gru = freeze(pretrainer.model.encoder.gru)
-            wrapper.model.decoder.gru = freeze(pretrainer.model.decoder.gru)
-            # for name, par in wrapper.named_parameters():
-            #     if par.requires_grad == False:
-            #         print(name)
-            # #     par.requires_grad = False
-            # # wrapper.model.decoder.out.requires_grad = True
+            wrapper.model.embedder = pretrainer.model.embedder
+            wrapper.model.autoencoder = pretrainer.model.autoencoder
+            # wrapper.model.encoder.gru = pretrainer.model.encoder.gru
+            # wrapper.model.decoder.gru = pretrainer.model.decoder.gru
         return wrapper
 
     def dump(self):

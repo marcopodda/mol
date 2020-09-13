@@ -88,7 +88,7 @@ class BaseDataset:
         return data, fingerprint
 
     def _corrupt_input_seq(self, seq):
-        targets = [self.vocab[f] for f in seq]
+        targets = [self.vocab[f] + len(Tokens) for f in seq]
 
         if np.random.rand() > 0.5 and len(seq) > 2:
             delete_index = np.random.choice(len(seq)-1)

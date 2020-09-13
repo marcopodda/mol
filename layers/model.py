@@ -18,7 +18,7 @@ class Model(nn.Module):
         super().__init__()
         self.hparams = HParams.load(hparams)
 
-        self.num_embeddings = vocab_size + len(Tokens)
+        self.dim_output = vocab_size + len(Tokens)
         self.seq_length = seq_length
         self.set_dimensions()
 
@@ -37,7 +37,7 @@ class Model(nn.Module):
             dim_input=self.encoder_dim_input,
             dim_state=self.encoder_dim_state,
             dropout=self.encoder_dropout,
-            seq_length=vocab_size)
+            dim_output=self.dim_output)
 
         self.autoencoder = Autoencoder(
             hparams=hparams,
@@ -79,7 +79,7 @@ class Model(nn.Module):
         self.decoder_dim_input = self.encoder_dim_input + self.encoder_dim_state
         self.decoder_dim_attention_input = self.decoder_dim_state + self.encoder_dim_state
         self.decoder_dim_attention_output = self.decoder_dim_state
-        self.decoder_dim_output = self.num_embeddings
+        self.decoder_dim_output = self.dim_output
         self.decoder_dropout = self.encoder_dropout
 
     def encode(self, batch, enc_inputs):

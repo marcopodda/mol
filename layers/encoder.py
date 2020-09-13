@@ -5,7 +5,7 @@ from core.hparams import HParams
 
 
 class Encoder(nn.Module):
-    def __init__(self, hparams, num_layers, dim_input, dim_state, dropout, seq_length):
+    def __init__(self, hparams, num_layers, dim_input, dim_state, dropout, dim_output):
         super().__init__()
         self.hparams = HParams.load(hparams)
 
@@ -13,7 +13,7 @@ class Encoder(nn.Module):
         self.dim_input = dim_input
         self.dim_state = dim_state
         self.dropout = dropout
-        self.seq_length = seq_length
+        self.dim_output = dim_output
 
         self.gru = nn.GRU(input_size=self.dim_input,
                           hidden_size=self.dim_state,
@@ -22,7 +22,7 @@ class Encoder(nn.Module):
                           dropout=self.dropout,
                           bidirectional=True)
 
-        self.out = nn.Linear(self.dim_state+self.dim_input, self.seq_length)
+        self.out = nn.Linear(self.dim_state+self.dim_input, self.dim_output)
 
     def forward(self, x):
         x = x.unsqueeze(0) if x.ndim == 2 else x
