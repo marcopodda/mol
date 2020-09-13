@@ -35,8 +35,9 @@ class BaseDataset:
         return token
 
     def _to_data(self, frags_smiles, is_target):
+        denoise_targets = None
         if self.corrupt_input and not is_target:
-            frags_smiles = self._corrupt_input_seq(frags_smiles)
+            frags_smiles, denoise_targets = self._corrupt_input_seq(frags_smiles)
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]
         num_nodes = [f.number_of_nodes() for f in frag_graphs]
@@ -45,6 +46,7 @@ class BaseDataset:
         frags_batch = [torch.LongTensor([i]).repeat(n) for (i, n) in enumerate(num_nodes)]
         data["frags_batch"] = torch.cat(frags_batch)
         data["length"] = torch.LongTensor([[len(frags_list)]])
+        data["denoise_targets"] = denoise_targets
         if is_target:
             data["target"] = self._get_target_sequence(frags_smiles)
         return data
@@ -92,20 +94,26 @@ class BaseDataset:
         if num_to_add == 1 and len(seq) + 2 <= self.max_length:
             add_index = np.random.choice(len(seq)-1)
             seq.insert(add_index, self.vocab.sample())
+            targets = torch.zeros((1, self.max_length))
+            targets[0, add_index] = 1
             changed = True
 
         num_to_delete = int(np.round(np.random.rand()))
         if changed is False and num_to_delete == 1:
             delete_index = np.random.choice(len(seq)-1)
             seq.remove(seq[delete_index])
+            targets = torch.zeros((1, self.max_length))
+            targets[0, delete_index] = 1
             changed = True
 
         if changed is False:
-            replacement_index = np.random.choice(len(seq)-1)
-            seq[replacement_index] = self.vocab.sample(uniform=False)
+            replace_index = np.random.choice(len(seq)-1)
+            seq[replace_index] = self.vocab.sample(uniform=True)
+            targets = torch.zeros((1, self.max_length))
+            targets[0, replace_index] = 1
             changed = True
 
-        return seq
+        return seq, targets
 
     def _corrupt_input_fingerprint(self, fingerprint):
         num_to_flip = int(np.clip(34 * np.random.randn() - 14, a_min=1, a_max=None))

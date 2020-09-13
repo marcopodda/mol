@@ -26,7 +26,7 @@ class Wrapper(pl.LightningModule):
         self.vocab = self.dataset.vocab
         self.num_samples = len(self.dataset)
 
-        self.model = Model(hparams, len(self.vocab))
+        self.model = Model(hparams, len(self.vocab), seq_length=self.dataset.max_length)
 
     def forward(self, data):
         return self.model(data)
@@ -44,11 +44,15 @@ class Wrapper(pl.LightningModule):
         return self.training_loader
 
     def training_step(self, batch, batch_idx):
-        (_, y_seqs), (_, y_fingerprints), _, _ = batch
-        y_seqs_rec, y_fingerprints_rec = self.model(batch)
+        (x_seqs, y_seqs), (_, y_fingerprints), _, _ = batch
+        y_seqs_rec, enc_logits, y_fingerprints_rec = self.model(batch)
 
         ce_loss = F.cross_entropy(y_seqs_rec, y_seqs.target.view(-1), ignore_index=0)
         bce_loss = F.binary_cross_entropy(y_fingerprints_rec, y_fingerprints)
+
+        if "denoise_targets" in x_seqs:
+            bce_loss2 = F.binary_cross_entropy(torch.sigmoid(enc_logits), x_seqs.denoise_targets)
+            bce_loss += bce_loss2
 
         result = pl.TrainResult(ce_loss + bce_loss)
         result.log('CE', ce_loss, prog_bar=True)

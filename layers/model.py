@@ -14,11 +14,12 @@ from layers.autoencoder import Autoencoder
 
 
 class Model(nn.Module):
-    def __init__(self, hparams, vocab_size):
+    def __init__(self, hparams, vocab_size, seq_length):
         super().__init__()
         self.hparams = HParams.load(hparams)
 
         self.num_embeddings = vocab_size + len(Tokens)
+        self.seq_length = seq_length
         self.set_dimensions()
 
         self.embedder = Embedder(
@@ -35,7 +36,8 @@ class Model(nn.Module):
             num_layers=self.encoder_num_layers,
             dim_input=self.encoder_dim_input,
             dim_state=self.encoder_dim_state,
-            dropout=self.encoder_dropout)
+            dropout=self.encoder_dropout,
+            seq_length=self.seq_length)
 
         self.autoencoder = Autoencoder(
             hparams=hparams,
@@ -83,8 +85,8 @@ class Model(nn.Module):
     def encode(self, batch, enc_inputs):
         enc_inputs = self.embedder(batch, enc_inputs, input=False)
         enc_inputs = F.dropout(enc_inputs, p=self.embedder_dropout, training=self.training)
-        enc_outputs, enc_hidden = self.encoder(enc_inputs)
-        return enc_hidden, enc_outputs
+        enc_logits, enc_outputs, enc_hidden = self.encoder(enc_inputs)
+        return enc_logits, enc_hidden, enc_outputs
 
     def decode(self, batch, enc_hidden, enc_outputs, dec_inputs):
         dec_inputs = self.embedder(batch, dec_inputs, input=True)
@@ -97,7 +99,7 @@ class Model(nn.Module):
         x_fps, _ = batch_fps
 
         # embed fragment sequence
-        enc_hidden, enc_outputs = self.encode(x_batch, enc_inputs)
+        enc_logits, enc_hidden, enc_outputs = self.encode(x_batch, enc_inputs)
 
         # autoencode fingerprint
         y_hat_fps, autoenc_hidden = self.autoencoder(x_fps)
@@ -108,4 +110,4 @@ class Model(nn.Module):
 
         # decode fragment sequence
         logits = self.decode(y_batch, dec_hidden, enc_outputs, dec_inputs)
-        return logits, y_hat_fps
+        return logits, enc_logits, y_hat_fps
