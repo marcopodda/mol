@@ -4,7 +4,6 @@ from pathlib import Path
 from moses import get_all_metrics
 
 from core.datasets.utils import load_data
-from core.datasets.settings import DATA_DIR
 from core.utils.serialization import load_yaml
 from core.mols.props import drd2, qed, logp, similarity
 from core.mols.utils import mol_from_smiles
