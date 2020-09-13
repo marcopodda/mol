@@ -106,7 +106,7 @@ class TranslationTaskRunner(TaskRunner):
             wrapper.model.autoencoder = pretrainer.model.autoencoder
             wrapper.model.encoder.gru = pretrainer.model.encoder.gru
             wrapper.model.decoder.gru = pretrainer.model.decoder.gru
-            for par in wrapper.model.parameters():
+            for par in wrapper.parameters():
                 par.requires_grad = False
             wrapper.model.decoder.out.requires_grad = True
         return wrapper
