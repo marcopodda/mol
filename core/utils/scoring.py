@@ -1,7 +1,9 @@
+import pandas as pd
 from pathlib import Path
 
 from moses import get_all_metrics
 
+from core.datasets.settings import DATA_DIR
 from core.utils.serialization import load_yaml
 from core.mols.props import drd2, qed, logp, similarity
 from core.mols.utils import mol_from_smiles
@@ -31,15 +33,16 @@ def success_rate(x, y, prop_fun, similarity_thres, improvement_thres):
     return sim >= similarity_thres and prop >= improvement_thres
 
 
-def score(results_dir, dataset_name, epoch=0):
-    results_dir = Path(results_dir)
-    samples_dir = results_dir / "samples"
+def score(exp_dir, dataset_name, epoch=0):
+    exp_dir = Path(exp_dir)
+    samples_dir = exp_dir / "samples"
     samples_filename = f"samples_{epoch}.yml"
-    samples = load_yaml(samples_dir / samples_filename)
 
-    gen = [s["gen"] for s in samples]
-    ref = [s["ref"] for s in samples]
+    samples = load_yaml(samples_dir / samples_filename)
     num_samples = len(samples)
+
+    ref = [s["ref"] for s in samples]
+    gen = [s["gen"] for s in samples]
 
     # valid samples
     valid_samples = [(x, y) for (x, y) in zip(ref, gen) if y and mol_from_smiles(y)]
@@ -47,11 +50,13 @@ def score(results_dir, dataset_name, epoch=0):
     validity_rate = num_valid / num_samples
 
     # novel samples
-    novel_samples = [y not in ref for (x, y) in valid_samples]
+    data = pd.read_csv(DATA_DIR / dataset_name / "data.csv")
+    training_set = data[data.is_train==True].smiles.tolist()
+    novel_samples = [y not in training_set for (_, y) in valid_samples]
     novelty_rate = len(novel_samples) / num_valid
 
     # unique samples
-    unique_samples = set([y for (x, y) in valid_samples])
+    unique_samples = set([y for (_, y) in valid_samples])
     uniqueness_rate = len(unique_samples) / num_valid
 
     # success rate
@@ -78,9 +83,9 @@ def convert_metrics_dict(metrics_dict):
     return metrics_dict
 
 
-def moses_score(results_dir, epoch=0, n_jobs=40):
-    results_dir = Path(results_dir)
-    samples_dir = results_dir / "samples"
+def moses_score(exp_dir, epoch=0, n_jobs=40):
+    exp_dir = Path(exp_dir)
+    samples_dir = exp_dir / "samples"
     samples_path = samples_dir / f"samples_{epoch}.yml"
     samples = load_yaml(samples_path)
 
