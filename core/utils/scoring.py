@@ -3,6 +3,7 @@ from pathlib import Path
 
 from moses import get_all_metrics
 
+from core.datasets.utils import load_data
 from core.datasets.settings import DATA_DIR
 from core.utils.serialization import load_yaml
 from core.mols.props import drd2, qed, logp, similarity
@@ -50,7 +51,7 @@ def score(exp_dir, dataset_name, epoch=0):
     validity_rate = num_valid / num_samples
 
     # novel samples
-    data = pd.read_csv(DATA_DIR / dataset_name / "data.csv")
+    data = load_data(dataset_name)
     training_set = data[data.is_train==True].smiles.tolist()
     novel_samples = [y not in training_set for (_, y) in valid_samples]
     novelty_rate = len(novel_samples) / num_valid
