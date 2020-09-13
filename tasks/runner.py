@@ -2,6 +2,7 @@ import torch
 from argparse import Namespace
 from pathlib import Path
 
+from core.datasets.datasets import EvalDataset
 from core.hparams import HParams
 from core.utils.scoring import score
 from core.utils.os import get_or_create_dir
@@ -12,7 +13,6 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 
 class TaskRunner:
-    dataset_class = None
     wrapper_class = None
     sampler_class = None
 
@@ -105,7 +105,7 @@ class TaskRunner:
                 root_dir=self.dirs.base,
                 dataset_name=self.dataset_name).model
 
-            dataset = self.dataset_class(
+            dataset = EvalDataset(
                 hparams=self.hparams,
                 dataset_name=self.dataset_name)
 

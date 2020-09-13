@@ -50,7 +50,6 @@ class TranslationSampler(Sampler):
 
 
 class TranslationTaskRunner(TaskRunner):
-    dataset_class = TranslationTrainDataset
     wrapper_class = TranslationWrapper
     sampler_class = TranslationSampler
 

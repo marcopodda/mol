@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader, Subset
 from torch_geometric.data import Batch
 
 from core.hparams import HParams
+from core.datasets.datasets import TrainDataset, EvalDataset
 
 def collate_frags(data_list):
     cumsum = 0
@@ -25,6 +26,9 @@ class BaseDataLoader:
     def __init__(self, hparams, dataset, indices=None):
         self.hparams = HParams.load(hparams)
         self.dataset = dataset
+
+        self._check_dataset()
+
         self.max_length = self.dataset.max_length
         if indices is None:
             indices = list(range(len(dataset)))
@@ -40,11 +44,18 @@ class BaseDataLoader:
             pin_memory=True,
             num_workers=self.hparams.num_workers)
 
+    def _check_dataset(self):
+        raise NotImplementedError
+
     def collate(self, data_list):
         raise NotImplementedError
 
 
 class TrainDataLoader(BaseDataLoader):
+    def _check_dataset(self):
+        if not isinstance(self.dataset, TrainDataset):
+            raise Exception("Works only for TrainDataset")
+
     def collate(self, data_list):
         frags_x, fps_x, frags_y, fps_y = zip(*data_list)
 
@@ -67,6 +78,10 @@ class TrainDataLoader(BaseDataLoader):
 
 
 class EvalDataLoader(BaseDataLoader):
+    def _check_dataset(self):
+        if not isinstance(self.dataset, EvalDataset):
+            raise Exception("Works only for EvalDataset")
+
     def collate(self, data_list):
         frags_batch, fps_x = zip(*data_list)
 

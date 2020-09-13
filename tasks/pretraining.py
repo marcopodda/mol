@@ -25,14 +25,17 @@ class PretrainingWrapper(Wrapper):
 
 
 class PretrainingSampler(Sampler):
+    dataset_class = EvalDataset
+
     def prepare_data(self):
-        indices = np.random.choice(len(self.dataset), 1000, replace=False)
+        num_samples = min(1000, len(self.dataset))
+        indices = np.random.choice(len(self.dataset), num_samples, replace=False)
         loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
         smiles = self.dataset.data.iloc[indices].smiles.tolist()
         return smiles, loader(batch_size=self.hparams.pretrain_batch_size, shuffle=False)
 
 
 class PretrainingTaskRunner(TaskRunner):
-    dataset_class = TrainDataset
+    dataset_class = EvalDataset
     wrapper_class = PretrainingWrapper
     sampler_class = PretrainingSampler
