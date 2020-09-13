@@ -106,6 +106,7 @@ class TranslationTaskRunner(TaskRunner):
             wrapper.model.autoencoder = pretrainer.model.autoencoder
             wrapper.model.encoder.gru = pretrainer.model.encoder.gru
             wrapper.model.decoder.gru = pretrainer.model.decoder.gru
+            wrapper.freeze()
         return wrapper
 
     def dump(self):
