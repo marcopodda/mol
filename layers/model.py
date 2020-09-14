@@ -82,10 +82,10 @@ class Model(nn.Module):
         self.decoder_dim_output = self.dim_output
         self.decoder_dropout = self.encoder_dropout
 
-    def encode(self, batch, enc_inputs):
+    def encode(self, batch, enc_inputs, denoise):
         enc_inputs = self.embedder(batch, enc_inputs, input=False)
         enc_inputs = F.dropout(enc_inputs, p=self.embedder_dropout, training=self.training)
-        enc_logits, enc_outputs, enc_hidden = self.encoder(enc_inputs)
+        enc_logits, enc_outputs, enc_hidden = self.encoder(enc_inputs, denoise=denoise)
         return enc_logits, enc_hidden, enc_outputs
 
     def decode(self, batch, enc_hidden, enc_outputs, dec_inputs):
@@ -93,13 +93,13 @@ class Model(nn.Module):
         dec_inputs = F.dropout(dec_inputs, p=self.embedder_dropout, training=self.training)
         return self.decoder(dec_inputs, enc_hidden, enc_outputs)
 
-    def forward(self, batch):
+    def forward(self, batch, denoise):
         batch_data, batch_fps, enc_inputs, dec_inputs = batch
         x_batch, y_batch = batch_data
         x_fps, _ = batch_fps
 
         # embed fragment sequence
-        enc_logits, enc_hidden, enc_outputs = self.encode(x_batch, enc_inputs)
+        enc_logits, enc_hidden, enc_outputs = self.encode(x_batch, enc_inputs, denoise=denoise)
 
         # autoencode fingerprint
         y_hat_fps, autoenc_hidden = self.autoencoder(x_fps)

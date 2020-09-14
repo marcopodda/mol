@@ -24,13 +24,15 @@ class Encoder(nn.Module):
 
         self.out = nn.Linear(self.dim_state * 2, self.dim_output)
 
-    def forward(self, x):
+    def forward(self, x, denoise):
         x = x.unsqueeze(0) if x.ndim == 2 else x
         output, hidden = self.gru(x)
         batch_size = output.size(0)
 
-        enc_output = output.reshape(-1, output.size(2))
-        logits = self.out(F.relu(enc_output)).squeeze(1)
+        logits = None
+        if denoise:
+            enc_output = output.reshape(-1, output.size(2))
+            logits = self.out(F.relu(enc_output)).squeeze(1)
 
         hidden = hidden.view(self.num_layers, 2, batch_size, self.dim_state).sum(dim=1)
         output = output[:, :, :self.dim_state] + output[:, :, self.dim_state:]
