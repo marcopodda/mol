@@ -100,11 +100,14 @@ class TranslationTaskRunner(TaskRunner):
             pretrain_ckpt_dir = self.pretrain_path / "checkpoints"
             pretrain_ckpt_path = get_latest_checkpoint_path(pretrain_ckpt_dir)
             state_dict = torch.load(pretrain_ckpt_path)['state_dict']
-            state_dict.pop('model.encoder.out.weight')
-            state_dict.pop('model.encoder.out.bias')
-            state_dict.pop('model.decoder.out.weight')
-            state_dict.pop('model.decoder.out.bias')
-            wrapper.load_state_dict(state_dict, strict=False)
+            try:
+                wrapper.load_state_dict(state_dict)
+            except:
+                state_dict.pop('model.encoder.out.weight')
+                state_dict.pop('model.encoder.out.bias')
+                state_dict.pop('model.decoder.out.weight')
+                state_dict.pop('model.decoder.out.bias')
+                wrapper.load_state_dict(state_dict, strict=False)
             return wrapper
         return wrapper
 
