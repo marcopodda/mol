@@ -32,4 +32,4 @@ class Autoencoder(nn.Module):
     def forward(self, batch):
         hidden = self.encode(batch)
         output = self.decode(hidden)
-        return torch.sigmoid(output), hidden
+        return output, hidden
