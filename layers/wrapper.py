@@ -44,7 +44,7 @@ class Wrapper(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         (x_seqs, y_seqs), (_, y_fingerprints), _, _ = batch
-        y_seqs_rec, enc_logits, y_fingerprints_rec = self.model(batch, denoise=self.pretrain)
+        y_seqs_rec, enc_logits, y_fingerprints_rec = self.model(batch, denoise=True) # self.pretrain)
 
         ce_loss = F.cross_entropy(y_seqs_rec, y_seqs.target.view(-1), ignore_index=0)
         bce_loss = F.binary_cross_entropy(y_fingerprints_rec, y_fingerprints)
