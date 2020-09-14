@@ -1,5 +1,6 @@
 import numpy as np
 import networkx as nx
+from scipy.stats import beta
 
 import torch
 from torch_geometric.utils import from_networkx
@@ -105,7 +106,7 @@ class BaseDataset:
         return seq, pad(targets + [Tokens.EOS.value], length=self.max_length)
 
     def _corrupt_input_fingerprint(self, fingerprint):
-        num_to_flip = int(np.clip(34 * np.random.randn() - 14, a_min=1, a_max=None))
+        num_to_flip = np.clip(int(beta.rvs(a=2, b=20, scale=200, loc=1)), a_min=1, a_max=None)
         flip_indices = np.random.choice(FINGERPRINT_DIM-1, num_to_flip)
         fingerprint[flip_indices] = np.logical_not(fingerprint[flip_indices])
         return fingerprint
