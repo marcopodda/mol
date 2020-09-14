@@ -30,9 +30,9 @@ class Encoder(nn.Module):
         batch_size = output.size(0)
 
         logits = None
-        if denoise:
-            enc_output = output.reshape(-1, output.size(2))
-            logits = self.out(F.relu(enc_output)).squeeze(1)
+        # if denoise:
+        #     enc_output = output.reshape(-1, output.size(2))
+        #     logits = self.out(F.relu(enc_output)).squeeze(1)
 
         hidden = hidden.view(self.num_layers, 2, batch_size, self.dim_state).sum(dim=1)
         output = output[:, :, :self.dim_state] + output[:, :, self.dim_state:]
