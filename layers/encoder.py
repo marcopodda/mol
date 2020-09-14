@@ -22,7 +22,7 @@ class Encoder(nn.Module):
                           dropout=self.dropout,
                           bidirectional=True)
 
-    def forward(self, x, denoise):
+    def forward(self, x):
         x = x.unsqueeze(0) if x.ndim == 2 else x
         output, hidden = self.gru(x)
         batch_size = output.size(0)
