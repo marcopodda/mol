@@ -97,14 +97,14 @@ class TranslationTaskRunner(TaskRunner):
 
     def post_init_wrapper(self, wrapper):
         if self.pretrain_path is not None:
-            print("ciao")
+            print("Loading pretrained model.")
             pretrain_ckpt_dir = self.pretrain_path / "checkpoints"
             pretrain_ckpt_path = get_latest_checkpoint_path(pretrain_ckpt_dir)
             state_dict = torch.load(pretrain_ckpt_path)['state_dict']
             try:
                 wrapper.load_state_dict(state_dict)
             except Exception as e:
-                print(e)
+                print("Output sizes don't match. Creating new weight matrices.")
                 state_dict.pop('model.encoder.out.weight')
                 state_dict.pop('model.encoder.out.bias')
                 state_dict.pop('model.decoder.out.weight')
