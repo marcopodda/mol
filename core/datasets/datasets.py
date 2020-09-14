@@ -1,5 +1,7 @@
 import numpy as np
+import pandas as pd
 import networkx as nx
+from collections import Counter
 from scipy.stats import beta
 
 import torch
@@ -114,6 +116,11 @@ class BaseDataset:
 
 class TrainDataset(BaseDataset):
     corrupt_input = True
+
+    def __init__(self, hparams, dataset_name):
+        super().__init__(hparams, dataset_name)
+        print("Calculating empirical distribution of fingerprint flips...")
+        print("Done")
 
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()

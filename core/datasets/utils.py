@@ -4,11 +4,16 @@ import pandas as pd
 import numpy as np
 import warnings
 from pathlib import Path
+from collections import Counter
+
+from joblib import Parallel, delayed
 
 import torch
 
 from core.datasets.settings import DATA_DIR, CONFIG_DIR
 from core.datasets.vocab import Vocab, Tokens
+from core.mols.props import get_fingerprint
+from core.utils.misc import get_n_jobs
 from core.utils.os import get_or_create_dir
 from core.utils.serialization import load_yaml
 
@@ -54,3 +59,22 @@ def load_data(dataset_name):
 
     vocab = Vocab.from_file(processed_vocab_path)
     return data, vocab, data.length.max() + 1
+
+
+def num_flips(x, y):
+    x_fp = get_fingerprint(x)
+    y_fp = get_fingerprint(y)
+    return np.logical_xor(x_fp, y_fp).sum()
+
+
+def bit_flip_counts(data):
+    n_jobs = get_n_jobs()
+    xs = data[data.is_x==True].smiles.tolist()
+    ys = data[data.is_y==True].smiles.tolist()
+
+    P = Parallel(n_jobs=n_jobs, verbose=1)
+    return P(delayed(num_flips)(x, y) for (x, y) in zip(xs, ys))
+    # return sorted(Counter(flips).items())
+    # min_num_flips = min([it for (it, _) in flip_counts])
+    # total_num_flips = sum([it for (_, it) in flip_counts])
+    # flip_probs = np.array([it/total_num_flips for (_, it) in flip_counts])

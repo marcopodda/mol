@@ -6,7 +6,7 @@ from molvs import standardize_smiles
 from core.datasets import clean as clean_functions
 from core.datasets.download import fetch_dataset
 from core.datasets.features import ATOM_FEATURES
-from core.datasets.utils import load_dataset_info
+from core.datasets.utils import load_dataset_info, load_csv
 from core.datasets.vocab import Vocab
 from core.mols.props import get_props_data
 from core.mols.split import split_molecule
@@ -74,6 +74,8 @@ def run_preprocess(dataset_name):
         cleaned_data = postprocess_fn(cleaned_data, data)
         cleaned_data = cleaned_data.dropna().reset_index(drop=True)
         cleaned_data.to_csv(processed_data_path)
-        if not processed_vocab_path.exists():
-            vocab = Vocab.from_df(cleaned_data)
-            vocab.save(processed_vocab_path)
+
+    if not processed_vocab_path.exists():
+        cleaned_data = load_csv(processed_data_path, convert=["frags"], cast={"length": int})
+        vocab = Vocab.from_df(cleaned_data)
+        vocab.save(processed_vocab_path)
