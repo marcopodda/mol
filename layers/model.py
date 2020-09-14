@@ -85,8 +85,8 @@ class Model(nn.Module):
     def encode(self, batch, enc_inputs):
         enc_inputs = self.embedder(batch, enc_inputs, input=False)
         enc_inputs = F.dropout(enc_inputs, p=self.embedder_dropout, training=self.training)
-        enc_logits, enc_outputs, enc_hidden = self.encoder(enc_inputs)
-        return enc_logits, enc_hidden, enc_outputs
+        enc_outputs, enc_hidden = self.encoder(enc_inputs)
+        return enc_outputs, enc_hidden
 
     def decode(self, batch, enc_hidden, enc_outputs, dec_inputs):
         dec_inputs = self.embedder(batch, dec_inputs, input=True)
@@ -99,7 +99,7 @@ class Model(nn.Module):
         noisy_fingerprint, _ = batch_fps
 
         # embed fragment sequence
-        enc_hidden, enc_outputs = self.encode(noisy_frags, enc_inputs)
+        enc_outputs, enc_hidden = self.encode(noisy_frags, enc_inputs)
 
         # autoencode fingerprint
         rec_fingerprint, autoenc_hidden = self.autoencoder(noisy_fingerprint)
