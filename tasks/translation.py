@@ -101,7 +101,7 @@ class TranslationTaskRunner(TaskRunner):
             pretrainer = PretrainingWrapper.load_from_checkpoint(
                 pretrain_ckpt_path.as_posix(),
                 dataset_name=self.pretrain_path.parts[-3])
-            pretrainer.model.dataset.corrup_input = False
+            pretrainer.dataset.corrupt_input = False
             # wrapper.model.embedder = pretrainer.model.embedder
             # wrapper.model.autoencoder = pretrainer.model.autoencoder
             # wrapper.model.encoder = pretrainer.model.encoder
