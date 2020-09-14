@@ -82,10 +82,10 @@ class Model(nn.Module):
         self.decoder_dim_output = self.dim_output
         self.decoder_dropout = self.encoder_dropout
 
-    def encode(self, batch, enc_inputs, denoise):
+    def encode(self, batch, enc_inputs):
         enc_inputs = self.embedder(batch, enc_inputs, input=False)
         enc_inputs = F.dropout(enc_inputs, p=self.embedder_dropout, training=self.training)
-        enc_logits, enc_outputs, enc_hidden = self.encoder(enc_inputs, denoise=denoise)
+        enc_logits, enc_outputs, enc_hidden = self.encoder(enc_inputs)
         return enc_logits, enc_hidden, enc_outputs
 
     def decode(self, batch, enc_hidden, enc_outputs, dec_inputs):
@@ -99,7 +99,7 @@ class Model(nn.Module):
         x_fps, _ = batch_fps
 
         # embed fragment sequence
-        enc_logits, enc_hidden, enc_outputs = self.encode(x_batch, enc_inputs, denoise=denoise)
+        enc_hidden, enc_outputs = self.encode(x_batch, enc_inputs)
 
         # autoencode fingerprint
         y_fps_rec, autoenc_hidden = self.autoencoder(x_fps)
@@ -109,4 +109,4 @@ class Model(nn.Module):
 
         # decode fragment sequence
         dec_logits = self.decode(y_batch, h, enc_outputs, dec_inputs)
-        return dec_logits, enc_logits, y_fps_rec
+        return dec_logits, y_fps_rec
