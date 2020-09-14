@@ -43,7 +43,7 @@ class Wrapper(pl.LightningModule):
         return self.training_loader
 
     def training_step(self, batch, batch_idx):
-        (x_seqs, y_seqs), (_, y_fingerprints), _, _ = batch
+        (_, y_seqs), (_, y_fingerprints), _, _ = batch
         dec_logits, y_fingerprints_rec = self.model(batch)
         targets = y_seqs.target.view(-1)
 
