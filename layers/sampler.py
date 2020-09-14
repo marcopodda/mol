@@ -95,7 +95,7 @@ class Sampler:
     def generate_batch(self, data, model, embedder, temp, greedy):
         frags, x_fps, enc_inputs, dec_inputs = data
 
-        _, enc_hidden, enc_outputs = model.encode(frags, enc_inputs)
+        enc_outputs, enc_hidden = model.encode(frags, enc_inputs)
         batch_size = enc_outputs.size(0)
 
         _, autoenc_hidden = model.autoencoder(x_fps)
