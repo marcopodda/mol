@@ -67,14 +67,14 @@ class TrainDataLoader(BaseDataLoader):
         D = self.hparams.frag_dim_embed
 
         lengths = [m.length for m in frags_x]
-        x_enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos, fill_at=lengths)
+        enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos, fill_at=lengths)
 
         x_fingerprints = torch.cat(fps_x, dim=0)
         y_fingerprints = torch.cat(fps_y, dim=0)
 
         dec_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.sos, fill_at=0)
 
-        return (frags_x_batch, frags_y_batch), (x_fingerprints, y_fingerprints), x_enc_inputs, dec_inputs
+        return (frags_x_batch, frags_y_batch), (x_fingerprints, y_fingerprints), enc_inputs, dec_inputs
 
 
 class EvalDataLoader(BaseDataLoader):

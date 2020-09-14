@@ -25,6 +25,7 @@ class BaseDataset:
         self.data, self.vocab, self.max_length = self.get_dataset()
         self.sos = self._initialize_token("sos")
         self.eos = self._initialize_token("eos")
+        self.mask = self._initialize_token("mask")
 
     def _initialize_token(self, name):
         path = DATA_DIR / self.dataset_name / f"{name}_{self.hparams.frag_dim_embed}.dat"
@@ -52,10 +53,6 @@ class BaseDataset:
         data["target"] = targets
         return data
 
-    def _get_denoise_targets(self, seq):
-        targets = [self.vocab[f] + len(Tokens) for f in seq]
-        return pad(targets + [Tokens.EOS.value], length=self.max_length)
-
     def _get_fingerprint(self, smiles, is_target):
         fingerprint = np.array(get_fingerprint(smiles), dtype=np.int)
         if self.corrupt_input is True and is_target is False:
@@ -67,6 +64,28 @@ class BaseDataset:
         seq = [self.vocab[f] + len(Tokens) for f in frags_list] + [Tokens.EOS.value]
         padded_seq = pad(seq, self.max_length)
         return padded_seq
+
+    def _corrupt_input_seq(self, seq):
+        if np.random.rand() > 0.5 and len(seq) > 2:
+            delete_index = np.random.choice(len(seq)-1)
+            seq.pop(delete_index)
+
+        mask_index = None
+        if np.random.rand() > 0.5:
+            mask_index = np.random.choice(len(seq)-1)
+            seq[mask_index] = self.vocab.sample()
+
+        if np.random.rand() > 0.5 and len(seq) + 2 <= self.max_length:
+            add_index = np.random.choice(len(seq)-1)
+            seq.insert(add_index, self.vocab.sample())
+
+        return seq
+
+    def _corrupt_input_fingerprint(self, fingerprint):
+        num_to_flip = np.clip(int(np.random.randn() * 20 + 68), a_min=1, a_max=None)
+        flip_indices = np.random.choice(FINGERPRINT_DIM-1, num_to_flip)
+        fingerprint[flip_indices] = np.logical_not(fingerprint[flip_indices])
+        return fingerprint
 
     def __len__(self):
         return self.data.shape[0]
@@ -91,27 +110,6 @@ class BaseDataset:
         data = self._to_data(mol_data.frags, is_target=True)
         fingerprint = self._get_fingerprint(mol_data.smiles, is_target=True)
         return data, fingerprint
-
-    def _corrupt_input_seq(self, seq):
-        if np.random.rand() > 0.5 and len(seq) > 2:
-            delete_index = np.random.choice(len(seq)-1)
-            seq.pop(delete_index)
-
-        if np.random.rand() > 0.5:
-            replace_index = np.random.choice(len(seq)-1)
-            seq[replace_index] = self.vocab.sample()
-
-        if np.random.rand() > 0.5 and len(seq) + 2 <= self.max_length:
-            add_index = np.random.choice(len(seq)-1)
-            seq.insert(add_index, self.vocab.sample())
-
-        return seq
-
-    def _corrupt_input_fingerprint(self, fingerprint):
-        num_to_flip = np.clip(int(np.random.randn() * 20 + 68), a_min=1, a_max=None)
-        flip_indices = np.random.choice(FINGERPRINT_DIM-1, num_to_flip)
-        fingerprint[flip_indices] = np.logical_not(fingerprint[flip_indices])
-        return fingerprint
 
 
 class TrainDataset(BaseDataset):
