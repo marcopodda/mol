@@ -101,7 +101,7 @@ class TranslationTaskRunner(TaskRunner):
             pretrain_ckpt_path = get_latest_checkpoint_path(pretrain_ckpt_dir)
             pretrainer = PretrainingWrapper.load_from_checkpoint(
                 pretrain_ckpt_path.as_posix(),
-                dataset_name=self.pretrain_path.parts[-3])
+                dataset_name=self.dataset_name)
             pretrainer.dataset.corrupt_input = False
             dim_output = wrapper.model.dim_output
             pretrainer.model.encoder.out = nn.Linear(pretrainer.model.encoder_dim_state * 2, dim_output)
