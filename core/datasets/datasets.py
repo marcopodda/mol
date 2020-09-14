@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 import networkx as nx
-from collections import Counter
-from scipy.stats import beta
 
 import torch
 from torch_geometric.utils import from_networkx
@@ -108,7 +106,7 @@ class BaseDataset:
         return seq, pad(targets + [Tokens.EOS.value], length=self.max_length)
 
     def _corrupt_input_fingerprint(self, fingerprint):
-        num_to_flip = np.clip(int(beta.rvs(a=2, b=20, scale=200, loc=1)), a_min=1, a_max=None)
+        num_to_flip = np.clip(int(np.random.randn() * 20 + 68), a_min=1, a_max=None)
         flip_indices = np.random.choice(FINGERPRINT_DIM-1, num_to_flip)
         fingerprint[flip_indices] = np.logical_not(fingerprint[flip_indices])
         return fingerprint
@@ -116,11 +114,6 @@ class BaseDataset:
 
 class TrainDataset(BaseDataset):
     corrupt_input = True
-
-    def __init__(self, hparams, dataset_name):
-        super().__init__(hparams, dataset_name)
-        print("Calculating empirical distribution of fingerprint flips...")
-        print("Done")
 
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()
