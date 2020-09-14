@@ -54,7 +54,7 @@ class BaseDataset:
 
     def _get_denoise_targets(self, seq):
         targets = [self.vocab[f] + len(Tokens) for f in seq]
-        return pad(targets + Tokens.EOS, length=self.max_length)
+        return pad(targets + [Tokens.EOS], length=self.max_length)
 
     def _get_fingerprint(self, smiles, is_target):
         fingerprint = np.array(get_fingerprint(smiles), dtype=np.int)
