@@ -28,7 +28,7 @@ def command_parser():
 
     sub_translate = sub.add_parser('translate', help="Run a task.")
     sub_translate.add_argument("--exp-name", default="Experiment", help="Experiment name.")
-    sub_translate.add_argument("--pretrain-path", help="Pretraining experiment path.")
+    sub_translate.add_argument("--pretrain-ckpt", help="Pretraining experiment checkpoint.")
     sub_translate.add_argument("--dataset-name", default="ZINC", help="Dataset name.")
     sub_translate.add_argument("--hparams-file", default="hparams.yml", help="HParams file.")
     sub_translate.add_argument("--root-dir", default="RESULTS", help="Output folder.")
