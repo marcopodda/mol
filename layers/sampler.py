@@ -100,6 +100,7 @@ class Sampler:
 
         _, hidden = model.autoencoder(fingerprints)
         if self.hparams.concat:
+            print(hidden.size(), enc_hidden.size())
             hidden = torch.cat([hidden, enc_hidden], dim=-1)
 
         x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1)
