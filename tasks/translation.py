@@ -104,7 +104,7 @@ class TranslationTaskRunner(TaskRunner):
                 dataset_name=self.pretrain_path.parts[-3])
             wrapper.model.embedder = pretrainer.model.embedder
             wrapper.model.autoencoder = pretrainer.model.autoencoder
-            wrapper.model.encoder.gru = pretrainer.model.encoder.gru
+            wrapper.model.encoder = pretrainer.model.encoder
             wrapper.model.decoder.gru = pretrainer.model.decoder.gru
         return wrapper
 
