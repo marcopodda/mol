@@ -1,6 +1,7 @@
 import pandas as pd
 
 from joblib import Parallel, delayed
+from rdkit import Chem
 from molvs import standardize_smiles
 
 from core.datasets import clean as clean_functions
@@ -10,7 +11,7 @@ from core.datasets.utils import load_dataset_info, load_csv, get_counts
 from core.datasets.vocab import Vocab
 from core.mols.props import get_props_data
 from core.mols.split import split_molecule
-from core.mols.utils import mol_from_smiles, mols_to_smiles
+from core.mols.utils import mol_from_smiles, mols_to_smiles, mol_to_smiles
 from core.utils.os import get_or_create_dir, dir_is_empty
 from core.utils.misc import get_n_jobs
 from core.utils.serialization import save_numpy
@@ -33,6 +34,9 @@ def clean_mol(smi):
     try:
         smi = standardize_smiles(smi)
         mol = mol_from_smiles(smi)
+        Chem.RemoveStereochemistry(mol)
+        smi = mol_to_smiles(mol)
+
         if filter_mol(mol):
             frags = split_molecule(mol)
             length = len(frags)
