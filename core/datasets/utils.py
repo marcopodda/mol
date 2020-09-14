@@ -61,20 +61,16 @@ def load_data(dataset_name):
     return data, vocab, data.length.max() + 1
 
 
-def num_flips(x, y):
+def hamming_distance(x, y):
     x_fp = get_fingerprint(x)
     y_fp = get_fingerprint(y)
     return np.logical_xor(x_fp, y_fp).sum()
 
 
-def bit_flip_counts(data):
+def get_counts(data):
     n_jobs = get_n_jobs()
     xs = data[data.is_x==True].smiles.tolist()
     ys = data[data.is_y==True].smiles.tolist()
 
     P = Parallel(n_jobs=n_jobs, verbose=1)
-    return P(delayed(num_flips)(x, y) for (x, y) in zip(xs, ys))
-    # return sorted(Counter(flips).items())
-    # min_num_flips = min([it for (it, _) in flip_counts])
-    # total_num_flips = sum([it for (_, it) in flip_counts])
-    # flip_probs = np.array([it/total_num_flips for (_, it) in flip_counts])
+    return P(delayed(hamming_distance)(x, y) for (x, y) in zip(xs, ys))

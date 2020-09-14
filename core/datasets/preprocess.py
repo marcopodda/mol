@@ -6,13 +6,14 @@ from molvs import standardize_smiles
 from core.datasets import clean as clean_functions
 from core.datasets.download import fetch_dataset
 from core.datasets.features import ATOM_FEATURES
-from core.datasets.utils import load_dataset_info, load_csv
+from core.datasets.utils import load_dataset_info, load_csv, get_counts
 from core.datasets.vocab import Vocab
 from core.mols.props import get_props_data
 from core.mols.split import split_molecule
 from core.mols.utils import mol_from_smiles, mols_to_smiles
 from core.utils.os import get_or_create_dir, dir_is_empty
 from core.utils.misc import get_n_jobs
+from core.utils.serialization import save_yaml
 from core.datasets.settings import DATA_DIR
 
 
@@ -64,6 +65,7 @@ def run_preprocess(dataset_name):
     processed_dir = get_or_create_dir(DATA_DIR / dataset_name)
     processed_data_path = processed_dir / "data.csv"
     processed_vocab_path = processed_dir / "vocab.csv"
+    processed_counts_path = processed_dir / "counts.yml"
 
     if not processed_data_path.exists():
         n_jobs = get_n_jobs()
@@ -76,6 +78,11 @@ def run_preprocess(dataset_name):
         cleaned_data.to_csv(processed_data_path)
 
     if not processed_vocab_path.exists():
-        cleaned_data = load_csv(processed_data_path, convert=["frags"], cast={"length": int})
-        vocab = Vocab.from_df(cleaned_data)
+        data = load_csv(processed_data_path, convert=["frags"], cast={"length": int})
+        vocab = Vocab.from_df(data)
         vocab.save(processed_vocab_path)
+
+    if info["is_translation"] and not processed_counts_path.exists():
+        data = load_csv(processed_data_path, convert=["frags"], cast={"length": int})
+        counts = get_counts(data)
+        save_yaml(counts, processed_counts_path)
