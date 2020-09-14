@@ -33,5 +33,5 @@ class Autoencoder(nn.Module):
     def forward(self, batch):
         hidden = self.encode(batch)
         output = self.decode(hidden)
-        output = output.unsqueeze(0).repeat(self.num_layers, 1, 1)
+        hidden = hidden.unsqueeze(0).repeat(self.num_layers, 1, 1)
         return output, hidden
