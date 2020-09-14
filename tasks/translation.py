@@ -97,6 +97,7 @@ class TranslationTaskRunner(TaskRunner):
 
     def post_init_wrapper(self, wrapper):
         if self.pretrain_path is not None:
+            print("ciao")
             pretrain_ckpt_dir = self.pretrain_path / "checkpoints"
             pretrain_ckpt_path = get_latest_checkpoint_path(pretrain_ckpt_dir)
             state_dict = torch.load(pretrain_ckpt_path)['state_dict']
