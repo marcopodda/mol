@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import torch
+from torch import nn
 from torch.nn import functional as F
 
 import pytorch_lightning as pl
@@ -102,10 +103,14 @@ class TranslationTaskRunner(TaskRunner):
                 pretrain_ckpt_path.as_posix(),
                 dataset_name=self.pretrain_path.parts[-3])
             pretrainer.dataset.corrupt_input = False
+            vocab_size = len(wrapper.dataset.vocab)
+            model = wrapper.model
             # wrapper.model.embedder = pretrainer.model.embedder
             # wrapper.model.autoencoder = pretrainer.model.autoencoder
             # wrapper.model.encoder = pretrainer.model.encoder
-            # wrapper.model.decoder.gru = pretrainer.model.decoder.gru
+            pretrainer.model.encoder.out = nn.Linear(model.encoder_dim_state * 2, vocab_size)
+            pretrainer.model.decoder.out = nn.Linear(model.encoder_dim_state, vocab_size)
+
             return pretrainer
         return wrapper
 
