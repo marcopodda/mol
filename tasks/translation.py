@@ -103,7 +103,7 @@ class TranslationTaskRunner(TaskRunner):
                 pretrain_ckpt_path.as_posix(),
                 dataset_name=self.pretrain_path.parts[-3])
             pretrainer.dataset.corrupt_input = False
-            dim_output = len(wrapper.model.dim_output)
+            dim_output = wrapper.model.dim_output
             pretrainer.model.encoder.out = nn.Linear(pretrainer.model.encoder_dim_state * 2, dim_output)
             pretrainer.model.decoder.out = nn.Linear(pretrainer.model.decoder_dim_state, dim_output)
             return pretrainer
