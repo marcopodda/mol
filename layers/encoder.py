@@ -22,13 +22,12 @@ class Encoder(nn.Module):
                           dropout=self.dropout,
                           bidirectional=True)
 
-        self.out = nn.Linear(self.dim_state+self.dim_input, self.dim_output)
+        self.out = nn.Linear(self.dim_state * 2, self.dim_output)
 
     def forward(self, x):
         x = x.unsqueeze(0) if x.ndim == 2 else x
         output, hidden = self.gru(x)
         batch_size = output.size(0)
-
 
         enc_output = output.reshape(-1, output.size(2))
         logits = self.out(F.relu(enc_output)).squeeze(1)

@@ -71,9 +71,9 @@ class Model(nn.Module):
         self.autoencoder_dim_input = FINGERPRINT_DIM
         self.autoencoder_dim_hidden = self.hparams.autoencoder_dim_hidden
 
-        self.decoder_dim_state = self.encoder_dim_state
+        self.decoder_dim_state = self.autoencoder_dim_hidden
         if self.hparams.concat:
-            self.decoder_dim_state += self.autoencoder_dim_hidden
+            self.decoder_dim_state += self.encoder_dim_state
 
         self.decoder_num_layers = self.hparams.rnn_num_layers
         self.decoder_dim_input = self.encoder_dim_input + self.encoder_dim_state
