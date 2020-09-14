@@ -98,18 +98,16 @@ class Sampler:
         enc_outputs, enc_hidden = model.encode(frags, enc_inputs)
         batch_size = enc_outputs.size(0)
 
-        _, autoenc_hidden = model.autoencoder(fingerprints)
-        h = autoenc_hidden.unsqueeze(0).repeat(self.hparams.rnn_num_layers, 1, 1)
-
+        _, hidden = model.autoencoder(fingerprints)
         if self.hparams.concat:
-            h = torch.cat([h, enc_hidden], dim=-1)
-        o = enc_outputs
+            hidden = torch.cat([hidden, enc_hidden], dim=-1)
+
         x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1)
 
-        samples = torch.zeros((batch_size, self.max_length), device=h.device)
+        samples = torch.zeros((batch_size, self.max_length), device=hidden.device)
 
         for it in range(self.max_length):
-            logits, h, _ = model.decoder.decode_with_attention(x, h, o)
+            logits, hidden, _ = model.decoder.decode_with_attention(x, hidden, enc_outputs)
 
             if greedy:
                 probs = torch.log_softmax(logits, dim=-1)

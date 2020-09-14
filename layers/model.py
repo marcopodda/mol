@@ -103,8 +103,7 @@ class Model(nn.Module):
         enc_outputs, enc_hidden = self.encode(noisy_frags, enc_inputs)
 
         # autoencode fingerprint
-        rec_fingerprint, autoenc_hidden = self.autoencoder(noisy_fingerprint)
-        hidden = autoenc_hidden.unsqueeze(0).repeat(self.decoder_num_layers, 1, 1)
+        rec_fingerprint, hidden = self.autoencoder(noisy_fingerprint)
         if self.hparams.concat:
             hidden = torch.cat([hidden, enc_hidden], dim=-1)
 
