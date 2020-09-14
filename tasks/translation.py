@@ -101,14 +101,15 @@ class TranslationTaskRunner(TaskRunner):
             state_dict = torch.load(self.pretrain_ckpt)['state_dict']
 
             try:
-                wrapper.load_from_checkpoint(self.pretrain_ckpt.as_posix(), dataset_name=self.dataset_name)
+                wrapper = wrapper.load_state_dict(state_dict)
+                # wrapper.load_from_checkpoint(self.pretrain_ckpt.as_posix(), dataset_name=self.dataset_name)
             except Exception as e:
                 print("Output sizes don't match. Creating new weight matrices.")
                 state_dict.pop('model.encoder.out.weight')
                 state_dict.pop('model.encoder.out.bias')
                 state_dict.pop('model.decoder.out.weight')
                 state_dict.pop('model.decoder.out.bias')
-                wrapper.load_state_dict(state_dict, strict=False)
+                wrapper = wrapper.load_state_dict(state_dict, strict=False)
             return wrapper
         return wrapper
 
