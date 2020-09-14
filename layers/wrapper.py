@@ -49,15 +49,13 @@ class Wrapper(pl.LightningModule):
 
         dec_loss = F.cross_entropy(dec_logits, targets, ignore_index=0)
         ae_loss = F.binary_cross_entropy(y_fingerprints_rec, y_fingerprints)
-
         enc_loss = 0
         if self.pretrain:
             enc_loss = F.cross_entropy(enc_logits, targets, ignore_index=0)
-            ae_loss += enc_loss
 
-        result = pl.TrainResult(dec_loss + ae_loss)
+        result = pl.TrainResult(dec_loss + ae_loss + enc_loss)
         result.log('dec', dec_loss, prog_bar=True)
-        result.log('AE', ae_loss, prog_bar=True)
+        result.log('ae', ae_loss, prog_bar=True)
         if self.pretrain:
             result.log('enc', enc_loss, prog_bar=True)
         return result
