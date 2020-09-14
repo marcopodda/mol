@@ -44,16 +44,20 @@ class Wrapper(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         (x_seqs, y_seqs), (_, y_fingerprints), _, _ = batch
-        y_seqs_rec, enc_logits, y_fingerprints_rec = self.model(batch, denoise=True) # self.pretrain)
+        dec_logits, enc_logits, y_fingerprints_rec = self.model(batch, denoise=self.pretrain)
+        targets = y_seqs.target.view(-1)
 
-        ce_loss = F.cross_entropy(y_seqs_rec, y_seqs.target.view(-1), ignore_index=0)
-        bce_loss = F.binary_cross_entropy(y_fingerprints_rec, y_fingerprints)
+        dec_loss = F.cross_entropy(dec_logits, targets, ignore_index=0)
+        ae_loss = F.binary_cross_entropy(y_fingerprints_rec, y_fingerprints)
 
-        # if self.pretrain:
-        bce_loss2 = F.cross_entropy(enc_logits, x_seqs.denoise_targets.view(-1), ignore_index=0)
-        bce_loss += bce_loss2
+        enc_loss = 0
+        if self.pretrain:
+            enc_loss = F.cross_entropy(enc_logits, targets, ignore_index=0)
+            ae_loss += enc_loss
 
-        result = pl.TrainResult(ce_loss + bce_loss)
-        result.log('CE', ce_loss, prog_bar=True)
-        result.log('BCE', bce_loss, prog_bar=True)
+        result = pl.TrainResult(dec_loss + ae_loss)
+        result.log('dec', dec_loss, prog_bar=True)
+        result.log('AE', ae_loss, prog_bar=True)
+        if self.pretrain:
+            result.log('enc', enc_loss, prog_bar=True)
         return result

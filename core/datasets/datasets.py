@@ -36,9 +36,11 @@ class BaseDataset:
         return token
 
     def _to_data(self, frags_smiles, is_target):
-        denoise_targets = self._get_denoise_targets(frags_smiles)
+        targets = self._get_target_sequence(frags_smiles)
+
         if self.corrupt_input is True and is_target is False:
             frags_smiles = self._corrupt_input_seq(frags_smiles)
+
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]
         num_nodes = [f.number_of_nodes() for f in frag_graphs]
@@ -47,9 +49,7 @@ class BaseDataset:
         frags_batch = [torch.LongTensor([i]).repeat(n) for (i, n) in enumerate(num_nodes)]
         data["frags_batch"] = torch.cat(frags_batch)
         data["length"] = torch.LongTensor([[len(frags_list)]])
-        data["denoise_targets"] = denoise_targets
-        if is_target:
-            data["target"] = self._get_target_sequence(frags_smiles)
+        data["target"] = targets
         return data
 
     def _get_denoise_targets(self, seq):
