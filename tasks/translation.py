@@ -104,6 +104,7 @@ class TranslationTaskRunner(TaskRunner):
                 print(wrapper.state_dict()['model.encoder.gru.weight_hh_l0'])
                 wrapper.load_state_dict(state_dict)
                 print(wrapper.state_dict()['model.encoder.gru.weight_hh_l0'])
+                print(state_dict['model.encoder.gru.weight_hh_l0'])
                 # wrapper.load_from_checkpoint(self.pretrain_ckpt.as_posix(), dataset_name=self.dataset_name)
             except Exception as e:
                 print("Output sizes don't match. Creating new weight matrices.")
