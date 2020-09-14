@@ -105,7 +105,7 @@ class Model(nn.Module):
         rec_fingerprint, autoenc_hidden = self.autoencoder(noisy_fingerprint)
         hidden = autoenc_hidden.unsqueeze(0).repeat(self.decoder_num_layers, 1, 1)
         if self.hparams.concat:
-            hidden = torch.cat([h, enc_hidden], dim=-1)
+            hidden = torch.cat([hidden, enc_hidden], dim=-1)
 
         # decode fragment sequence
         dec_logits = self.decode(denoised_frags, hidden, enc_outputs, dec_inputs)
