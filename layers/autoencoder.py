@@ -11,6 +11,7 @@ class Autoencoder(nn.Module):
         self.hparams = HParams.load(hparams)
         self.dim_input = dim_input
         self.dim_hidden = dim_hidden
+        self.num_layers = self.hparams.rnn_num_layers
 
         self.input = nn.Linear(self.dim_input, self.dim_input // 2)
         self.input2hidden = nn.Linear(self.dim_input // 2, self.dim_input // 4)
@@ -32,4 +33,5 @@ class Autoencoder(nn.Module):
     def forward(self, batch):
         hidden = self.encode(batch)
         output = self.decode(hidden)
+        output = output.unsqueeze(0).repeat(self.num_layers, 1, 1)
         return output, hidden
