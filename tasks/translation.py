@@ -62,7 +62,7 @@ class TranslationTaskRunner(TaskRunner):
             task=config["task"],
             exp_name=config["exp_name"],
             root_dir=config["root_dir"],
-            pretrain_path=config["pretrain_path"],
+            pretrain_ckpt=config["pretrain_ckpt"],
             dataset_name=config["dataset_name"],
             hparams=HParams.from_file(config["hparams"]),
             gpu=config["gpu"],
@@ -74,16 +74,16 @@ class TranslationTaskRunner(TaskRunner):
             task=args.command,
             exp_name=args.exp_name,
             root_dir=args.root_dir,
-            pretrain_path=args.pretrain_path,
+            pretrain_ckpt=args.pretrain_ckpt,
             dataset_name=args.dataset_name,
             hparams=HParams.from_file(args.hparams_file),
             gpu=args.gpu if torch.cuda.is_available() else None,
             debug=args.debug)
 
-    def __init__(self, task, exp_name, pretrain_path, root_dir, dataset_name, hparams, gpu, debug):
-        self.pretrain_path = None
-        if pretrain_path is not None:
-            self.pretrain_path = Path(pretrain_path)
+    def __init__(self, task, exp_name, pretrain_ckpt, root_dir, dataset_name, hparams, gpu, debug):
+        self.pretrain_ckpt = None
+        if pretrain_ckpt is not None:
+            self.pretrain_ckpt = Path(pretrain_ckpt)
 
         super().__init__(
             task=task,
@@ -96,11 +96,10 @@ class TranslationTaskRunner(TaskRunner):
         )
 
     def post_init_wrapper(self, wrapper):
-        if self.pretrain_path is not None:
+        if self.pretrain_ckpt is not None:
             print("Loading pretrained model.")
-            pretrain_ckpt_dir = self.pretrain_path / "checkpoints"
-            pretrain_ckpt_path = get_latest_checkpoint_path(pretrain_ckpt_dir)
-            state_dict = torch.load(pretrain_ckpt_path)['state_dict']
+            state_dict = torch.load(self.pretrain_ckpt)['state_dict']
+
             try:
                 # wrapper.load_state_dict(state_dict)
                 state_dict.pop('model.encoder.out.weight')
@@ -124,7 +123,7 @@ class TranslationTaskRunner(TaskRunner):
             "root_dir": self.dirs.root.as_posix(),
             "exp_name": self.exp_name,
             "dataset_name": self.dataset_name,
-            "pretrain_path": self.pretrain_path.as_posix() if self.pretrain_path else None,
+            "pretrain_ckpt": self.pretrain_ckpt.as_posix() if self.pretrain_ckpt else None,
             "hparams": self.hparams.__dict__,
             "gpu": self.gpu,
             "debug": self.debug

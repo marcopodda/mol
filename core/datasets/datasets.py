@@ -37,7 +37,7 @@ class BaseDataset:
 
     def _to_data(self, frags_smiles, is_target):
         denoise_targets = self._get_denoise_targets(frags_smiles)
-        if self.corrupt_input and not is_target:
+        if self.corrupt_input is True and is_target is False:
             frags_smiles = self._corrupt_input_seq(frags_smiles)
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]
@@ -58,7 +58,7 @@ class BaseDataset:
 
     def _get_fingerprint(self, smiles, is_target):
         fingerprint = np.array(get_fingerprint(smiles), dtype=np.int)
-        if not is_target and self.corrupt_input:
+        if self.corrupt_input is True and is_target is False:
             fingerprint = self._corrupt_input_fingerprint(fingerprint)
         fingerprint_tx = torch.FloatTensor(fingerprint).view(1, -1)
         return fingerprint_tx

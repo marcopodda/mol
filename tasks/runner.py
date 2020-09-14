@@ -75,8 +75,9 @@ class TaskRunner:
         wrapper = self.wrapper_class(
             hparams=self.hparams,
             dataset_name=self.dataset_name)
-
+        torch.save(wrapper.state_dict(), "before.pt")
         wrapper = self.post_init_wrapper(wrapper)
+        torch.save(wrapper.state_dict(), "after.pt")
 
         trainer = pl.Trainer(
             logger=logger,
