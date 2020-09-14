@@ -13,7 +13,7 @@ from core.mols.split import split_molecule
 from core.mols.utils import mol_from_smiles, mols_to_smiles
 from core.utils.os import get_or_create_dir, dir_is_empty
 from core.utils.misc import get_n_jobs
-from core.utils.serialization import save_yaml
+from core.utils.serialization import save_numpy
 from core.datasets.settings import DATA_DIR
 
 
@@ -65,7 +65,7 @@ def run_preprocess(dataset_name):
     processed_dir = get_or_create_dir(DATA_DIR / dataset_name)
     processed_data_path = processed_dir / "data.csv"
     processed_vocab_path = processed_dir / "vocab.csv"
-    processed_counts_path = processed_dir / "counts.yml"
+    processed_counts_path = processed_dir / "counts.dat"
 
     if not processed_data_path.exists():
         n_jobs = get_n_jobs()
@@ -85,4 +85,4 @@ def run_preprocess(dataset_name):
     if info["is_translation"] and not processed_counts_path.exists():
         data = load_csv(processed_data_path, convert=["frags"], cast={"length": int})
         counts = get_counts(data)
-        save_yaml(counts, processed_counts_path)
+        save_numpy(counts, processed_counts_path)
