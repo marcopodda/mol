@@ -36,9 +36,9 @@ class BaseDataset:
         return token
 
     def _to_data(self, frags_smiles, is_target):
-        denoise_targets = None
+        denoise_targets = self._get_denoise_targets(frags_smiles)
         if self.corrupt_input and not is_target:
-            frags_smiles, denoise_targets = self._corrupt_input_seq(frags_smiles)
+            frags_smiles = self._corrupt_input_seq(frags_smiles)
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]
         num_nodes = [f.number_of_nodes() for f in frag_graphs]
@@ -51,6 +51,10 @@ class BaseDataset:
         if is_target:
             data["target"] = self._get_target_sequence(frags_smiles)
         return data
+
+    def _get_denoise_targets(self, seq):
+        targets = [self.vocab[f] + len(Tokens) for f in seq]
+        return pad(targets + Tokens.EOS, length=self.max_length)
 
     def _get_fingerprint(self, smiles, is_target):
         fingerprint = np.array(get_fingerprint(smiles), dtype=np.int)
@@ -89,8 +93,6 @@ class BaseDataset:
         return data, fingerprint
 
     def _corrupt_input_seq(self, seq):
-        targets = [self.vocab[f] + len(Tokens) for f in seq]
-
         if np.random.rand() > 0.5 and len(seq) > 2:
             delete_index = np.random.choice(len(seq)-1)
             seq.pop(delete_index)
@@ -103,7 +105,7 @@ class BaseDataset:
             add_index = np.random.choice(len(seq)-1)
             seq.insert(add_index, self.vocab.sample())
 
-        return seq, pad(targets + [Tokens.EOS.value], length=self.max_length)
+        return seq
 
     def _corrupt_input_fingerprint(self, fingerprint):
         num_to_flip = np.clip(int(np.random.randn() * 20 + 68), a_min=1, a_max=None)
