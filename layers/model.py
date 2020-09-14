@@ -93,7 +93,7 @@ class Model(nn.Module):
         dec_inputs = F.dropout(dec_inputs, p=self.embedder_dropout, training=self.training)
         return self.decoder(dec_inputs, enc_hidden, enc_outputs)
 
-    def forward(self, batch, denoise):
+    def forward(self, batch):
         batch_data, batch_fps, enc_inputs, dec_inputs = batch
         x_batch, y_batch = batch_data
         x_fps, _ = batch_fps
