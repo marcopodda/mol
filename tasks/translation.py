@@ -99,14 +99,13 @@ class TranslationTaskRunner(TaskRunner):
         if self.pretrain_path is not None:
             pretrain_ckpt_dir = self.pretrain_path / "checkpoints"
             pretrain_ckpt_path = get_latest_checkpoint_path(pretrain_ckpt_dir)
-            pretrainer = PretrainingWrapper.load_from_checkpoint(
-                pretrain_ckpt_path.as_posix(),
-                dataset_name=self.dataset_name)
-            pretrainer.dataset.corrupt_input = False
-            dim_output = wrapper.model.dim_output
-            pretrainer.model.encoder.out = nn.Linear(pretrainer.model.encoder_dim_state * 2, dim_output)
-            pretrainer.model.decoder.out = nn.Linear(pretrainer.model.decoder_dim_state, dim_output)
-            return pretrainer
+            state_dict = torch.load(pretrain_ckpt_path)['state_dict']
+            state_dict.pop('model.encoder.out.weight')
+            state_dict.pop('model.encoder.out.bias')
+            state_dict.pop('model.decoder.out.weight')
+            state_dict.pop('model.decoder.out.bias')
+            wrapper.load_state_dict(state_dict, strict=False)
+            return wrapper
         return wrapper
 
     def dump(self):
