@@ -102,7 +102,8 @@ class TranslationTaskRunner(TaskRunner):
             state_dict = torch.load(pretrain_ckpt_path)['state_dict']
             try:
                 wrapper.load_state_dict(state_dict)
-            except:
+            except Exception as e:
+                print(e)
                 state_dict.pop('model.encoder.out.weight')
                 state_dict.pop('model.encoder.out.bias')
                 state_dict.pop('model.decoder.out.weight')
