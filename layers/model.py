@@ -99,14 +99,13 @@ class Model(nn.Module):
         x_fps, _ = batch_fps
 
         # embed fragment sequence
-        enc_logits, h, enc_outputs = self.encode(x_batch, enc_inputs, denoise=denoise)
+        enc_logits, enc_hidden, enc_outputs = self.encode(x_batch, enc_inputs, denoise=denoise)
 
         # autoencode fingerprint
         y_hat_fps, autoenc_hidden = self.autoencoder(x_fps)
         h = autoenc_hidden.unsqueeze(0).repeat(self.decoder_num_layers, 1, 1)
-
-        # if self.hparams.concat:
-        #     h = torch.cat([h, enc_hidden], dim=-1)
+        if self.hparams.concat:
+            h = torch.cat([h, enc_hidden], dim=-1)
 
         # decode fragment sequence
         logits = self.decode(y_batch, h, enc_outputs, dec_inputs)

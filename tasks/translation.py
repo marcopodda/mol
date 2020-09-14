@@ -102,7 +102,12 @@ class TranslationTaskRunner(TaskRunner):
             pretrain_ckpt_path = get_latest_checkpoint_path(pretrain_ckpt_dir)
             state_dict = torch.load(pretrain_ckpt_path)['state_dict']
             try:
-                wrapper.load_state_dict(state_dict)
+                # wrapper.load_state_dict(state_dict)
+                state_dict.pop('model.encoder.out.weight')
+                state_dict.pop('model.encoder.out.bias')
+                state_dict.pop('model.decoder.out.weight')
+                state_dict.pop('model.decoder.out.bias')
+                wrapper.load_state_dict(state_dict, strict=False)
             except Exception as e:
                 print("Output sizes don't match. Creating new weight matrices.")
                 state_dict.pop('model.encoder.out.weight')
