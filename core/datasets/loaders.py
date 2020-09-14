@@ -96,9 +96,7 @@ class EvalDataLoader(BaseDataLoader):
 
         x_fingerprints = torch.cat(fps_x, dim=0)
 
-        dec_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.sos, fill_at=0)
-
-        return frags_x_batch, x_fingerprints, enc_inputs, dec_inputs
+        return frags_x_batch, x_fingerprints, enc_inputs
 
 
 class VocabDataLoader:
