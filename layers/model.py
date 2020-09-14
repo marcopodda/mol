@@ -95,18 +95,18 @@ class Model(nn.Module):
 
     def forward(self, batch):
         batch_data, batch_fps, enc_inputs, dec_inputs = batch
-        x_batch, y_batch = batch_data
-        x_fps, _ = batch_fps
+        noisy_frags, denoised_frags = batch_data
+        noisy_fingerprint, _ = batch_fps
 
         # embed fragment sequence
-        enc_hidden, enc_outputs = self.encode(x_batch, enc_inputs)
+        enc_hidden, enc_outputs = self.encode(noisy_frags, enc_inputs)
 
         # autoencode fingerprint
-        y_fps_rec, autoenc_hidden = self.autoencoder(x_fps)
+        rec_fingerprint, autoenc_hidden = self.autoencoder(noisy_fingerprint)
         h = autoenc_hidden.unsqueeze(0).repeat(self.decoder_num_layers, 1, 1)
         if self.hparams.concat:
             h = torch.cat([h, enc_hidden], dim=-1)
 
         # decode fragment sequence
-        dec_logits = self.decode(y_batch, h, enc_outputs, dec_inputs)
-        return dec_logits, y_fps_rec
+        dec_logits = self.decode(denoised_frags, h, enc_outputs, dec_inputs)
+        return dec_logits, rec_fingerprint
