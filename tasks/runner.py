@@ -74,7 +74,6 @@ class TaskRunner:
 
         wrapper = self.wrapper_class(
             hparams=self.hparams,
-            root_dir=self.dirs.exp,
             dataset_name=self.dataset_name)
 
         wrapper = self.post_init_wrapper(wrapper)
@@ -102,7 +101,6 @@ class TaskRunner:
 
             model = self.wrapper_class.load_from_checkpoint(
                 checkpoint_path=ckpt_path.as_posix(),
-                root_dir=self.dirs.base,
                 dataset_name=self.dataset_name).model
 
             dataset = EvalDataset(

@@ -17,11 +17,10 @@ class Wrapper(pl.LightningModule):
     pretrain = True
     dataset_class = TrainDataset
 
-    def __init__(self, hparams, root_dir, dataset_name):
+    def __init__(self, hparams, dataset_name):
         super().__init__()
         self.hparams = HParams.load(hparams)
 
-        data_dir = root_dir.parent.parent / "data"
         self.dataset = self.dataset_class(hparams, dataset_name)
         self.vocab = self.dataset.vocab
         self.num_samples = len(self.dataset)

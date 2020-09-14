@@ -100,12 +100,13 @@ class TranslationTaskRunner(TaskRunner):
             pretrain_ckpt_path = get_latest_checkpoint_path(pretrain_ckpt_dir)
             pretrainer = PretrainingWrapper.load_from_checkpoint(
                 pretrain_ckpt_path.as_posix(),
-                root_dir=self.pretrain_path.parent.parent,
                 dataset_name=self.pretrain_path.parts[-3])
-            wrapper.model.embedder = pretrainer.model.embedder
-            wrapper.model.autoencoder = pretrainer.model.autoencoder
-            wrapper.model.encoder = pretrainer.model.encoder
-            wrapper.model.decoder.gru = pretrainer.model.decoder.gru
+            pretrainer.model.dataset.corrup_input = False
+            # wrapper.model.embedder = pretrainer.model.embedder
+            # wrapper.model.autoencoder = pretrainer.model.autoencoder
+            # wrapper.model.encoder = pretrainer.model.encoder
+            # wrapper.model.decoder.gru = pretrainer.model.decoder.gru
+            return pretrainer
         return wrapper
 
     def dump(self):
