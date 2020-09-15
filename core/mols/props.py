@@ -96,19 +96,20 @@ def get_fingerprint(mol):
     return AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, nBits=2048, useChirality=False)
 
 
-def similarity(mol1, mol2):
-    if isinstance(mol1, str):
-        mol1 = mol_from_smiles(mol1)
+def similarity(obj1, obj2):
+    if isinstance(obj1, str):
+        mol1 = mol_from_smiles(obj1)
+        if mol1 is None:
+            return 0.0
+        fp1 = get_fingerprint(mol1)
 
-    if isinstance(mol2, str):
-        mol2 = mol_from_smiles(mol2)
+    if isinstance(obj2, str):
+        mol2 = mol_from_smiles(obj2)
+        if mol2 is None:
+            return 0.0
+        fp2 = get_fingerprint(mol2)
 
-    if mol1 is None or mol2 is None:
-        return 0.0
-
-    fp1 = get_fingerprint(mol1)
-    fp2 = get_fingerprint(mol2)
-    return DataStructs.FingerprintSimilarity(fp1, fp2)
+    return DataStructs.FingerprintSimilarity(obj1, obj2)
 
 
 def bulk_tanimoto(mol, mols):

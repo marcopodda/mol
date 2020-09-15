@@ -41,23 +41,23 @@ class Wrapper(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         batch_data, mlp_targets, _, _ = batch
         encoder_batch, decoder_batch = batch_data
-        encoder_mlp_targets, decoder_mlp_targets = mlp_targets
+        props_targets, sims_targets = mlp_targets
 
         decoder_outputs, mlp_outputs, bag_of_frags = self.model(batch)
 
-        decoder_mlp_outputs, encoder_mlp_outputs = mlp_outputs
+        props_outputs, sims_outputs = mlp_outputs
         decoder_bag_of_frags, encoder_bag_of_frags = bag_of_frags
 
         decoder_ce_loss = F.cross_entropy(decoder_outputs, decoder_batch.target, ignore_index=0)
-        encoder_bce_loss = F.binary_cross_entropy_with_logits(encoder_mlp_outputs, encoder_mlp_targets)
-        decoder_bce_loss = F.binary_cross_entropy_with_logits(decoder_mlp_outputs, decoder_mlp_targets)
+        props_bce_loss = F.binary_cross_entropy_with_logits(props_outputs, props_targets)
+        sims_mse_loss = F.mse_loss(sims_outputs, sims_targets)
         cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags).mean(dim=0)
 
-        total_loss = decoder_ce_loss + encoder_bce_loss + decoder_bce_loss
+        total_loss = decoder_ce_loss + props_bce_loss + sims_mse_loss
         result = pl.TrainResult(minimize=total_loss)
         result.log('ce', decoder_ce_loss, prog_bar=True)
-        result.log('EL', encoder_bce_loss, prog_bar=True)
-        result.log('DL', decoder_bce_loss, prog_bar=True)
+        result.log('p', props_bce_loss, prog_bar=True)
+        result.log('s', sims_mse_loss, prog_bar=True)
         result.log('cs', cos_sim, prog_bar=True)
 
         return result

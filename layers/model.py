@@ -46,18 +46,18 @@ class Model(nn.Module):
             dim_attention_output=self.decoder_dim_attention_output,
             dropout=self.decoder_dropout)
 
-        self.encoder_mlp = MLP(
+        self.mlp_props = MLP(
             hparams=hparams,
-            dim_input=self.embedder_dim_output,
-            dim_hidden=64,
-            dim_output=1,
+            dim_input=self.embedder_dim_output*2,
+            dim_hidden=128,
+            dim_output=6,
             num_layers=2
         )
 
-        self.decoder_mlp =MLP(
+        self.mlp_sims =MLP(
             hparams=hparams,
-            dim_input=self.embedder_dim_output,
-            dim_hidden=64,
+            dim_input=self.embedder_dim_output*2,
+            dim_hidden=128,
             dim_output=1,
             num_layers=2
         )
@@ -106,7 +106,8 @@ class Model(nn.Module):
         # decode fragment sequence
         decoder_outputs, decoder_bag_of_frags = self.decode(decoder_batch, decoder_inputs, encoder_hidden, encoder_outputs)
 
-        encoder_mlp_outputs = self.encoder_mlp(encoder_bag_of_frags)
-        decoder_mlp_outputs = self.decoder_mlp(decoder_bag_of_frags)
+        bag_of_frags = torch.cat([encoder_bag_of_frags, decoder_bag_of_frags], dim=-1)
+        props_outputs = self.mlp_props(bag_of_frags)
+        sims_outputs = self.mlp_sims(bag_of_frags)
 
-        return decoder_outputs, (decoder_mlp_outputs, encoder_mlp_outputs), (decoder_bag_of_frags, encoder_bag_of_frags)
+        return decoder_outputs, (props_outputs, sims_outputs), (decoder_bag_of_frags, encoder_bag_of_frags)
