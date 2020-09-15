@@ -36,6 +36,5 @@ class PretrainingSampler(Sampler):
 
 
 class PretrainingTaskRunner(TaskRunner):
-    dataset_class = EvalDataset
     wrapper_class = PretrainingWrapper
     sampler_class = PretrainingSampler
