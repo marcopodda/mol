@@ -35,10 +35,9 @@ class BaseDataset:
             save_numpy(token.numpy(), path)
         return token
 
-    def _to_data(self, frags_smiles, is_target, corrupt=None):
-        corrupt = corrupt if corrupt is not None else self.corrupt_input
+    def _to_data(self, frags_smiles, corrupt=False):
         targets = self._get_target_sequence(frags_smiles)
-        if corrupt is True and is_target is False:
+        if corrupt is True:
             frags_smiles = self._corrupt_input_seq(frags_smiles)
 
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
@@ -52,11 +51,10 @@ class BaseDataset:
         data["target"] = targets
         return data
 
-    def _get_fingerprint(self, smiles, is_target, corrupt=None):
-        corrupt = corrupt if corrupt is not None else self.corrupt_input
+    def _get_fingerprint(self, smiles, corrupt=False):
         fingerprint = np.array(get_fingerprint(smiles), dtype=np.int)
 
-        if corrupt is True and is_target is False:
+        if corrupt is True:
             fingerprint = self._corrupt_input_fingerprint(fingerprint)
 
         fingerprint_tx = torch.FloatTensor(fingerprint).view(1, -1)
@@ -94,31 +92,23 @@ class BaseDataset:
         return self.data.shape[0]
 
     def __getitem__(self, index):
-        if np.random.rand() > 0.5:
-            target = 1
-            x_molecule, x_fingerprint = self.get_input_data(index)
-            y_molecule, y_fingerprint = self.get_target_data(index)
-        else:
-            target = 0
-            y_molecule, y_fingerprint = self.get_input_data(index)
-            x_molecule, x_fingerprint = self.get_target_data(index)
-        return x_molecule, x_fingerprint, y_molecule, y_fingerprint, torch.FloatTensor([[target]])
+        corrupt = bool(np.random.rand() > 0.5)
+        x_molecule, x_fingerprint = self.get_input_data(index, corrupt=corrupt)
+        y_molecule, y_fingerprint = self.get_target_data(index)
+        return x_molecule, x_fingerprint, y_molecule, y_fingerprint, torch.FloatTensor([[corrupt]])
 
     def get_dataset(self):
         data, vocab, max_length = load_data(self.dataset_name)
         return data, vocab, max_length
 
-    def get_input_data(self, index):
+    def get_input_data(self, index, corrupt=False):
         mol_data = self.data.iloc[index]
-        data = self._to_data(mol_data.frags, is_target=False)
-        fingerprint = self._get_fingerprint(mol_data.smiles, is_target=False)
+        data = self._to_data(mol_data.frags, corrupt=corrupt)
+        fingerprint = self._get_fingerprint(mol_data.smiles, corrupt=corrupt)
         return data, fingerprint
 
-    def get_target_data(self, index):
-        mol_data = self.data.iloc[index]
-        data = self._to_data(mol_data.frags, is_target=True)
-        fingerprint = self._get_fingerprint(mol_data.smiles, is_target=True)
-        return data, fingerprint
+    def get_target_data(self, index, corrupt=False):
+        return self.get_input_data(index, corrupt=corrupt)
 
 
 class TrainDataset(BaseDataset):

@@ -18,18 +18,17 @@ class TranslationTrainDataset(TrainDataset):
     def __len__(self):
         return self.data[self.data.is_x == True].shape[0]
 
-    def get_input_data(self, index):
-        smiles = self.data.iloc[index].target
-        mol_data = self.data[self.data.smiles == smiles].iloc[0]
-        data = self._to_data(mol_data.frags, is_target=False, corrupt=True)
-        fingerprint = self._get_fingerprint(mol_data.smiles, is_target=False, corrupt=True)
-        return data, fingerprint
+    def __getitem__(self, index):
+        corrupt = bool(np.random.rand() > 0.5)
+        x_molecule, x_fingerprint = self.get_input_data(index, corrupt=corrupt)
+        y_molecule, y_fingerprint = self.get_target_data(index)
+        return x_molecule, x_fingerprint, y_molecule, y_fingerprint, torch.FloatTensor([[corrupt]])
 
-    def get_target_data(self, index):
+    def get_target_data(self, index, corrupt=False):
         smiles = self.data.iloc[index].target
-        mol_data = self.data[self.data.smiles == smiles].iloc[0]
-        data = self._to_data(mol_data.frags, is_target=True)
-        fingerprint = self._get_fingerprint(mol_data.smiles, is_target=True)
+        mol_data = self.data[self.data.smiles==smiles].iloc[0]
+        data = self._to_data(mol_data.frags, corrupt=corrupt)
+        fingerprint = self._get_fingerprint(mol_data.smiles, corrupt=corrupt)
         return data, fingerprint
 
 
