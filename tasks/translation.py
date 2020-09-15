@@ -105,7 +105,7 @@ class TranslationTaskRunner(TaskRunner):
                 state_dict.pop('model.decoder.out.weight')
                 state_dict.pop('model.decoder.out.bias')
                 wrapper.load_state_dict(state_dict, strict=False)
-            wrapper.eval()
+            wrapper.eval(True)
             wrapper.model.decoder.out.train(True)
             return wrapper
         return wrapper
