@@ -120,8 +120,8 @@ class TranslationTaskRunner(TaskRunner):
                 state_dict.pop('model.decoder.out.bias')
                 wrapper.load_state_dict(state_dict, strict=False)
 
-            # for param in wrapper.model.parameters():
-            #     param.requires_grad = False
+            for param in wrapper.model.parameters():
+                param.requires_grad = False
 
             # for param in wrapper.model.autoencoder.parameters():
             #     param.requires_grad = True
@@ -129,8 +129,8 @@ class TranslationTaskRunner(TaskRunner):
             # for param in wrapper.model.decoder.attention.parameters():
             #     param.requires_grad = True
 
-            # wrapper.model.decoder.out.weight.requires_grad = True
-            # wrapper.model.decoder.out.bias.requires_grad = True
+            wrapper.model.decoder.out.weight.requires_grad = True
+            wrapper.model.decoder.out.bias.requires_grad = True
             return wrapper
 
         return wrapper
