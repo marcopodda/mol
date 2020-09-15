@@ -62,8 +62,6 @@ class TrainDataLoader(BaseDataLoader):
         frags_x_batch = collate_frags(frags_x)
         frags_y_batch = collate_frags(frags_y)
 
-        print(frags_x_batch.frags_batch)
-
         B = len(frags_x)
         L = self.dataset.max_length
         D = self.hparams.frag_dim_embed
