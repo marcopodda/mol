@@ -91,7 +91,6 @@ class BaseDataset:
         return self.data.shape[0]
 
     def __getitem__(self, index):
-        index = index % 10
         x_molecule, x_fingerprint = self.get_input_data(index)
         y_molecule, y_fingerprint = self.get_target_data(index)
         return x_molecule, x_fingerprint, y_molecule, y_fingerprint

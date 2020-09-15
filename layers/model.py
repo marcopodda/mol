@@ -38,10 +38,10 @@ class Model(nn.Module):
             dropout=self.encoder_dropout,
             dim_output=self.dim_output)
 
-        # self.autoencoder = Autoencoder(
-        #     hparams=hparams,
-        #     dim_input=self.autoencoder_dim_input,
-        #     dim_hidden=self.autoencoder_dim_hidden)
+        self.autoencoder = Autoencoder(
+            hparams=hparams,
+            dim_input=self.autoencoder_dim_input,
+            dim_hidden=self.autoencoder_dim_hidden)
 
         self.decoder = Decoder(
             hparams=hparams,
