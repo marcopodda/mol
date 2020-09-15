@@ -49,7 +49,7 @@ class BaseDataset:
         data = from_networkx(nx.disjoint_union_all(frag_graphs))
         frags_batch = [torch.LongTensor([i]).repeat(n) for (i, n) in enumerate(num_nodes)]
         data["frags_batch"] = torch.cat(frags_batch)
-        data["length"] = torch.LongTensor([[len(frags_list)]])
+        data["length"] = torch.LongTensor([[len(frags_list)+1]])
         data["target"] = targets
         return data
 
