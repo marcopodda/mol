@@ -39,8 +39,9 @@ class Sampler:
         embeddings = []
         for data in loader(batch_size=512):
             data = data.to(device)
-            x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
-            embedding = gnn(x, edge_index, edge_attr, batch)
+            x, edge_index, edge_attr, frags_batch, graph_batch = \
+                data.x, data.edge_index, data.edge_attr, data.frags_batch, data.batch
+            embedding, _ = gnn(x, edge_index, edge_attr, frags_batch, graph_batch)
             embeddings.append(embedding)
 
         embeddings = torch.cat(embeddings, dim=0)
@@ -93,7 +94,7 @@ class Sampler:
     def generate_batch(self, data, model, embedder, temp, greedy):
         frags, fingerprints, enc_inputs = data
 
-        enc_outputs, enc_hidden = model.encode(frags, enc_inputs)
+        enc_outputs, enc_hidden, _ = model.encode(frags, enc_inputs)
         batch_size = enc_outputs.size(0)
 
         _, hidden = model.autoencoder(fingerprints)
