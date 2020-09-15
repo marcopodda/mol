@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-from torch.nn import functional as F
 
 from core.hparams import HParams
 from layers.attention import Attention

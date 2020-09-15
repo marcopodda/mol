@@ -1,4 +1,3 @@
-import pandas as pd
 from pathlib import Path
 
 from moses import get_all_metrics
@@ -7,7 +6,6 @@ from core.datasets.utils import load_data
 from core.utils.serialization import load_yaml
 from core.mols.props import drd2, qed, logp, similarity
 from core.mols.utils import mol_from_smiles
-from tasks import PRETRAINING, TRANSLATION
 
 
 SR_KWARGS = {
@@ -51,7 +49,7 @@ def score(exp_dir, dataset_name, epoch=0):
 
     # novel samples
     data, _, _ = load_data(dataset_name)
-    training_set = set(data[data.is_train==True].smiles.tolist())
+    training_set = set(data[data.is_train is True].smiles.tolist())
     novel_samples = [y not in training_set for (_, y) in valid_samples]
     novelty_rate = len(novel_samples) / num_valid
 
@@ -89,7 +87,6 @@ def moses_score(exp_dir, epoch=0, n_jobs=40):
     samples_path = samples_dir / f"samples_{epoch}.yml"
     samples = load_yaml(samples_path)
 
-    ref_samples = [s["ref"] for s in samples]
     gen_samples = [s["gen"] for s in samples]
 
     scores = get_all_metrics(gen_samples, n_jobs=n_jobs)

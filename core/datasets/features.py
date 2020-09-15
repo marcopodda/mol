@@ -1,8 +1,6 @@
 import networkx as nx
-import torch
 
 from rdkit import Chem
-from rdkit.Chem import rdmolops
 
 from core.mols.utils import mol_from_smiles
 

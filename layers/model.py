@@ -1,11 +1,8 @@
-from argparse import Namespace
-
 import torch
 from torch import nn
 from torch.nn import functional as F
 
 from core.hparams import HParams
-from core.datasets.vocab import Tokens
 from core.datasets.features import ATOM_FDIM, BOND_FDIM, FINGERPRINT_DIM
 from layers.embedder import Embedder
 from layers.encoder import Encoder

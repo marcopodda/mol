@@ -5,6 +5,7 @@ from torch_geometric.data import Batch
 from core.hparams import HParams
 from core.datasets.datasets import TrainDataset, EvalDataset
 
+
 def collate_frags(data_list):
     cumsum = 0
 

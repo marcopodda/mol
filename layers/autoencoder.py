@@ -1,8 +1,8 @@
-import torch
 from torch import nn
 from torch.nn import functional as F
 
 from core.hparams import HParams
+
 
 class Autoencoder(nn.Module):
     def __init__(self, hparams, dim_input, dim_hidden):

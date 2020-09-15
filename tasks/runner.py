@@ -12,6 +12,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 
+
 class TaskRunner:
     wrapper_class = None
     sampler_class = None

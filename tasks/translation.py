@@ -1,25 +1,13 @@
 from pathlib import Path
 
 import torch
-from torch import nn
-from torch.nn import functional as F
-
-import pytorch_lightning as pl
-from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.callbacks import ModelCheckpoint
 
 from core.hparams import HParams
-from core.datasets.datasets import TrainDataset, EvalDataset
+from core.datasets.datasets import TrainDataset
 from core.datasets.loaders import EvalDataLoader
 from core.utils.serialization import load_yaml, save_yaml
-from core.utils.misc import get_latest_checkpoint_path, freeze
-from core.utils.os import get_or_create_dir
-from core.utils.scoring import score
-from layers.model import Model
-from layers.wrapper import Wrapper
 from layers.sampler import Sampler
-from tasks import TRANSLATION, PRETRAINING
-from tasks.pretraining import PretrainingWrapper
+from layers.wrapper import Wrapper
 from tasks.runner import TaskRunner
 
 
@@ -27,11 +15,11 @@ class TranslationTrainDataset(TrainDataset):
     corrupt_input = False
 
     def __len__(self):
-        return self.data[self.data.is_x==True].shape[0]
+        return self.data[self.data.is_x is True].shape[0]
 
     def get_target_data(self, index):
         smiles = self.data.iloc[index].target
-        mol_data = self.data[self.data.smiles==smiles].iloc[0]
+        mol_data = self.data[self.data.smiles == smiles].iloc[0]
         data = self._to_data(mol_data.frags, is_target=True)
         fingerprint = self._get_fingerprint(mol_data.smiles, is_target=True)
         return data, fingerprint
@@ -44,7 +32,7 @@ class TranslationWrapper(Wrapper):
 
 class TranslationSampler(Sampler):
     def prepare_data(self):
-        indices = self.dataset.data[self.dataset.data.is_val==True].index.tolist()
+        indices = self.dataset.data[self.dataset.data.is_val is True].index.tolist()
         loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
         smiles = self.dataset.data.iloc[indices].smiles.tolist()
         return smiles, loader(batch_size=self.hparams.translate_batch_size, shuffle=False)
@@ -102,7 +90,7 @@ class TranslationTaskRunner(TaskRunner):
 
             try:
                 wrapper.load_state_dict(state_dict)
-            except:
+            except Exception:
                 state_dict.pop('model.decoder.out.weight')
                 state_dict.pop('model.decoder.out.bias')
                 wrapper.load_state_dict(state_dict, strict=False)

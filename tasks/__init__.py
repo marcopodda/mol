@@ -1,2 +1,1 @@
-PRETRAINING = "pretraining"
-TRANSLATION = "translation"
+

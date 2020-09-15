@@ -2,14 +2,12 @@ import torch
 from torch import nn
 from torch.distributions import Categorical
 
-from rdkit import Chem
-# from moses.utils import disable_rdkit_log, enable_rdkit_log
-
 from core.hparams import HParams
 from core.datasets.datasets import VocabDataset
-from core.datasets.loaders import EvalDataLoader, VocabDataLoader
+from core.datasets.loaders import VocabDataLoader
 from core.datasets.vocab import Tokens
 from core.mols.split import join_fragments
+from core.mols.utils import mol_to_smiles, mols_from_smiles
 
 
 class Sampler:
@@ -79,9 +77,9 @@ class Sampler:
                 for ref, gen in zip(refs, gens):
                     if len(gen) >= 2:
                         try:
-                            frags = [Chem.MolFromSmiles(f) for f in gen]
+                            frags = mols_from_smiles(gen)
                             mol = join_fragments(frags)
-                            sample = Chem.MolToSmiles(mol)
+                            sample = mol_to_smiles(mol)
                             # print(f"Val: {smi} - Sampled: {sample}")
                             samples.append({"ref": ref,  "gen": sample})
                         except Exception:

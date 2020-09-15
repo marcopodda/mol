@@ -2,9 +2,6 @@ import ast
 
 import pandas as pd
 import numpy as np
-import warnings
-from pathlib import Path
-from collections import Counter
 
 from joblib import Parallel, delayed
 
@@ -14,7 +11,6 @@ from core.datasets.settings import DATA_DIR, CONFIG_DIR
 from core.datasets.vocab import Vocab, Tokens
 from core.mols.props import get_fingerprint
 from core.utils.misc import get_n_jobs
-from core.utils.os import get_or_create_dir
 from core.utils.serialization import load_yaml
 
 
@@ -69,8 +65,8 @@ def hamming_distance(x, y):
 
 def get_counts(data):
     n_jobs = get_n_jobs()
-    xs = data[data.is_x==True].smiles.tolist()
-    ys = data[data.is_y==True].smiles.tolist()
+    xs = data[data.is_x is True].smiles.tolist()
+    ys = data[data.is_y is True].smiles.tolist()
 
     P = Parallel(n_jobs=n_jobs, verbose=1)
     return P(delayed(hamming_distance)(x, y) for (x, y) in zip(xs, ys))
