@@ -99,14 +99,19 @@ class TranslationTaskRunner(TaskRunner):
         if self.pretrain_ckpt is not None:
             print("Loading pretrained model.")
             state_dict = torch.load(self.pretrain_ckpt)['state_dict']
+
             try:
                 wrapper.load_state_dict(state_dict)
             except:
                 state_dict.pop('model.decoder.out.weight')
                 state_dict.pop('model.decoder.out.bias')
                 wrapper.load_state_dict(state_dict, strict=False)
-            wrapper.eval(True)
-            wrapper.model.decoder.out.train(True)
+
+            for param in wrapper.model.parameters():
+                param.requires_grad = False
+
+            wrapper.model.decoder.out.weight.requires_grad = True
+            wrapper.model.decoder.out.bias.requires_grad = True
             return wrapper
         return wrapper
 

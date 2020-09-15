@@ -102,10 +102,11 @@ class Model(nn.Module):
         enc_outputs, enc_hidden = self.encode(noisy_frags, enc_inputs)
 
         # autoencode fingerprint
+        print(self.autoencoder.input.weight.requires_grad)
         rec_fingerprint, hidden = self.autoencoder(noisy_fingerprint)
         if self.hparams.concat:
             hidden = torch.cat([hidden, enc_hidden], dim=-1)
-
+        print(self.decoder.out.weight.requires_grad)
         # decode fragment sequence
         dec_logits = self.decode(denoised_frags, hidden, enc_outputs, dec_inputs)
         return dec_logits, rec_fingerprint
