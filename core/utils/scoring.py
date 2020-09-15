@@ -63,11 +63,15 @@ def score(exp_dir, dataset_name, epoch=0):
     improved = [is_improved(y, kw["prop_fun"], kw["improvement_thres"]) for (x, y) in valid_samples]
     success = [x and y for (x, y) in zip(similar, improved)]
 
+    # reconstructed
+    reconstructed = [x == y for (x, y) in valid_samples]
+
     return {
         "num_samples": len(samples),
         "similar": sum(similar) / num_valid,
         "improved": sum(improved) / num_valid,
         "success_rate": sum(success) / num_valid,
+        "recon_rate": sum(reconstructed) / num_valid,
         "valid": validity_rate,
         "unique": uniqueness_rate,
         "novel": novelty_rate,
