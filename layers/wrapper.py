@@ -10,6 +10,7 @@ import pytorch_lightning as pl
 from core.hparams import HParams
 from core.datasets.datasets import TrainDataset
 from core.datasets.loaders import TrainDataLoader
+from core.datasets.vocab import Tokens
 from layers.model import Model
 
 
@@ -23,9 +24,9 @@ class Wrapper(pl.LightningModule):
 
         self.dataset = self.dataset_class(hparams, dataset_name)
         self.vocab = self.dataset.vocab
-        self.num_samples = len(self.dataset)
+        self.dim_output = len(self.vocab) + len(Tokens)
 
-        self.model = Model(hparams, len(self.vocab), seq_length=self.dataset.max_length)
+        self.model = Model(hparams, dim_output=self.dim_output)
 
     def forward(self, data):
         return self.model(data)
@@ -48,9 +49,9 @@ class Wrapper(pl.LightningModule):
         targets = y_seqs.target.view(-1)
 
         dec_loss = F.cross_entropy(dec_logits, targets, ignore_index=0)
-        ae_loss = F.binary_cross_entropy_with_logits(y_fingerprints_rec, y_fingerprints)
+        ae_loss = 0 # F.binary_cross_entropy_with_logits(y_fingerprints_rec, y_fingerprints)
 
         result = pl.TrainResult(dec_loss + ae_loss)
         result.log('dec', dec_loss, prog_bar=True)
-        result.log('ae', ae_loss, prog_bar=True)
+        # result.log('ae', ae_loss, prog_bar=True)
         return result
