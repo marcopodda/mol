@@ -98,8 +98,8 @@ class TranslationTaskRunner(TaskRunner):
             for param in wrapper.model.parameters():
                 param.requires_grad = False
 
-            # for param in wrapper.model.autoencoder.parameters():
-            #     param.requires_grad = True
+            for param in wrapper.model.autoencoder.parameters():
+                param.requires_grad = True
 
             for param in wrapper.model.decoder.attention.parameters():
                 param.requires_grad = True
