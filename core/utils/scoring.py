@@ -97,7 +97,8 @@ def moses_score(exp_dir, epoch=0, n_jobs=40):
     samples_path = samples_dir / f"samples_{epoch}.yml"
     samples = load_yaml(samples_path)
 
+    ref_samples = [s["ref"] for s in samples]
     gen_samples = [s["gen"] for s in samples]
 
-    scores = get_all_metrics(gen_samples, n_jobs=n_jobs)
+    scores = get_all_metrics(gen_samples, test=ref_samples, n_jobs=n_jobs)
     return convert_metrics_dict(scores)
