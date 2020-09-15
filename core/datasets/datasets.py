@@ -74,7 +74,6 @@ class BaseDataset:
             delete_index = np.random.choice(len(seq)-1)
             seq.pop(delete_index)
 
-        mask_index = None
         if np.random.rand() > 0.25:
             mask_index = np.random.choice(len(seq)-1)
             seq[mask_index] = self.vocab.sample()
