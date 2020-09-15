@@ -107,5 +107,5 @@ class Model(nn.Module):
             hidden = torch.cat([hidden, enc_hidden], dim=-1)
 
         # decode fragment sequence
-        dec_logits = self.decode(denoised_frags, enc_hidden, enc_outputs, dec_inputs)
+        dec_logits = self.decode(denoised_frags, hidden, enc_outputs, dec_inputs)
         return dec_logits, rec_fingerprint
