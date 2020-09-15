@@ -38,10 +38,8 @@ class BaseDataset:
     def _to_data(self, frags_smiles, is_target, corrupt=None):
         corrupt = corrupt if corrupt is not None else self.corrupt_input
         targets = self._get_target_sequence(frags_smiles)
-        print("before", frags_smiles)
         if corrupt is True and is_target is False:
             frags_smiles = self._corrupt_input_seq(frags_smiles)
-        print("after", frags_smiles)
 
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]
