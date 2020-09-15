@@ -65,6 +65,8 @@ class BaseDataset:
         return padded_seq
 
     def _corrupt_input_seq(self, seq):
+        seq = seq[:]
+
         if np.random.rand() > 0.25 and len(seq) > 2:
             delete_index = np.random.choice(len(seq)-1)
             seq.pop(delete_index)

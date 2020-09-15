@@ -54,21 +54,22 @@ class GNN(nn.Module):
             if p.dim() > 1 and p.requires_grad:
                 nn.init.xavier_uniform_(p, gain=nn.init.calculate_gain('relu'))
 
-    def forward(self, x, edge_index, edge_attr, batch):
+    def forward(self, x, edge_index, edge_attr, frag_batch, graph_batch):
         for conv, bn in zip(self.convs, self.bns):
             x = conv(x, edge_index, edge_attr=edge_attr)
             x = bn(F.relu(x))
 
-        nodes_per_graph = scatter_add(torch.ones_like(batch), batch)
+        nodes_per_graph = scatter_add(torch.ones_like(frag_batch), frag_batch)
         nodes_per_graph = nodes_per_graph.repeat_interleave(nodes_per_graph.view(-1))
-        output = global_add_pool(x / nodes_per_graph.view(-1, 1), batch)
+        output = global_add_pool(x / nodes_per_graph.view(-1, 1), frag_batch)
+        graph_output = global_add_pool(x / nodes_per_graph.view(-1, 1), graph_batch)
 
         if self.readout is not None:
             output = self.readout(x)
 
         # nodes_per_graph = scatter_add(torch.ones_like(batch), batch)
         # output = global_add_pool(x, batch)
-        return output
+        return output, graph_output
 
 
 class Embedder(nn.Module):
@@ -94,8 +95,7 @@ class Embedder(nn.Module):
 
     def forward(self, data, mat, input=False):
         x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
-
-        x = self.gnn(x, edge_index, edge_attr, batch=data.frags_batch)
+        x, bag_of_fragments = self.gnn(x, edge_index, edge_attr, frag_batch=data.frags_batch, graph_batch=data.batch)
 
         cumsum = 0
         for i, l in enumerate(data.length):
@@ -104,4 +104,4 @@ class Embedder(nn.Module):
             mat[i, range(offset, offset + l), :] = seq_element
             cumsum += l
 
-        return mat
+        return mat, bag_of_fragments

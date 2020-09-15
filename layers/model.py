@@ -79,16 +79,16 @@ class Model(nn.Module):
         self.decoder_dropout = self.encoder_dropout
 
     def encode(self, batch, enc_inputs):
-        enc_inputs = self.embedder(batch, enc_inputs, input=False)
+        enc_inputs, bag_of_fragments = self.embedder(batch, enc_inputs, input=False)
         enc_inputs = F.dropout(enc_inputs, p=self.embedder_dropout, training=self.training)
         enc_outputs, enc_hidden = self.encoder(enc_inputs)
-        return enc_outputs, enc_hidden
+        return enc_outputs, enc_hidden, bag_of_fragments
 
     def decode(self, batch, enc_hidden, enc_outputs, dec_inputs):
-        dec_inputs = self.embedder(batch, dec_inputs, input=True)
+        dec_inputs, bag_of_fragments = self.embedder(batch, dec_inputs, input=True)
         dec_inputs = F.dropout(dec_inputs, p=self.embedder_dropout, training=self.training)
         dec_outputs = self.decoder(dec_inputs, enc_hidden, enc_outputs)
-        return dec_outputs
+        return dec_outputs, bag_of_fragments
 
     def forward(self, batch):
         batch_data, batch_fps, enc_inputs, dec_inputs = batch
@@ -96,7 +96,7 @@ class Model(nn.Module):
         noisy_fingerprint, _ = batch_fps
 
         # embed fragment sequence
-        enc_outputs, enc_hidden = self.encode(noisy_frags, enc_inputs)
+        enc_outputs, enc_hidden, enc_bag_of_fragments = self.encode(noisy_frags, enc_inputs)
 
         # autoencode fingerprint
         rec_fingerprint, hidden = self.autoencoder(noisy_fingerprint)
@@ -104,5 +104,5 @@ class Model(nn.Module):
             hidden = torch.cat([hidden, enc_hidden], dim=-1)
 
         # decode fragment sequence
-        dec_logits = self.decode(denoised_frags, hidden, enc_outputs, dec_inputs)
-        return dec_logits, rec_fingerprint
+        dec_logits, dec_bag_of_fragments = self.decode(denoised_frags, hidden, enc_outputs, dec_inputs)
+        return dec_logits, rec_fingerprint, enc_bag_of_fragments, dec_bag_of_fragments
