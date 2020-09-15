@@ -15,7 +15,7 @@ class TranslationTrainDataset(TrainDataset):
     corrupt_input = False
 
     def __len__(self):
-        return self.data[self.data.is_x is True].shape[0]
+        return self.data[self.data.is_x == True].shape[0]
 
     def get_target_data(self, index):
         smiles = self.data.iloc[index].target
@@ -32,7 +32,7 @@ class TranslationWrapper(Wrapper):
 
 class TranslationSampler(Sampler):
     def prepare_data(self):
-        indices = self.dataset.data[self.dataset.data.is_val is True].index.tolist()
+        indices = self.dataset.data[self.dataset.data.is_val == True].index.tolist()
         loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
         smiles = self.dataset.data.iloc[indices].smiles.tolist()
         return smiles, loader(batch_size=self.hparams.translate_batch_size, shuffle=False)

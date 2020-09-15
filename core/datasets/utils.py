@@ -65,8 +65,8 @@ def hamming_distance(x, y):
 
 def get_counts(data):
     n_jobs = get_n_jobs()
-    xs = data[data.is_x is True].smiles.tolist()
-    ys = data[data.is_y is True].smiles.tolist()
+    xs = data[data.is_x == True].smiles.tolist()
+    ys = data[data.is_y == True].smiles.tolist()
 
     P = Parallel(n_jobs=n_jobs, verbose=1)
     return P(delayed(hamming_distance)(x, y) for (x, y) in zip(xs, ys))
