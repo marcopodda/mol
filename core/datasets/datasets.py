@@ -15,8 +15,6 @@ from core.utils.serialization import load_numpy, save_numpy
 
 
 class BaseDataset:
-    corrupt_input = None
-
     def __init__(self, hparams, dataset_name):
         self.hparams = HParams.load(hparams)
         self.dataset_name = dataset_name
@@ -116,8 +114,6 @@ class BaseDataset:
 
 
 class TrainDataset(BaseDataset):
-    corrupt_input = True
-
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()
         data = data[data.is_train == True].reset_index(drop=True)
@@ -125,8 +121,6 @@ class TrainDataset(BaseDataset):
 
 
 class EvalDataset(BaseDataset):
-    corrupt_input = False
-
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()
         data = data[data.is_val == True].reset_index(drop=True)

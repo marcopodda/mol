@@ -84,30 +84,29 @@ class Model(nn.Module):
         self.decoder_dim_output = self.dim_output
         self.decoder_dropout = self.encoder_dropout
 
-    def encode(self, input_frags, enc_inputs):
-        enc_inputs, bag_of_frags = self.embedder(input_frags, enc_inputs, input=False)
-        enc_inputs = F.dropout(enc_inputs, p=self.embedder_dropout, training=self.training)
-        enc_outputs, enc_hidden = self.encoder(enc_inputs)
-        return enc_outputs, enc_hidden, bag_of_frags
+    def encode(self, input_frags, encoder_inputs):
+        encoder_inputs, bag_of_frags = self.embedder(input_frags, encoder_inputs, input=False)
+        encoder_inputs = F.dropout(encoder_inputs, p=self.embedder_dropout, training=self.training)
+        encoder_outputs, encoder_hidden = self.encoder(encoder_inputs)
+        return encoder_outputs, encoder_hidden, bag_of_frags
 
-    def decode(self, output_frags, dec_inputs, enc_hidden, enc_outputs):
-        dec_inputs, bag_of_frags = self.embedder(output_frags, dec_inputs, input=True)
-        dec_inputs = F.dropout(dec_inputs, p=self.embedder_dropout, training=self.training)
-        dec_outputs = self.decoder(dec_inputs, enc_hidden, enc_outputs)
-        return dec_outputs, bag_of_frags
+    def decode(self, output_frags, decoder_inputs, encoder_hidden, encoder_outputs):
+        decoder_inputs, bag_of_frags = self.embedder(output_frags, decoder_inputs, input=True)
+        decoder_inputs = F.dropout(decoder_inputs, p=self.embedder_dropout, training=self.training)
+        decoder_outputs = self.decoder(decoder_inputs, encoder_hidden, encoder_outputs)
+        return decoder_outputs, bag_of_frags
 
     def forward(self, batch):
-        batch_data, _, enc_inputs, dec_inputs = batch
-        input_frags, output_frags = batch_data
+        batch_data, _, encoder_inputs, decoder_inputs = batch
+        encoder_batch, decoder_batch = batch_data
 
         # embed fragment sequence
-        enc_outputs, enc_hidden, enc_bag_of_frags = self.encode(input_frags, enc_inputs)
+        encoder_outputs, encoder_hidden, encoder_bag_of_frags = self.encode(encoder_batch, encoder_inputs)
 
         # decode fragment sequence
-        dec_outputs, dec_bag_of_frags = self.decode(output_frags, dec_inputs, enc_hidden, enc_outputs)
+        decoder_outputs, decoder_bag_of_frags = self.decode(decoder_batch, decoder_inputs, encoder_hidden, encoder_outputs)
 
-        enc_mlp_outputs = self.encoder_mlp(enc_bag_of_frags)
-        dec_mlp_outputs = self.decoder_mlp(dec_bag_of_frags)
-        cos_sim = F.cosine_similarity(enc_bag_of_frags, dec_bag_of_frags).mean()
+        encoder_mlp_outputs = self.encoder_mlp(encoder_bag_of_frags)
+        decoder_mlp_outputs = self.decoder_mlp(decoder_bag_of_frags)
 
-        return dec_outputs, dec_mlp_outputs, enc_mlp_outputs, cos_sim
+        return decoder_outputs, (decoder_mlp_outputs, encoder_mlp_outputs), (decoder_bag_of_frags, encoder_bag_of_frags)

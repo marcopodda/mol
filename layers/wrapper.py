@@ -39,16 +39,25 @@ class Wrapper(pl.LightningModule):
         return self.training_loader
 
     def training_step(self, batch, batch_idx):
-        (_, y_seqs), (enc_targets, dec_targets), _, _ = batch
-        dec_outputs, dec_mlp_outputs, enc_mlp_outputs, cos_sim = self.model(batch)
-        dec_loss = F.cross_entropy(dec_outputs, y_seqs.target.view(-1), ignore_index=0)
-        bce_enc_loss = F.binary_cross_entropy_with_logits(enc_mlp_outputs, enc_targets)
-        bce_dec_loss = F.binary_cross_entropy_with_logits(dec_mlp_outputs, dec_targets)
+        batch_data, mlp_targets, _, _ = batch
+        encoder_batch, decoder_batch = batch_data
+        encoder_mlp_targets, decoder_mlp_targets = mlp_targets
 
-        result = pl.TrainResult(minimize=dec_loss + bce_enc_loss + bce_dec_loss)
-        result.log('ce', dec_loss, prog_bar=True)
-        result.log('EL', bce_enc_loss, prog_bar=True)
-        result.log('DL', bce_dec_loss, prog_bar=True)
+        decoder_outputs, mlp_outputs, bag_of_frags = self.model(batch)
+
+        decoder_mlp_outputs, encoder_mlp_outputs = mlp_outputs
+        decoder_bag_of_frags, encoder_bag_of_frags = bag_of_frags
+
+        decoder_ce_loss = F.cross_entropy(decoder_outputs, decoder_batch.target, ignore_index=0)
+        encoder_bce_loss = F.binary_cross_entropy_with_logits(encoder_mlp_outputs, encoder_mlp_targets)
+        decoder_bce_loss = F.binary_cross_entropy_with_logits(decoder_mlp_outputs, decoder_mlp_targets)
+        cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags).mean(dim=0)
+
+        total_loss = decoder_ce_loss + encoder_bce_loss + decoder_bce_loss
+        result = pl.TrainResult(minimize=total_loss)
+        result.log('ce', decoder_ce_loss, prog_bar=True)
+        result.log('EL', encoder_bce_loss, prog_bar=True)
+        result.log('DL', decoder_bce_loss, prog_bar=True)
         result.log('cs', cos_sim, prog_bar=True)
 
         return result

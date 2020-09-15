@@ -2,6 +2,9 @@ import numpy as np
 from pathlib import Path
 
 import torch
+from torch.nn import functional as F
+
+import pytorch_lightning as pl
 
 from core.hparams import HParams
 from core.datasets.datasets import TrainDataset
@@ -13,8 +16,6 @@ from tasks.runner import TaskRunner
 
 
 class TranslationTrainDataset(TrainDataset):
-    corrupt_input = False
-
     def __len__(self):
         return self.data[self.data.is_x == True].shape[0]
 
@@ -28,6 +29,30 @@ class TranslationTrainDataset(TrainDataset):
 class TranslationWrapper(Wrapper):
     pretrain = False
     dataset_class = TranslationTrainDataset
+
+    def training_step(self, batch, batch_idx):
+        batch_data, mlp_targets, _, _ = batch
+        encoder_batch, decoder_batch = batch_data
+        encoder_mlp_targets, decoder_mlp_targets = mlp_targets
+
+        decoder_outputs, mlp_outputs, bag_of_frags = self.model(batch)
+
+        decoder_mlp_outputs, encoder_mlp_outputs = mlp_outputs
+        decoder_bag_of_frags, encoder_bag_of_frags = bag_of_frags
+
+        decoder_ce_loss = F.cross_entropy(decoder_outputs, decoder_batch.target, ignore_index=0)
+        encoder_bce_loss = F.binary_cross_entropy_with_logits(encoder_mlp_outputs, encoder_mlp_targets)
+        decoder_bce_loss = F.binary_cross_entropy_with_logits(decoder_mlp_outputs, decoder_mlp_targets)
+        bag_of_frags_mse_loss = F.mse_loss(decoder_bag_of_frags, encoder_bag_of_frags)
+
+        total_loss = decoder_ce_loss + encoder_bce_loss + decoder_bce_loss + bag_of_frags_mse_loss
+        result = pl.TrainResult(minimize=total_loss)
+        result.log('ce', decoder_ce_loss, prog_bar=True)
+        result.log('EL', encoder_bce_loss, prog_bar=True)
+        result.log('DL', decoder_bce_loss, prog_bar=True)
+        result.log('mse', bag_of_frags_mse_loss, prog_bar=True)
+
+        return result
 
 
 class TranslationSampler(Sampler):

@@ -17,7 +17,7 @@ from core.utils.serialization import load_yaml
 def pad(vec, length, pad_symbol=Tokens.PAD.value):
     padded = np.ones(length) * pad_symbol
     padded[:len(vec)] = vec
-    return torch.LongTensor([padded])
+    return torch.LongTensor(padded)
 
 
 def load_dataset_info(name):
