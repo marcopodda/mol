@@ -92,7 +92,7 @@ class Sampler:
         return samples
 
     def generate_batch(self, data, model, embedder, temp, greedy):
-        frags, fingerprints, enc_inputs = data
+        frags, enc_inputs = data
 
         enc_outputs, hidden, _ = model.encode(frags, enc_inputs)
         batch_size = enc_outputs.size(0)
