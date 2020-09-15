@@ -45,7 +45,7 @@ class Sampler:
             embeddings.append(embedding)
 
         embeddings = torch.cat(embeddings, dim=0)
-        embeddings = torch.cat([tokens, embeddings])
+        embeddings = torch.cat([tokens, embeddings], dim=0)
         # torch.save(embeddings.cpu(), "embeddings.pt")
         embedder = nn.Embedding.from_pretrained(embeddings)
         return embedder
@@ -116,7 +116,7 @@ class Sampler:
                 probs = torch.softmax(logits / temp, dim=-1)
                 indexes = Categorical(probs=probs).sample()
 
-            if it > 0:
+            if it != 0:
                 prev = samples[:, it-1]
                 mask = prev < len(Tokens)
                 indexes[mask] = Tokens.PAD.value

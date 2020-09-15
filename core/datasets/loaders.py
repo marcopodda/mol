@@ -92,7 +92,7 @@ class EvalDataLoader(BaseDataLoader):
         L = self.dataset.max_length
         D = self.hparams.frag_dim_embed
 
-        lengths = [m.length.item() for m in frags_batch]
+        lengths = [m.length for m in frags_batch]
         enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos, fill_at=lengths)
 
         x_fingerprints = torch.cat(fps_x, dim=0)
@@ -105,12 +105,12 @@ class VocabDataLoader:
         self.hparams = HParams.load(hparams)
         self.dataset = dataset
 
-    def __call__(self, shuffle=False, batch_size=None):
+    def __call__(self, batch_size=None):
         batch_size = batch_size or self.hparams.batch_size
         return DataLoader(
             dataset=self.dataset,
             collate_fn=lambda b: Batch.from_data_list(b),
             batch_size=batch_size,
-            shuffle=shuffle,
+            shuffle=False,
             pin_memory=True,
             num_workers=self.hparams.num_workers)
