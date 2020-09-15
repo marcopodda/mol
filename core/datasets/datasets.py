@@ -133,8 +133,8 @@ class EvalDataset(BaseDataset):
         return data, vocab, max_length
 
     def __getitem__(self, index):
-        x_molecule, x_fingerprint = self.get_input_data(index)
-        return x_molecule, x_fingerprint
+        x_molecule = self.get_input_data(index, corrupt=False)
+        return x_molecule
 
 
 class VocabDataset:
