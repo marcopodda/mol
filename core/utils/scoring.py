@@ -75,7 +75,7 @@ def score(exp_dir, dataset_name, epoch=0):
         "similar": sum(similar) / num_valid,
         "avg_similarity": (np.mean(similarities), np.std(similarities)),
         "improved": sum(improved) / num_valid,
-        "avg_improvement": (np.mean(improvement), np.std(similarities)),
+        "avg_improvement": (np.mean(improvement), np.std(improvement)),
         "success_rate": sum(success) / num_valid,
         "recon_rate": sum(reconstructed) / num_valid,
         "valid": validity_rate,
