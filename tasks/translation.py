@@ -110,9 +110,9 @@ class TranslationTaskRunner(TaskRunner):
             for param in wrapper.model.parameters():
                 param.requires_grad = False
 
-            wrapper.decoder.attention.attn.weight.requires_grad = True
-            wrapper.decoder.attention.attn.bias.requires_grad = True
-            wrapper.decoder.attention.a.weight.requires_grad = True
+            wrapper.model.decoder.attention.attn.weight.requires_grad = True
+            wrapper.model.decoder.attention.attn.bias.requires_grad = True
+            wrapper.model.decoder.attention.v.requires_grad = True
             wrapper.model.decoder.out.weight.requires_grad = True
             wrapper.model.decoder.out.bias.requires_grad = True
             return wrapper
