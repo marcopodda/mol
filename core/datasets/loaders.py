@@ -8,9 +8,9 @@ from core.datasets.datasets import TrainDataset, EvalDataset
 def collate_frags(data_list):
     cumsum = 0
 
-    for i, frag_x in enumerate(data_list):
-        inc = (frag_x.frags_batch.numel() + 1)
-        frag_x.frags_batch += cumsum
+    for i, data in enumerate(data_list):
+        inc = (data.frags_batch.max() + 1)
+        data.frags_batch += cumsum
         cumsum += inc
 
     return Batch.from_data_list(data_list)
@@ -61,6 +61,8 @@ class TrainDataLoader(BaseDataLoader):
 
         frags_x_batch = collate_frags(frags_x)
         frags_y_batch = collate_frags(frags_y)
+
+        print(frags_x_batch.frags_batch)
 
         B = len(frags_x)
         L = self.dataset.max_length
