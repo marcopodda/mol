@@ -49,6 +49,7 @@ class TranslationWrapper(Wrapper):
         encoder_bce_loss = F.binary_cross_entropy_with_logits(encoder_mlp_outputs, encoder_mlp_targets)
         decoder_bce_loss = F.binary_cross_entropy_with_logits(decoder_mlp_outputs, decoder_mlp_targets)
         bag_of_frags_mse_loss = F.mse_loss(decoder_bag_of_frags, encoder_bag_of_frags)
+        cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags)
 
         total_loss = decoder_ce_loss + encoder_bce_loss + decoder_bce_loss + bag_of_frags_mse_loss
         result = pl.TrainResult(minimize=total_loss)
@@ -56,6 +57,7 @@ class TranslationWrapper(Wrapper):
         result.log('EL', encoder_bce_loss, prog_bar=True)
         result.log('DL', decoder_bce_loss, prog_bar=True)
         result.log('mse', bag_of_frags_mse_loss, prog_bar=True)
+        result.log('cs', cos_sim, prog_bar=True)
 
         return result
 
