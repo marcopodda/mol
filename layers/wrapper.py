@@ -39,19 +39,16 @@ class Wrapper(pl.LightningModule):
         return self.training_loader
 
     def training_step(self, batch, batch_idx):
-        (_, y_seqs), (_, y_fingerprints), _, _, bce_targets = batch
-        dec_logits, y_fingerprints_rec, enc_bof, dec_bof, outputs = self.model(batch)
-        targets = y_seqs.target.view(-1)
+        (_, y_seqs), (enc_targets, dec_targets), _, _ = batch
+        dec_outputs, dec_mlp_outputs, enc_mlp_outputs, cos_sim = self.model(batch)
+        dec_loss = F.cross_entropy(dec_outputs, y_seqs.target.view(-1), ignore_index=0)
+        bce_enc_loss = F.binary_cross_entropy_with_logits(enc_mlp_outputs, enc_targets)
+        bce_dec_loss = F.binary_cross_entropy_with_logits(dec_mlp_outputs, dec_targets)
 
-        dec_loss = F.cross_entropy(dec_logits, targets, ignore_index=0)
-        dae_loss = F.binary_cross_entropy_with_logits(y_fingerprints_rec, y_fingerprints)
-        bce_loss = F.binary_cross_entropy_with_logits(outputs, bce_targets)
-        cs = F.cosine_similarity(dec_bof, enc_bof).mean(dim=0)
-
-        result = pl.TrainResult(minimize=dec_loss + dae_loss + bce_loss)
-        result.log('dec', dec_loss, prog_bar=True)
-        result.log('dae', dae_loss, prog_bar=True)
-        result.log('bce', bce_loss, prog_bar=True)
-        result.log('cs', cs, prog_bar=True)
+        result = pl.TrainResult(minimize=dec_loss + bce_enc_loss + bce_dec_loss)
+        result.log('ce', dec_loss, prog_bar=True)
+        result.log('EL', bce_enc_loss, prog_bar=True)
+        result.log('DL', bce_dec_loss, prog_bar=True)
+        result.log('cs', cos_sim, prog_bar=True)
 
         return result

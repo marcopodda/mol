@@ -58,7 +58,7 @@ class TrainDataLoader(BaseDataLoader):
             raise Exception("Works only for TrainDataset")
 
     def collate(self, data_list):
-        frags_x, fps_x, frags_y, fps_y, targets = zip(*data_list)
+        frags_x, x_targets, frags_y, y_targets = zip(*data_list)
 
         frags_x_batch = collate_frags(frags_x)
         frags_y_batch = collate_frags(frags_y)
@@ -69,14 +69,12 @@ class TrainDataLoader(BaseDataLoader):
 
         lengths = [m.length for m in frags_x]
         enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos, fill_at=lengths)
-
-        x_fingerprints = torch.cat(fps_x, dim=0)
-        y_fingerprints = torch.cat(fps_y, dim=0)
-
         dec_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.sos, fill_at=0)
-        targets = torch.cat(targets, dim=0)
 
-        return (frags_x_batch, frags_y_batch), (x_fingerprints, y_fingerprints), enc_inputs, dec_inputs, targets
+        x_targets = torch.cat(x_targets, dim=0)
+        y_targets = torch.cat(y_targets, dim=0)
+
+        return (frags_x_batch, frags_y_batch), (x_targets, y_targets), enc_inputs, dec_inputs
 
 
 class EvalDataLoader(BaseDataLoader):
@@ -85,7 +83,7 @@ class EvalDataLoader(BaseDataLoader):
             raise Exception("Works only for EvalDataset")
 
     def collate(self, data_list):
-        frags_batch, fps_x = zip(*data_list)
+        frags_batch = data_list
 
         frags_x_batch = collate_frags(frags_batch)
 
@@ -96,9 +94,7 @@ class EvalDataLoader(BaseDataLoader):
         lengths = [m.length for m in frags_batch]
         enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos, fill_at=lengths)
 
-        x_fingerprints = torch.cat(fps_x, dim=0)
-
-        return frags_x_batch, x_fingerprints, enc_inputs
+        return frags_x_batch, enc_inputs
 
 
 class VocabDataLoader:

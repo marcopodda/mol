@@ -94,12 +94,8 @@ class Sampler:
     def generate_batch(self, data, model, embedder, temp, greedy):
         frags, fingerprints, enc_inputs = data
 
-        enc_outputs, enc_hidden, _ = model.encode(frags, enc_inputs)
+        enc_outputs, hidden, _ = model.encode(frags, enc_inputs)
         batch_size = enc_outputs.size(0)
-
-        _, hidden = model.autoencoder(fingerprints)
-        if self.hparams.concat:
-            hidden = torch.cat([hidden, enc_hidden], dim=-1)
 
         x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1)
 

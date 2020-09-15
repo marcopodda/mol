@@ -36,11 +36,6 @@ class Model(nn.Module):
             dropout=self.encoder_dropout,
             dim_output=self.dim_output)
 
-        self.autoencoder = Autoencoder(
-            hparams=hparams,
-            dim_input=self.autoencoder_dim_input,
-            dim_hidden=self.autoencoder_dim_hidden)
-
         self.decoder = Decoder(
             hparams=hparams,
             num_layers=self.decoder_num_layers,
@@ -51,7 +46,15 @@ class Model(nn.Module):
             dim_attention_output=self.decoder_dim_attention_output,
             dropout=self.decoder_dropout)
 
-        self.mlp = MLP(
+        self.encoder_mlp = MLP(
+            hparams=hparams,
+            dim_input=self.embedder_dim_output,
+            dim_hidden=64,
+            dim_output=1,
+            num_layers=2
+        )
+
+        self.decoder_mlp =MLP(
             hparams=hparams,
             dim_input=self.embedder_dim_output,
             dim_hidden=64,
@@ -73,13 +76,7 @@ class Model(nn.Module):
         self.encoder_dim_state = self.hparams.rnn_dim_state
         self.encoder_dropout = self.hparams.rnn_dropout
 
-        self.autoencoder_dim_input = FINGERPRINT_DIM
-        self.autoencoder_dim_hidden = self.hparams.autoencoder_dim_hidden
-
-        self.decoder_dim_state = self.autoencoder_dim_hidden
-        if self.hparams.concat:
-            self.decoder_dim_state += self.encoder_dim_state
-
+        self.decoder_dim_state = self.encoder_dim_state
         self.decoder_num_layers = self.hparams.rnn_num_layers
         self.decoder_dim_input = self.encoder_dim_input + self.encoder_dim_state
         self.decoder_dim_attention_input = self.decoder_dim_state + self.encoder_dim_state
@@ -87,32 +84,30 @@ class Model(nn.Module):
         self.decoder_dim_output = self.dim_output
         self.decoder_dropout = self.encoder_dropout
 
-    def encode(self, batch, enc_inputs):
-        enc_inputs, bag_of_fragments = self.embedder(batch, enc_inputs, input=False)
+    def encode(self, input_frags, enc_inputs):
+        enc_inputs, bag_of_frags = self.embedder(input_frags, enc_inputs, input=False)
         enc_inputs = F.dropout(enc_inputs, p=self.embedder_dropout, training=self.training)
         enc_outputs, enc_hidden = self.encoder(enc_inputs)
-        return enc_outputs, enc_hidden, bag_of_fragments
+        return enc_outputs, enc_hidden, bag_of_frags
 
-    def decode(self, batch, enc_hidden, enc_outputs, dec_inputs):
-        dec_inputs, bag_of_fragments = self.embedder(batch, dec_inputs, input=True)
+    def decode(self, output_frags, dec_inputs, enc_hidden, enc_outputs):
+        dec_inputs, bag_of_frags = self.embedder(output_frags, dec_inputs, input=True)
         dec_inputs = F.dropout(dec_inputs, p=self.embedder_dropout, training=self.training)
         dec_outputs = self.decoder(dec_inputs, enc_hidden, enc_outputs)
-        return dec_outputs, bag_of_fragments
+        return dec_outputs, bag_of_frags
 
     def forward(self, batch):
-        batch_data, batch_fps, enc_inputs, dec_inputs, targets = batch
-        noisy_frags, denoised_frags = batch_data
-        noisy_fingerprint, _ = batch_fps
+        batch_data, _, enc_inputs, dec_inputs = batch
+        input_frags, output_frags = batch_data
 
         # embed fragment sequence
-        enc_outputs, enc_hidden, enc_bag_of_fragments = self.encode(noisy_frags, enc_inputs)
-
-        # autoencode fingerprint
-        rec_fingerprint, hidden = self.autoencoder(noisy_fingerprint)
-        if self.hparams.concat:
-            hidden = torch.cat([hidden, enc_hidden], dim=-1)
+        enc_outputs, enc_hidden, enc_bag_of_frags = self.encode(input_frags, enc_inputs)
 
         # decode fragment sequence
-        dec_logits, dec_bag_of_fragments = self.decode(denoised_frags, hidden, enc_outputs, dec_inputs)
-        outputs = self.mlp(dec_bag_of_fragments)
-        return dec_logits, rec_fingerprint, enc_bag_of_fragments, dec_bag_of_fragments, outputs
+        dec_outputs, dec_bag_of_frags = self.decode(output_frags, dec_inputs, enc_hidden, enc_outputs)
+
+        enc_mlp_outputs = self.encoder_mlp(enc_bag_of_frags)
+        dec_mlp_outputs = self.decoder_mlp(dec_bag_of_frags)
+        cos_sim = F.cosine_similarity(enc_bag_of_frags, dec_bag_of_frags).mean()
+
+        return dec_outputs, dec_mlp_outputs, enc_mlp_outputs, cos_sim

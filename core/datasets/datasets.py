@@ -92,22 +92,26 @@ class BaseDataset:
         return self.data.shape[0]
 
     def __getitem__(self, index):
-        corrupt = bool(np.random.rand() > 0.5)
-        x_molecule, x_fingerprint = self.get_input_data(index, corrupt=corrupt)
-        y_molecule, y_fingerprint = self.get_target_data(index)
-        return x_molecule, x_fingerprint, y_molecule, y_fingerprint, torch.FloatTensor([[corrupt]])
+        corrupt_input = bool(np.random.rand() > 0.5)
+        x_molecule = self.get_input_data(index, corrupt=corrupt_input)
+        x_target =  torch.FloatTensor([[corrupt_input]])
+
+        corrupt_target = bool(np.random.rand() > 0.5)
+        y_molecule = self.get_target_data(index, corrupt=corrupt_target)
+        y_target = torch.FloatTensor([[corrupt_target]])
+
+        return x_molecule, x_target, y_molecule, y_target
 
     def get_dataset(self):
         data, vocab, max_length = load_data(self.dataset_name)
         return data, vocab, max_length
 
-    def get_input_data(self, index, corrupt=False):
+    def get_input_data(self, index, corrupt):
         mol_data = self.data.iloc[index]
         data = self._to_data(mol_data.frags, corrupt=corrupt)
-        fingerprint = self._get_fingerprint(mol_data.smiles, corrupt=corrupt)
-        return data, fingerprint
+        return data
 
-    def get_target_data(self, index, corrupt=False):
+    def get_target_data(self, index, corrupt):
         return self.get_input_data(index, corrupt=corrupt)
 
 
