@@ -1,3 +1,4 @@
+import numpy as np
 from pathlib import Path
 
 from moses import get_all_metrics
@@ -59,8 +60,11 @@ def score(exp_dir, dataset_name, epoch=0):
 
     # success rate
     kw = SR_KWARGS[dataset_name].copy()
-    similar = [is_similar(x, y, kw["similarity_thres"]) for (x, y) in valid_samples]
-    improved = [is_improved(y, kw["prop_fun"], kw["improvement_thres"]) for (x, y) in valid_samples]
+    similarities = [similarity(x, y) for (x, y) in valid_samples]
+    similar = [s > kw["similarity_thres"] for s in similarities]
+    fun = kw["prop_fun"]
+    improvement = [fun(y) - fun(x) for (x, y) in valid_samples]
+    improved = [fun(y) > kw["improvement_thres"] for (x, y) in valid_samples]
     success = [x and y for (x, y) in zip(similar, improved)]
 
     # reconstructed
@@ -69,7 +73,9 @@ def score(exp_dir, dataset_name, epoch=0):
     return {
         "num_samples": len(samples),
         "similar": sum(similar) / num_valid,
+        "avg_similarity": (np.mean(similarities), np.std(similarities)),
         "improved": sum(improved) / num_valid,
+        "avg_improvement": (np.mean(improvement), np.std(similarities)),
         "success_rate": sum(success) / num_valid,
         "recon_rate": sum(reconstructed) / num_valid,
         "valid": validity_rate,
