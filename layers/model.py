@@ -114,5 +114,5 @@ class Model(nn.Module):
 
         # decode fragment sequence
         dec_logits, dec_bag_of_fragments = self.decode(denoised_frags, hidden, enc_outputs, dec_inputs)
-        outputs = self.mlp(enc_bag_of_fragments)
+        outputs = self.mlp(dec_bag_of_fragments)
         return dec_logits, rec_fingerprint, enc_bag_of_fragments, dec_bag_of_fragments, outputs

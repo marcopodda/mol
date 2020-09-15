@@ -20,9 +20,12 @@ class TranslationTrainDataset(TrainDataset):
 
     def __getitem__(self, index):
         corrupt = bool(np.random.rand() > 0.5)
-        x_molecule, x_fingerprint = self.get_input_data(index, corrupt=corrupt)
-        y_molecule, y_fingerprint = self.get_target_data(index)
+        x_molecule, x_fingerprint = self.get_input_data(index)
+        y_molecule, y_fingerprint = self.get_target_data(index, corrupt=corrupt)
         return x_molecule, x_fingerprint, y_molecule, y_fingerprint, torch.FloatTensor([[corrupt]])
+
+    def get_target_data(self, index, corrupt=False):
+        return self.get_target_data(index, corrupt=corrupt)
 
     def get_target_data(self, index, corrupt=False):
         smiles = self.data.iloc[index].target
