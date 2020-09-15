@@ -94,9 +94,15 @@ class BaseDataset:
         return self.data.shape[0]
 
     def __getitem__(self, index):
-        x_molecule, x_fingerprint = self.get_input_data(index)
-        y_molecule, y_fingerprint = self.get_target_data(index)
-        return x_molecule, x_fingerprint, y_molecule, y_fingerprint
+        if np.random.rand() > 0.5:
+            target = 1
+            x_molecule, x_fingerprint = self.get_input_data(index)
+            y_molecule, y_fingerprint = self.get_target_data(index)
+        else:
+            target = 0
+            y_molecule, y_fingerprint = self.get_input_data(index)
+            x_molecule, x_fingerprint = self.get_target_data(index)
+        return x_molecule, x_fingerprint, y_molecule, y_fingerprint, torch.FloatTensor([[target]])
 
     def get_dataset(self):
         data, vocab, max_length = load_data(self.dataset_name)

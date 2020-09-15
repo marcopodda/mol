@@ -19,12 +19,6 @@ class TranslationTrainDataset(TrainDataset):
         return self.data[self.data.is_x == True].shape[0]
 
     def get_input_data(self, index):
-        # if np.random.rand() > 0.5:
-        #     mol_data = self.data.iloc[index]
-        #     data = self._to_data(mol_data.frags, is_target=False)
-        #     fingerprint = self._get_fingerprint(mol_data.smiles, is_target=False)
-        #     return data, fingerprint
-        # else:
         smiles = self.data.iloc[index].target
         mol_data = self.data[self.data.smiles == smiles].iloc[0]
         data = self._to_data(mol_data.frags, is_target=False, corrupt=True)

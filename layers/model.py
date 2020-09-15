@@ -7,6 +7,7 @@ from core.datasets.features import ATOM_FDIM, BOND_FDIM, FINGERPRINT_DIM
 from layers.embedder import Embedder
 from layers.encoder import Encoder
 from layers.decoder import Decoder
+from layers.mlp import MLP
 from layers.autoencoder import Autoencoder
 
 
@@ -50,6 +51,14 @@ class Model(nn.Module):
             dim_attention_output=self.decoder_dim_attention_output,
             dropout=self.decoder_dropout)
 
+        self.mlp = MLP(
+            hparams=hparams,
+            dim_input=self.embedder_dim_output,
+            dim_hidden=64,
+            dim_output=1,
+            num_layers=2
+        )
+
     def set_dimensions(self):
         self.embedder_num_layers = self.hparams.gnn_num_layers
         self.embedder_dim_input = ATOM_FDIM
@@ -91,7 +100,7 @@ class Model(nn.Module):
         return dec_outputs, bag_of_fragments
 
     def forward(self, batch):
-        batch_data, batch_fps, enc_inputs, dec_inputs = batch
+        batch_data, batch_fps, enc_inputs, dec_inputs, targets = batch
         noisy_frags, denoised_frags = batch_data
         noisy_fingerprint, _ = batch_fps
 
@@ -105,4 +114,5 @@ class Model(nn.Module):
 
         # decode fragment sequence
         dec_logits, dec_bag_of_fragments = self.decode(denoised_frags, hidden, enc_outputs, dec_inputs)
-        return dec_logits, rec_fingerprint, enc_bag_of_fragments, dec_bag_of_fragments
+        outputs = self.mlp(dec_bag_of_fragments)
+        return dec_logits, rec_fingerprint, enc_bag_of_fragments, dec_bag_of_fragments, outputs
