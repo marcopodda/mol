@@ -1,3 +1,4 @@
+import numpy as np
 from pathlib import Path
 
 import torch
@@ -16,6 +17,19 @@ class TranslationTrainDataset(TrainDataset):
 
     def __len__(self):
         return self.data[self.data.is_x == True].shape[0]
+
+    def get_input_data(self, index):
+        if np.random.rand() > 0.5:
+            mol_data = self.data.iloc[index]
+            data = self._to_data(mol_data.frags, is_target=False)
+            fingerprint = self._get_fingerprint(mol_data.smiles, is_target=False)
+            return data, fingerprint
+        else:
+            smiles = self.data.iloc[index].target
+            mol_data = self.data[self.data.smiles == smiles].iloc[0]
+            data = self._to_data(mol_data.frags, is_target=False, corrupt=True)
+            fingerprint = self._get_fingerprint(mol_data.smiles, is_target=False, corrupt=True)
+            return data, fingerprint
 
     def get_target_data(self, index):
         smiles = self.data.iloc[index].target

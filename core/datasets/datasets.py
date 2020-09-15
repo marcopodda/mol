@@ -35,10 +35,11 @@ class BaseDataset:
             save_numpy(token.numpy(), path)
         return token
 
-    def _to_data(self, frags_smiles, is_target):
+    def _to_data(self, frags_smiles, is_target, corrupt=None):
+        corrupt = corrupt or self.corrupt_input
         targets = self._get_target_sequence(frags_smiles)
 
-        if self.corrupt_input is True and is_target is False:
+        if corrupt is True and is_target is False:
             frags_smiles = self._corrupt_input_seq(frags_smiles)
 
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
@@ -52,9 +53,10 @@ class BaseDataset:
         data["target"] = targets
         return data
 
-    def _get_fingerprint(self, smiles, is_target):
+    def _get_fingerprint(self, smiles, is_target, corrupt=None):
+        corrupt = corrupt or self.corrupt_input
         fingerprint = np.array(get_fingerprint(smiles), dtype=np.int)
-        if self.corrupt_input is True and is_target is False:
+        if corrupt is True and is_target is False:
             fingerprint = self._corrupt_input_fingerprint(fingerprint)
         fingerprint_tx = torch.FloatTensor(fingerprint).view(1, -1)
         return fingerprint_tx
