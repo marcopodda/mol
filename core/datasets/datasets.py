@@ -90,25 +90,25 @@ class BaseDataset:
         return self.data.shape[0]
 
     def __getitem__(self, index):
-        corrupt = bool(round(np.random.rand()))
-        x_molecule = self.get_input_data(index, corrupt=True)
-        y_molecule = self.get_target_data(index, corrupt=corrupt)
-        target = torch.FloatTensor([[not corrupt]])
+        x_molecule = self.get_input_data(index)
+        y_molecule, target = self.get_target_data(index)
         return x_molecule, y_molecule, target
 
     def get_dataset(self):
         data, vocab, max_length = load_data(self.dataset_name)
         return data, vocab, max_length
 
-    def get_input_data(self, index, corrupt):
+    def get_input_data(self, index):
         mol_data = self.data.iloc[index]
-        data = self._to_data(mol_data.frags, corrupt=corrupt, uniform=True)
+        data = self._to_data(mol_data.frags, corrupt=True, uniform=True)
         return data
 
     def get_target_data(self, index, corrupt):
         mol_data = self.data.iloc[index]
+        corrupt = bool(round(np.random.rand()))
         data = self._to_data(mol_data.frags, corrupt=corrupt, uniform=False)
-        return data
+        target = torch.FloatTensor([[not corrupt]])
+        return data, target
 
 
 class TrainDataset(BaseDataset):
