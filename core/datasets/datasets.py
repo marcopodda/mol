@@ -33,10 +33,10 @@ class BaseDataset:
             save_numpy(token.numpy(), path)
         return token
 
-    def _to_data(self, frags_smiles, corrupt=False):
+    def _to_data(self, frags_smiles, corrupt=False, uniform=False):
         targets = self._get_target_sequence(frags_smiles)
         if corrupt is True:
-            frags_smiles = self._corrupt_input_seq(frags_smiles)
+            frags_smiles = self._corrupt_input_seq(frags_smiles, uniform=uniform)
 
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]
@@ -102,11 +102,13 @@ class BaseDataset:
 
     def get_input_data(self, index, corrupt):
         mol_data = self.data.iloc[index]
-        data = self._to_data(mol_data.frags, corrupt=corrupt)
+        data = self._to_data(mol_data.frags, corrupt=corrupt, uniform=True)
         return data
 
     def get_target_data(self, index, corrupt):
-        return self.get_input_data(index, corrupt=corrupt)
+        mol_data = self.data.iloc[index]
+        data = self._to_data(mol_data.frags, corrupt=corrupt, uniform=False)
+        return data
 
 
 class TrainDataset(BaseDataset):
