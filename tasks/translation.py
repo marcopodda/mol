@@ -31,13 +31,11 @@ class TranslationTrainDataset(TrainDataset):
         return data
 
     def __getitem__(self, index):
-        corrupt_input = bool(np.random.rand() > 0.5)
         x_molecule = self.get_input_data(index, corrupt=False)
-        x_target =  torch.FloatTensor([[corrupt_input]])
+        x_target = torch.FloatTensor([[True]])
 
-        corrupt_target = bool(np.random.rand() > 0.5)
-        y_molecule = self.get_target_data(index, corrupt=corrupt_target)
-        y_target = torch.FloatTensor([[corrupt_target]])
+        y_molecule = self.get_target_data(index, corrupt=False)
+        y_target = torch.FloatTensor([[False]])
 
         return x_molecule, x_target, y_molecule, y_target
 
