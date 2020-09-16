@@ -66,7 +66,7 @@ def score(exp_dir, dataset_name, epoch=0):
     gen_prop = [fun(y) for (_, y) in valid_samples]
 
     # improvement
-    improvement = [r - g for (r, g) in zip(ref_prop, gen_prop)]
+    improvement = [g - r for (r, g) in zip(ref_prop, gen_prop)]
     improved = [p > kw["improvement_thres"] for p in gen_prop]
 
     # success
