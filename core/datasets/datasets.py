@@ -92,13 +92,12 @@ class BaseDataset:
     def __getitem__(self, index):
         corrupt_input = bool(np.random.rand() > 0.5)
         x_molecule = self.get_input_data(index, corrupt=corrupt_input)
-        x_target =  torch.FloatTensor([[corrupt_input]])
 
         corrupt_target = bool(np.random.rand() > 0.5)
         y_molecule = self.get_target_data(index, corrupt=corrupt_target)
-        y_target = torch.FloatTensor([[corrupt_target]])
 
-        return x_molecule, x_target, y_molecule, y_target
+        target = torch.FloatTensor([[not(corrupt_input and corrupt_target)]])
+        return x_molecule, y_molecule, target
 
     def get_dataset(self):
         data, vocab, max_length = load_data(self.dataset_name)

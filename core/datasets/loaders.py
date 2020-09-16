@@ -58,7 +58,7 @@ class TrainDataLoader(BaseDataLoader):
             raise Exception("Works only for TrainDataset")
 
     def collate(self, data_list):
-        frags_x, x_targets, frags_y, y_targets = zip(*data_list)
+        frags_x, frags_y, targets = zip(*data_list)
 
         frags_x_batch = collate_frags(frags_x)
         frags_y_batch = collate_frags(frags_y)
@@ -71,10 +71,9 @@ class TrainDataLoader(BaseDataLoader):
         enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos, fill_at=lengths)
         dec_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.sos, fill_at=0)
 
-        x_targets = torch.cat(x_targets, dim=0)
-        y_targets = torch.cat(y_targets, dim=0)
+        targets = torch.cat(targets, dim=0)
 
-        return (frags_x_batch, frags_y_batch), (x_targets, y_targets), enc_inputs, dec_inputs
+        return (frags_x_batch, frags_y_batch), targets, enc_inputs, dec_inputs
 
 
 class EvalDataLoader(BaseDataLoader):

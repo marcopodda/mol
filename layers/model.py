@@ -46,7 +46,7 @@ class Model(nn.Module):
             dim_attention_output=self.decoder_dim_attention_output,
             dropout=self.decoder_dropout)
 
-        self.encoder_mlp = MLP(
+        self.mlp = MLP(
             hparams=hparams,
             dim_input=self.embedder_dim_output,
             dim_hidden=64,
@@ -54,13 +54,13 @@ class Model(nn.Module):
             num_layers=2
         )
 
-        self.decoder_mlp =MLP(
-            hparams=hparams,
-            dim_input=self.embedder_dim_output,
-            dim_hidden=64,
-            dim_output=1,
-            num_layers=2
-        )
+        # self.decoder_mlp =MLP(
+        #     hparams=hparams,
+        #     dim_input=self.embedder_dim_output,
+        #     dim_hidden=64,
+        #     dim_output=1,
+        #     num_layers=2
+        # )
 
     def set_dimensions(self):
         self.embedder_num_layers = self.hparams.gnn_num_layers
@@ -106,7 +106,10 @@ class Model(nn.Module):
         # decode fragment sequence
         decoder_outputs, decoder_bag_of_frags = self.decode(decoder_batch, decoder_inputs, encoder_hidden, encoder_outputs)
 
-        encoder_mlp_outputs = self.encoder_mlp(encoder_bag_of_frags)
-        decoder_mlp_outputs = self.decoder_mlp(decoder_bag_of_frags)
+        # encoder_mlp_outputs = self.encoder_mlp(encoder_bag_of_frags)
+        # decoder_mlp_outputs = self.decoder_mlp(decoder_bag_of_frags)
 
-        return decoder_outputs, (decoder_mlp_outputs, encoder_mlp_outputs), (decoder_bag_of_frags, encoder_bag_of_frags)
+        diff = torch.abs(decoder_bag_of_frags - encoder_bag_of_frags)
+        mlp_outputs = self.mlp(diff)
+
+        return decoder_outputs, mlp_outputs, (decoder_bag_of_frags, encoder_bag_of_frags)
