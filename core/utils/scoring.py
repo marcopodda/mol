@@ -46,42 +46,43 @@ def score(exp_dir, dataset_name, epoch=0):
     # valid samples
     valid_samples = [(x, y) for (x, y) in zip(ref, gen) if y and mol_from_smiles(y)]
     num_valid = len(valid_samples)
-    validity_rate = num_valid / num_samples
 
     # novel samples
     data, _, _ = load_data(dataset_name)
     training_set = set(data[data.is_train == True].smiles.tolist())
     novel_samples = [y not in training_set for (_, y) in valid_samples]
-    novelty_rate = len(novel_samples) / num_valid
 
     # unique samples
     unique_samples = set([y for (_, y) in valid_samples])
-    uniqueness_rate = len(unique_samples) / num_valid
 
-    # success rate
+    # similarity
     kw = SR_KWARGS[dataset_name].copy()
     similarities = [similarity(x, y) for (x, y) in valid_samples]
     similar = [s > kw["similarity_thres"] for s in similarities]
+
+    # improvement
     fun = kw["prop_fun"]
     improvement = [fun(y) - fun(x) for (x, y) in valid_samples]
     improved = [fun(y) > kw["improvement_thres"] for (x, y) in valid_samples]
+
+    # success
     success = [x and y for (x, y) in zip(similar, improved)]
 
     # reconstructed
     reconstructed = [x == y for (x, y) in valid_samples]
 
     return {
+        "scoring": dataset_name,
         "num_samples": len(samples),
+        "valid": num_valid / num_samples,
+        "unique": len(unique_samples) / num_valid,
+        "novel": sum(novel_samples) / num_valid,
         "similar": sum(similar) / num_valid,
         "avg_similarity": (np.mean(similarities), np.std(similarities)),
         "improved": sum(improved) / num_valid,
         "avg_improvement": (np.mean(improvement), np.std(improvement)),
         "success_rate": sum(success) / num_valid,
         "recon_rate": sum(reconstructed) / num_valid,
-        "valid": validity_rate,
-        "unique": uniqueness_rate,
-        "novel": novelty_rate,
-        "scoring": dataset_name
     }
 
 
