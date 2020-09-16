@@ -32,7 +32,7 @@ class TranslationTrainDataset(TrainDataset):
 
     def __getitem__(self, index):
         x_molecule = self.get_input_data(index, corrupt=False)
-        x_target = torch.FloatTensor([[True]])
+        x_target = torch.FloatTensor([[False]])
 
         y_molecule = self.get_target_data(index, corrupt=False)
         y_target = torch.FloatTensor([[False]])
