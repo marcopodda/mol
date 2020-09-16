@@ -101,13 +101,13 @@ def similarity(obj1, obj2):
         mol1 = mol_from_smiles(obj1)
         if mol1 is None:
             return 0.0
-        fp1 = get_fingerprint(mol1)
+        obj1 = get_fingerprint(mol1)
 
     if isinstance(obj2, str):
         mol2 = mol_from_smiles(obj2)
         if mol2 is None:
             return 0.0
-        fp2 = get_fingerprint(mol2)
+        obj1 = get_fingerprint(mol2)
 
     return DataStructs.FingerprintSimilarity(obj1, obj2)
 
