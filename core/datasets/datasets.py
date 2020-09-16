@@ -34,9 +34,9 @@ class BaseDataset:
         return token
 
     def _to_data(self, frags_smiles, corrupt=False, uniform=False):
-        targets = self._get_target_sequence(frags_smiles)
         if corrupt is True:
             frags_smiles = self._corrupt_input_seq(frags_smiles, uniform=uniform)
+        targets = self._get_target_sequence(frags_smiles)
 
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]
