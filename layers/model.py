@@ -106,10 +106,7 @@ class Model(nn.Module):
         # decode fragment sequence
         decoder_outputs, decoder_bag_of_frags = self.decode(decoder_batch, decoder_inputs, encoder_hidden, encoder_outputs)
 
-        # encoder_mlp_outputs = self.encoder_mlp(encoder_bag_of_frags)
-        # decoder_mlp_outputs = self.decoder_mlp(decoder_bag_of_frags)
-
-        diff = torch.abs(decoder_bag_of_frags - encoder_bag_of_frags)
-        mlp_outputs = self.mlp(diff)
+        # compute outputs
+        mlp_outputs = self.mlp(decoder_bag_of_frags)
 
         return decoder_outputs, mlp_outputs, (decoder_bag_of_frags, encoder_bag_of_frags)
