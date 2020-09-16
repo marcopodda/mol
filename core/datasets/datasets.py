@@ -72,11 +72,11 @@ class BaseDataset:
 
         if np.random.rand() > 0.25:
             mask_index = np.random.choice(len(seq)-1)
-            seq[mask_index] = self.vocab.sample()
+            seq[mask_index] = self.vocab.sample_uniform()
 
         if np.random.rand() > 0.25 and len(seq) + 2 <= self.max_length:
             add_index = np.random.choice(len(seq)-1)
-            seq.insert(add_index, self.vocab.sample())
+            seq.insert(add_index, self.vocab.sample_uniform())
 
         return seq
 
