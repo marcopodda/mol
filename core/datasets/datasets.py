@@ -34,9 +34,9 @@ class BaseDataset:
         return token
 
     def _to_data(self, frags_smiles, corrupt=False, uniform=False):
+        targets = self._get_target_sequence(frags_smiles)
         if corrupt is True:
             frags_smiles = self._corrupt_input_seq(frags_smiles, uniform=uniform)
-        targets = self._get_target_sequence(frags_smiles)
 
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]
@@ -106,8 +106,8 @@ class BaseDataset:
     def get_target_data(self, index):
         mol_data = self.data.iloc[index]
         corrupt = bool(round(np.random.rand()))
-        data = self._to_data(mol_data.frags, corrupt=corrupt, uniform=False)
-        target = torch.FloatTensor([[not corrupt]])
+        data = self._to_data(mol_data.frags, corrupt=False)
+        target = torch.FloatTensor([[False]])
         return data, target
 
 

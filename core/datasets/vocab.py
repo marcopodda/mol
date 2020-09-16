@@ -22,6 +22,7 @@ class Vocab:
             vocab._idx2frag[idx] = smi
 
         vocab._freq = data.freqs.to_dict()
+        setattr(vocab, "_unigram_prob", data.unigram.values)
         return vocab
 
     @classmethod
@@ -72,7 +73,8 @@ class Vocab:
         freqs = list(self._freq.values())
         df = pd.DataFrame.from_dict({
             "smiles": smiles,
-            "freqs": freqs})
+            "freqs": freqs,
+            "unigram": [float(f) for f in self.unigram_prob]})
         df.index = idx
         return df
 
@@ -85,6 +87,17 @@ class Vocab:
         p = None if uniform is False else self.unigram_prob
         index = np.random.choice(num_words, p=p)
         return self[index]
+
+    def prob(self, key):
+        if isinstance(key, int):
+            return self.unigram_prob[key]
+        return self.unigram_prob[self[key]]
+
+    def condition(self, key):
+        value = self.prob(key)
+        new_unigram_probs = self.unigram_prob.copy()
+        new_unigram_probs[new_unigram_probs>value] = 1e-9
+        return new_unigram_probs / new_unigram_probs.sum()
 
     @property
     def unigram_prob(self):
