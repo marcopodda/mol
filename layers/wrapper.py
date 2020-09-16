@@ -27,6 +27,9 @@ class Wrapper(pl.LightningModule):
     def forward(self, data):
         return self.model(data)
 
+    def get_batch_size(self):
+        return 32
+
     def configure_optimizers(self):
         optimizer = Adam(self.parameters(), lr=self.hparams.lr)
         return optimizer
@@ -48,8 +51,6 @@ class Wrapper(pl.LightningModule):
 
         decoder_ce_loss = F.cross_entropy(decoder_outputs, decoder_batch.target, ignore_index=0)
         bce_loss = F.binary_cross_entropy_with_logits(mlp_outputs, mlp_targets)
-        # encoder_bce_loss = F.binary_cross_entropy_with_logits(encoder_mlp_outputs, encoder_mlp_targets)
-        # decoder_bce_loss = F.binary_cross_entropy_with_logits(decoder_mlp_outputs, decoder_mlp_targets)
         cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags).mean(dim=0)
 
         total_loss = decoder_ce_loss + bce_loss

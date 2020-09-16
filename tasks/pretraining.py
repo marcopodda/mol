@@ -8,12 +8,11 @@ from tasks.runner import TaskRunner
 
 
 class PretrainingWrapper(Wrapper):
-    pretrain = True
+    def get_batch_size(self):
+        return self.hparams.pretrain_batch_size
 
 
 class PretrainingSampler(Sampler):
-    dataset_class = EvalDataset
-
     def prepare_data(self):
         num_samples = min(1000, len(self.dataset))
         indices = np.random.choice(len(self.dataset), num_samples, replace=False)
