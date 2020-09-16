@@ -125,8 +125,13 @@ class EvalDataset(BaseDataset):
         return data, vocab, max_length
 
     def __getitem__(self, index):
-        x_molecule = self.get_input_data(index, corrupt=False)
+        x_molecule = self.get_input_data(index)
         return x_molecule
+
+    def get_input_data(self, index):
+        mol_data = self.data.iloc[index]
+        data = self._to_data(mol_data.frags, corrupt=False)
+        return data
 
 
 class VocabDataset:
