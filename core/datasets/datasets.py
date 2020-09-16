@@ -102,14 +102,14 @@ class BaseDataset:
         return self.data.shape[0]
 
     def __getitem__(self, index):
-        flipped = bool(round(np.random.rand()))
-        if not flipped:
+        keep_prob = bool(round(np.random.rand()))
+        if keep_prob:
             x_molecule = self.get_input_data(index)
             y_molecule = self.get_target_data(index)
         else:
             y_molecule = self.get_input_data(index)
             x_molecule = self.get_target_data(index)
-        target = torch.FloatTensor([[flipped]])
+        target = torch.FloatTensor([[keep_prob]])
         return x_molecule, y_molecule, target
 
     def get_dataset(self):
@@ -123,7 +123,6 @@ class BaseDataset:
 
     def get_target_data(self, index):
         mol_data = self.data.iloc[index]
-        corrupt = bool(round(np.random.rand()))
         data = self._to_data(mol_data.frags, corrupt=False)
         return data
 
