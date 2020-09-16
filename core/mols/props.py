@@ -101,7 +101,7 @@ def similarity(mol1, mol2):
         mol1 = mol_from_smiles(mol1)
 
     if isinstance(mol2, str):
-        mol2 = mol_from_smiles(mol1)
+        mol2 = mol_from_smiles(mol2)
 
     if mol1 is None or mol2 is None:
         return 0.0
