@@ -60,10 +60,14 @@ def score(exp_dir, dataset_name, epoch=0):
     similarities = [similarity(x, y) for (x, y) in valid_samples]
     similar = [s > kw["similarity_thres"] for s in similarities]
 
-    # improvement
+    # property
     fun = kw["prop_fun"]
-    improvement = [fun(y) - fun(x) for (x, y) in valid_samples]
-    improved = [fun(y) > kw["improvement_thres"] for (x, y) in valid_samples]
+    ref_prop = [fun(x) for (x, _) in valid_samples]
+    gen_prop = [fun(y) for (_, y) in valid_samples]
+
+    # improvement
+    improvement = [r - g for (r, g) in zip(ref_prop, gen_prop)]
+    improved = [p > kw["improvement_thres"] for p in gen_prop]
 
     # success
     success = [x and y for (x, y) in zip(similar, improved)]
@@ -77,6 +81,7 @@ def score(exp_dir, dataset_name, epoch=0):
         "valid": num_valid / num_samples,
         "unique": len(unique_samples) / num_valid,
         "novel": sum(novel_samples) / num_valid,
+        "property": (np.mean(gen_prop), np.std(gen_prop)),
         "similar": sum(similar) / num_valid,
         "avg_similarity": (np.mean(similarities), np.std(similarities)),
         "improved": sum(improved) / num_valid,
