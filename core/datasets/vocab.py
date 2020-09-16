@@ -80,14 +80,10 @@ class Vocab:
         df = self.to_dataframe()
         df.to_csv(path)
 
-    def sample(self):
+    def sample(self, uniform=False):
         num_words = len(self)
-        index = np.random.choice(num_words, p=self.unigram_prob)
-        return self[index]
-
-    def sample_uniform(self):
-        num_words = len(self)
-        index = np.random.choice(num_words, p=None)
+        p = None if uniform is False else self.unigram_prob
+        index = np.random.choice(num_words, p=p)
         return self[index]
 
     @property

@@ -63,7 +63,7 @@ class BaseDataset:
         padded_seq = pad(seq, self.max_length)
         return padded_seq
 
-    def _corrupt_input_seq(self, seq):
+    def _corrupt_input_seq(self, seq, uniform=False):
         seq = seq[:]
 
         if np.random.rand() > 0.25 and len(seq) > 2:
@@ -72,11 +72,11 @@ class BaseDataset:
 
         if np.random.rand() > 0.25:
             mask_index = np.random.choice(len(seq)-1)
-            seq[mask_index] = self.vocab.sample_uniform()
+            seq[mask_index] = self.vocab.sample(uniform=uniform)
 
         if np.random.rand() > 0.25 and len(seq) + 2 <= self.max_length:
             add_index = np.random.choice(len(seq)-1)
-            seq.insert(add_index, self.vocab.sample_uniform())
+            seq.insert(add_index, self.vocab.sample(uniform=uniform))
 
         return seq
 
