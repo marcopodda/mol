@@ -103,7 +103,7 @@ class BaseDataset:
         data = self._to_data(mol_data.frags, corrupt=True, uniform=True)
         return data
 
-    def get_target_data(self, index, corrupt):
+    def get_target_data(self, index):
         mol_data = self.data.iloc[index]
         corrupt = bool(round(np.random.rand()))
         data = self._to_data(mol_data.frags, corrupt=corrupt, uniform=False)
