@@ -19,25 +19,21 @@ class TranslationTrainDataset(TrainDataset):
     def __len__(self):
         return self.data[self.data.is_x == True].shape[0]
 
-    # def get_input_data(self, index, corrupt=False):
-    #     mol_data = self.data.iloc[index]
-    #     data = self._to_data(mol_data.frags, corrupt=corrupt)
-    #     return data
+    def get_input_data(self, index, corrupt=False):
+        return self.get_target_data(index, corrupt=corrupt)
 
     def get_target_data(self, index, corrupt=False):
         smiles = self.data.iloc[index].target
-        mol_data = self.data[self.data.smiles==smiles].iloc[0]
+        mol_data = self.data[self.data.smiles == smiles].iloc[0]
         data = self._to_data(mol_data.frags, corrupt=corrupt)
         return data
 
     def __getitem__(self, index):
-        x_molecule = self.get_input_data(index, corrupt=False)
-        x_target = torch.FloatTensor([[True]])
-
-        y_molecule = self.get_target_data(index, corrupt=False)
-        y_target = torch.FloatTensor([[False]])
-
-        return x_molecule, y_molecule, y_target
+        corrupt = int(np.random.rand())
+        x_molecule = self.get_input_data(index, corrupt=True)
+        y_molecule = self.get_target_data(index, corrupt=corrupt)
+        target = torch.FloatTensor([[not corrupt]])
+        return x_molecule, y_molecule, target
 
 
 class TranslationWrapper(Wrapper):
