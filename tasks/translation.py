@@ -19,56 +19,30 @@ class TranslationTrainDataset(TrainDataset):
     def __len__(self):
         return self.data[self.data.is_x == True].shape[0]
 
-    def get_input_data(self, index, corrupt=False):
-        mol_data = self.data.iloc[index]
-        data = self._to_data(mol_data.frags, corrupt=corrupt)
-        return data
+    # def get_input_data(self, index, corrupt=False):
+    #     mol_data = self.data.iloc[index]
+    #     data = self._to_data(mol_data.frags, corrupt=corrupt)
+    #     return data
 
-    def get_target_data(self, index, corrupt=False):
-        smiles = self.data.iloc[index].target
-        mol_data = self.data[self.data.smiles==smiles].iloc[0]
-        data = self._to_data(mol_data.frags, corrupt=corrupt)
-        return data
+    # def get_target_data(self, index, corrupt=False):
+    #     smiles = self.data.iloc[index].target
+    #     mol_data = self.data[self.data.smiles==smiles].iloc[0]
+    #     data = self._to_data(mol_data.frags, corrupt=corrupt)
+    #     return data
 
-    def __getitem__(self, index):
-        x_molecule = self.get_input_data(index, corrupt=False)
-        x_target = torch.FloatTensor([[True]])
+    # def __getitem__(self, index):
+    #     x_molecule = self.get_input_data(index, corrupt=False)
+    #     x_target = torch.FloatTensor([[True]])
 
-        y_molecule = self.get_target_data(index, corrupt=False)
-        y_target = torch.FloatTensor([[False]])
+    #     y_molecule = self.get_target_data(index, corrupt=False)
+    #     y_target = torch.FloatTensor([[False]])
 
-        return x_molecule, x_target, y_molecule, y_target
+    #     return x_molecule, x_target, y_molecule, y_target
 
 
 class TranslationWrapper(Wrapper):
     pretrain = False
     dataset_class = TranslationTrainDataset
-
-    def training_step(self, batch, batch_idx):
-        batch_data, mlp_targets, _, _ = batch
-        encoder_batch, decoder_batch = batch_data
-        encoder_mlp_targets, decoder_mlp_targets = mlp_targets
-
-        decoder_outputs, mlp_outputs, bag_of_frags = self.model(batch)
-
-        decoder_mlp_outputs, encoder_mlp_outputs = mlp_outputs
-        decoder_bag_of_frags, encoder_bag_of_frags = bag_of_frags
-
-        decoder_ce_loss = F.cross_entropy(decoder_outputs, decoder_batch.target, ignore_index=0)
-        encoder_bce_loss = F.binary_cross_entropy_with_logits(encoder_mlp_outputs, encoder_mlp_targets)
-        decoder_bce_loss = F.binary_cross_entropy_with_logits(decoder_mlp_outputs, decoder_mlp_targets)
-        mse = F.mse_loss(decoder_bag_of_frags, encoder_bag_of_frags)
-        cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags).mean(dim=0)
-
-        total_loss = decoder_ce_loss + decoder_bce_loss + encoder_bce_loss + mse
-        result = pl.TrainResult(minimize=total_loss)
-        result.log('ce', decoder_ce_loss, prog_bar=True)
-        result.log('EL', encoder_bce_loss, prog_bar=True)
-        result.log('DL', decoder_bce_loss, prog_bar=True)
-        result.log('mse', mse, prog_bar=True)
-        result.log('cs', cos_sim, prog_bar=True)
-
-        return result
 
 
 class TranslationSampler(Sampler):
