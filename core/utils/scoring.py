@@ -66,7 +66,7 @@ def score(exp_dir, dataset_name, epoch=0):
     # improvement
     gen_prop, ref_prop = [fun(g) for g in gen], [fun(r) for r in ref]
     gen_mean, gen_std = np.mean(gen_prop), np.std(gen_prop)
-    impr = [fun(g) - fun(r) for (g, r) in zip(gen_prop, ref_prop)]
+    impr = [g - r for (g, r) in zip(gen_prop, ref_prop)]
     impr_mean, impr_std = np.mean(impr), np.std(impr)
     improved = [fun(g) >= kw["improvement_thres"] for g in gen]
 
