@@ -53,7 +53,7 @@ class Wrapper(pl.LightningModule):
         mse_loss = F.mse_loss(encoder_bag_of_frags, decoder_bag_of_frags)
         cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags).mean(dim=0)
 
-        total_loss = decoder_ce_loss + mse_loss
+        total_loss = decoder_ce_loss
         result = pl.TrainResult(minimize=total_loss)
         result.log('DL', decoder_ce_loss, prog_bar=True)
         result.log('mse', mse_loss, prog_bar=True)
