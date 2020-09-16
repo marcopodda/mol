@@ -38,56 +38,53 @@ def score(exp_dir, dataset_name, epoch=0):
     samples_filename = f"samples_{epoch}.yml"
 
     samples = load_yaml(samples_dir / samples_filename)
-    num_samples = len(samples)
 
     ref = [s["ref"] for s in samples]
     gen = [s["gen"] for s in samples]
 
     # valid samples
-    valid_samples = [(x, y) for (x, y) in zip(ref, gen) if y and mol_from_smiles(y)]
-    num_valid = len(valid_samples)
+    valid = [(x, y) for (x, y) in zip(ref, gen) if y and mol_from_smiles(y)]
+    ref, gen = zip(*valid)
 
     # novel samples
     data, _, _ = load_data(dataset_name)
     training_set = set(data[data.is_train == True].smiles.tolist())
-    novel_samples = [y not in training_set for (_, y) in valid_samples]
+    novel = [g not in training_set for g in gen]
 
     # unique samples
-    unique_samples = set([y for (_, y) in valid_samples])
+    unique = set(gen)
 
     # similarity
     kw = SR_KWARGS[dataset_name].copy()
-    similarities = [similarity(x, y) for (x, y) in valid_samples]
-    similar = [s > kw["similarity_thres"] for s in similarities]
+    sims = [similarity(x, y) for (x, y) in valid]
+    similar = [s >= kw["similarity_thres"] for s in sims]
 
     # property
     fun = kw["prop_fun"]
-    ref_prop = [fun(x) for (x, _) in valid_samples]
-    gen_prop = [fun(y) for (_, y) in valid_samples]
 
     # improvement
-    improvement = [g - r for (r, g) in zip(ref_prop, gen_prop)]
-    improved = [p > kw["improvement_thres"] for p in gen_prop]
+    impr = [fun(g) - fun(r) for (r, g) in zip(ref, gen)]
+    improved = [fun(g) >= kw["improvement_thres"] for g in gen]
 
     # success
     success = [x and y for (x, y) in zip(similar, improved)]
 
     # reconstructed
-    reconstructed = [x == y for (x, y) in valid_samples]
+    recon = [x == y for (x, y) in valid]
 
     return {
         "scoring": dataset_name,
         "num_samples": len(samples),
-        "valid": num_valid / num_samples,
-        "unique": len(unique_samples) / num_valid,
-        "novel": sum(novel_samples) / num_valid,
-        "property": (np.mean(gen_prop), np.std(gen_prop)),
-        "similar": sum(similar) / num_valid,
-        "avg_similarity": (np.mean(similarities), np.std(similarities)),
-        "improved": sum(improved) / num_valid,
-        "avg_improvement": (np.mean(improvement), np.std(improvement)),
-        "success_rate": sum(success) / num_valid,
-        "recon_rate": sum(reconstructed) / num_valid,
+        "valid": len(valid) / len(samples),
+        "unique": len(unique) / len(valid),
+        "novel": sum(novel) / len(valid),
+        "property": f"{np.mean(gen)} +/- {np.std(gen)}",
+        "similar": sum(similar) / len(similar),
+        "avg_similarity": f"{np.mean(sims)} +/- {np.std(sims)}",
+        "improved": sum(improved) / len(improved),
+        "avg_improvement": f"{np.mean(impr)} +/- {np.std(impr)}",
+        "success_rate": sum(success) / len(success),
+        "recon_rate": sum(recon) / len(recon),
     }
 
 
