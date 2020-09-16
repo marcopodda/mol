@@ -57,13 +57,17 @@ def score(exp_dir, dataset_name, epoch=0):
     # similarity
     kw = SR_KWARGS[dataset_name].copy()
     sims = [similarity(x, y) for (x, y) in valid]
+    sim_mean, sim_std = np.mean(sims), np.std(sims)
     similar = [s >= kw["similarity_thres"] for s in sims]
 
     # property
     fun = kw["prop_fun"]
 
     # improvement
-    impr = [fun(g) - fun(r) for (r, g) in zip(ref, gen)]
+    gen_prop, ref_prop = [fun(g) for g in gen], [fun(r) for r in ref]
+    gen_mean, gen_std = np.mean(gen_prop), np.std(gen_prop)
+    impr = [fun(g) - fun(r) for (g, r) in zip(gen_prop, ref_prop)]
+    impr_mean, impr_std = np.mean(impr), np.std(impr)
     improved = [fun(g) >= kw["improvement_thres"] for g in gen]
 
     # success
@@ -75,16 +79,16 @@ def score(exp_dir, dataset_name, epoch=0):
     return {
         "scoring": dataset_name,
         "num_samples": len(samples),
-        "valid": len(valid) / len(samples),
-        "unique": len(unique) / len(valid),
-        "novel": sum(novel) / len(valid),
-        "property": f"{np.mean(gen)} +/- {np.std(gen)}",
-        "similar": sum(similar) / len(similar),
-        "avg_similarity": f"{np.mean(sims)} +/- {np.std(sims)}",
-        "improved": sum(improved) / len(improved),
-        "avg_improvement": f"{np.mean(impr)} +/- {np.std(impr)}",
-        "success_rate": sum(success) / len(success),
-        "recon_rate": sum(recon) / len(recon),
+        "valid": f"{len(valid) / len(samples):.4f}",
+        "unique": f"{len(unique) / len(valid):.4f}",
+        "novel": f"{sum(novel) / len(valid):.4f}",
+        "property": f"{gen_mean:.4f} +/- {gen_std:.4f}",
+        "similar": f"{sum(similar) / len(similar):.4f}",
+        "avg_similarity": f"{sim_mean:.4f} +/- {sim_std:.4f}",
+        "improved": f"{sum(improved) / len(improved):.4f}",
+        "avg_improvement": f"{impr_mean:.4f} +/- {impr_std:.4f}",
+        "success_rate": f"{sum(success) / len(success):.4f}",
+        "recon_rate": f"{sum(recon) / len(recon):.4f}"
     }
 
 
