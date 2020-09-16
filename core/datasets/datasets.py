@@ -90,7 +90,7 @@ class BaseDataset:
         return self.data.shape[0]
 
     def __getitem__(self, index):
-        corrupt = round(np.random.rand())
+        corrupt = bool(round(np.random.rand()))
         x_molecule = self.get_input_data(index, corrupt=True)
         y_molecule = self.get_target_data(index, corrupt=corrupt)
         target = torch.FloatTensor([[not corrupt]])
