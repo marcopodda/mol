@@ -24,80 +24,6 @@ class BaseDataset:
         self.eos = self._initialize_token("eos")
         self.mask = self._initialize_token("mask")
 
-    def _initialize_token(self, name):
-        path = DATA_DIR / self.dataset_name / f"{name}_{self.hparams.frag_dim_embed}.dat"
-        if path.exists():
-            token = torch.FloatTensor(load_numpy(path))
-        else:
-            token = torch.randn((1, self.hparams.frag_dim_embed))
-            save_numpy(token.numpy(), path)
-        return token
-
-    def _to_data(self, frags_smiles, corrupt=False, uniform=False):
-        targets = self._get_target_sequence(frags_smiles)
-        if corrupt is True:
-            frags_smiles = self._corrupt_input_seq(frags_smiles, uniform=uniform)
-
-        frags_list = [mol_from_smiles(f) for f in frags_smiles]
-        frag_graphs = [mol2nx(f) for f in frags_list]
-        num_nodes = [f.number_of_nodes() for f in frag_graphs]
-
-        data = from_networkx(nx.disjoint_union_all(frag_graphs))
-        frags_batch = [torch.LongTensor([i]).repeat(n) for (i, n) in enumerate(num_nodes)]
-        data["frags_batch"] = torch.cat(frags_batch)
-        data["length"] = torch.LongTensor([len(frags_list)])
-        data["target"] = targets
-        return data
-
-    def _get_fingerprint(self, smiles, corrupt=False):
-        fingerprint = np.array(get_fingerprint(smiles), dtype=np.int)
-
-        if corrupt is True:
-            fingerprint = self._corrupt_input_fingerprint(fingerprint)
-
-        fingerprint_tx = torch.FloatTensor(fingerprint).view(1, -1)
-        return fingerprint_tx
-
-    def _get_target_sequence(self, frags_list):
-        seq = [self.vocab[f] + len(Tokens) for f in frags_list] + [Tokens.EOS.value]
-        padded_seq = pad(seq, self.max_length)
-        return padded_seq
-
-    def _corrupt_input_seq(self, seq, uniform=False):
-        seq = seq[:]
-
-        if np.random.rand() > 0.25 and len(seq) > 2:
-            delete_index = np.random.choice(len(seq)-1)
-            seq.pop(delete_index)
-
-        if np.random.rand() > 0.25 and len(seq) > 2:
-            delete_index = np.random.choice(len(seq)-1)
-            seq.pop(delete_index)
-
-        if np.random.rand() > 0.25:
-            mask_index = np.random.choice(len(seq)-1)
-            seq[mask_index] = self.vocab.sample(uniform=uniform)
-
-        if np.random.rand() > 0.25:
-            mask_index = np.random.choice(len(seq)-1)
-            seq[mask_index] = self.vocab.sample(uniform=uniform)
-
-        if np.random.rand() > 0.25 and len(seq) + 2 <= self.max_length:
-            add_index = np.random.choice(len(seq)-1)
-            seq.insert(add_index, self.vocab.sample(uniform=uniform))
-
-        if np.random.rand() > 0.25 and len(seq) + 2 <= self.max_length:
-            add_index = np.random.choice(len(seq)-1)
-            seq.insert(add_index, self.vocab.sample(uniform=uniform))
-
-        return seq
-
-    def _corrupt_input_fingerprint(self, fingerprint):
-        num_to_flip = np.clip(int(np.random.randn() * 20 + 68), a_min=1, a_max=None)
-        flip_indices = np.random.choice(FINGERPRINT_DIM-1, num_to_flip)
-        fingerprint[flip_indices] = np.logical_not(fingerprint[flip_indices])
-        return fingerprint
-
     def __len__(self):
         return self.data.shape[0]
 
@@ -112,18 +38,91 @@ class BaseDataset:
         target = torch.FloatTensor([[keep_prob]])
         return x_molecule, y_molecule, target
 
+    def _initialize_token(self, name):
+        path = DATA_DIR / self.dataset_name / f"{name}_{self.hparams.frag_dim_embed}.dat"
+        if path.exists():
+            token = torch.FloatTensor(load_numpy(path))
+        else:
+            token = torch.randn((1, self.hparams.frag_dim_embed))
+            save_numpy(token.numpy(), path)
+        return token
+
+    def _get_fingerprint(self, smiles, corrupt=False):
+        fingerprint = np.array(get_fingerprint(smiles), dtype=np.int)
+
+        if corrupt is True:
+            fingerprint = self._corrupt_input_fingerprint(fingerprint)
+
+        fingerprint_tx = torch.FloatTensor(fingerprint).view(1, -1)
+        return fingerprint_tx
+
+    def _corrupt_input_fingerprint(self, fingerprint):
+        num_to_flip = np.clip(int(np.random.randn() * 20 + 68), a_min=1, a_max=None)
+        flip_indices = np.random.choice(FINGERPRINT_DIM-1, num_to_flip)
+        fingerprint[flip_indices] = np.logical_not(fingerprint[flip_indices])
+        return fingerprint
+
+    def _get_data(self, frags_smiles, corrupt=False):
+        if corrupt is True:
+            frags_smiles = self._corrupt_input_seq(frags_smiles)
+
+        frags_list = [mol_from_smiles(f) for f in frags_smiles]
+        frag_graphs = [mol2nx(f) for f in frags_list]
+        num_nodes = [f.number_of_nodes() for f in frag_graphs]
+
+        data = from_networkx(nx.disjoint_union_all(frag_graphs))
+        frags_batch = [torch.LongTensor([i]).repeat(n) for (i, n) in enumerate(num_nodes)]
+        data["frags_batch"] = torch.cat(frags_batch)
+        data["length"] = torch.LongTensor([len(frags_list)])
+        data["target"] = self._get_target_sequence(frags_smiles)
+        return data
+
+    def _corrupt_input_seq(self, seq):
+        seq = seq[:]
+
+        if np.random.rand() > 0.25 and len(seq) > 2:
+            delete_index = np.random.choice(len(seq)-1)
+            seq.pop(delete_index)
+
+        if np.random.rand() > 0.25 and len(seq) > 2:
+            delete_index = np.random.choice(len(seq)-1)
+            seq.pop(delete_index)
+
+        if np.random.rand() > 0.25:
+            mask_index = np.random.choice(len(seq)-1)
+            seq[mask_index] = self.vocab.sample()
+
+        if np.random.rand() > 0.25:
+            mask_index = np.random.choice(len(seq)-1)
+            seq[mask_index] = self.vocab.sample()
+
+        if np.random.rand() > 0.25 and len(seq) + 2 <= self.max_length:
+            add_index = np.random.choice(len(seq)-1)
+            seq.insert(add_index, self.vocab.sample())
+
+        if np.random.rand() > 0.25 and len(seq) + 2 <= self.max_length:
+            add_index = np.random.choice(len(seq)-1)
+            seq.insert(add_index, self.vocab.sample())
+
+        return seq
+
+    def _get_target_sequence(self, frags_list):
+        seq = [self.vocab[f] + len(Tokens) for f in frags_list] + [Tokens.EOS.value]
+        padded_seq = pad(seq, self.max_length)
+        return padded_seq
+
     def get_dataset(self):
         data, vocab, max_length = load_data(self.dataset_name)
         return data, vocab, max_length
 
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
-        data = self._to_data(mol_data.frags, corrupt=True, uniform=True)
+        data = self._get_data(mol_data.frags, corrupt=True)
         return data
 
     def get_target_data(self, index):
         mol_data = self.data.iloc[index]
-        data = self._to_data(mol_data.frags, corrupt=False)
+        data = self._get_data(mol_data.frags, corrupt=False)
         return data
 
 
@@ -146,7 +145,7 @@ class EvalDataset(BaseDataset):
 
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
-        data = self._to_data(mol_data.frags, corrupt=True)
+        data = self._get_data(mol_data.frags, corrupt=True)
         return data
 
 
