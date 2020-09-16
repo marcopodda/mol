@@ -85,10 +85,10 @@ class BaseDataset:
         return self.data.shape[0]
 
     def __getitem__(self, index):
-        x_molecule, x_fingerprint, x_props = self.get_input_data(index)
+        x_molecule, x_smiles, x_props = self.get_input_data(index)
         other_index = np.random.choice(len(self))
-        y_molecule, y_fingerprint, y_props = self.get_input_data(other_index)
-        sim = torch.FloatTensor([[similarity(x_fingerprint, y_fingerprint)]])
+        y_molecule, y_smiles, y_props = self.get_input_data(other_index)
+        sim = torch.FloatTensor([[similarity(x_smiles, y_smiles)]])
         prop_improvement = torch.FloatTensor([y_props > x_props])
         return x_molecule, y_molecule, prop_improvement, sim
 
@@ -100,8 +100,7 @@ class BaseDataset:
         mol_data = self.data.iloc[index]
         data = self._to_data(mol_data.frags, corrupt=corrupt)
         props = [mol_data.qed, mol_data.logP, mol_data.SAS, mol_data.plogP, mol_data.mw, mol_data.mr]
-        fingerprint = self._get_fingerprint(mol_data.smiles)
-        return data, fingerprint, np.array(props)
+        return data, mol_data.smiles, np.array(props)
 
     def get_target_data(self, index, corrupt):
         return self.get_input_data(index, corrupt=corrupt)
@@ -121,8 +120,8 @@ class EvalDataset(BaseDataset):
         return data, vocab, max_length
 
     def __getitem__(self, index):
-        x_molecule, fingerprint, props = self.get_input_data(index, corrupt=False)
-        return x_molecule, fingerprint, props
+        x_molecule, _, props = self.get_input_data(index, corrupt=False)
+        return x_molecule, props
 
 
 class VocabDataset:

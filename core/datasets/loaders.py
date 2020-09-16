@@ -83,7 +83,7 @@ class EvalDataLoader(BaseDataLoader):
             raise Exception("Works only for EvalDataset")
 
     def collate(self, data_list):
-        frags_batch, _, _ = zip(*data_list)
+        frags_batch, _ = zip(*data_list)
 
         frags_x_batch = collate_frags(frags_batch)
 
