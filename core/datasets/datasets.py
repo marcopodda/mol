@@ -86,14 +86,14 @@ class BaseDataset:
             seq.pop(delete_index)
             changed = True
 
-        if np.random.rand() > 0.1:
-            mask_index = np.random.choice(len(seq)-1)
-            seq[mask_index] = self.vocab.sample()
-            changed = True
-
         if not changed and np.random.rand() > 0.1 and len(seq) + 2 <= self.max_length:
             add_index = np.random.choice(len(seq)-1)
             seq.insert(add_index, self.vocab.sample())
+
+        if not changed:
+            mask_index = np.random.choice(len(seq)-1)
+            seq[mask_index] = self.vocab.sample()
+            changed = True
 
         return seq
 
