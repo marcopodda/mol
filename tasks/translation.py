@@ -24,11 +24,11 @@ class TranslationTrainDataset(TrainDataset):
     #     data = self._to_data(mol_data.frags, corrupt=corrupt)
     #     return data
 
-    # def get_target_data(self, index, corrupt=False):
-    #     smiles = self.data.iloc[index].target
-    #     mol_data = self.data[self.data.smiles==smiles].iloc[0]
-    #     data = self._to_data(mol_data.frags, corrupt=corrupt)
-    #     return data
+    def get_target_data(self, index, corrupt=False):
+        smiles = self.data.iloc[index].target
+        mol_data = self.data[self.data.smiles==smiles].iloc[0]
+        data = self._to_data(mol_data.frags, corrupt=corrupt)
+        return data
 
     # def __getitem__(self, index):
     #     x_molecule = self.get_input_data(index, corrupt=False)
