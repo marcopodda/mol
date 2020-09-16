@@ -37,7 +37,7 @@ class TranslationTrainDataset(TrainDataset):
         y_molecule = self.get_target_data(index, corrupt=False)
         y_target = torch.FloatTensor([[False]])
 
-        return x_molecule, x_target, y_molecule, y_target
+        return x_molecule, y_molecule, y_target
 
 
 class TranslationWrapper(Wrapper):
