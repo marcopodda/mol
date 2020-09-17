@@ -11,7 +11,6 @@ from layers.model import Model
 
 
 class Wrapper(pl.LightningModule):
-    pretrain = True
     dataset_class = TrainDataset
 
     def __init__(self, hparams, dataset_name):

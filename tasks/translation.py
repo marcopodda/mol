@@ -15,7 +15,22 @@ from layers.wrapper import Wrapper
 from tasks.runner import TaskRunner
 
 
+class TranslationDataset(TrainDataset):
+    def get_input_data(self, index):
+        mol_data = self.data.iloc[index]
+        data = self._get_data(mol_data.frags, corrupt=False)
+        return data
+
+    def get_target_data(self, index):
+        smiles = self.data.iloc[index]
+        mol_data = self.data[self.data.smiles==smiles].iloc[0]
+        data = self._get_data(mol_data.frags, corrupt=False)
+        return data
+
+
 class TranslationWrapper(Wrapper):
+    dataset_class = TranslationSampler
+
     def get_batch_size(self):
         return self.hparams.translation_batch_size
 

@@ -66,6 +66,16 @@ class BaseDataset:
         if corrupt is True:
             frags_smiles = self._corrupt_input_seq(frags_smiles)
 
+        from core.mols.utils import mol_from_smiles, mol_to_smiles
+        from core.mols.split import join_fragments
+        from core.mols.props import drd2
+        try:
+            fs = [mol_from_smiles(f) for f in frags_smiles]
+            rec = mol_to_smiles(join_fragments(fs))
+            print(rec, drd2(rec))
+        except:
+            print(frags_smiles, 0.0)
+
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]
         num_nodes = [f.number_of_nodes() for f in frag_graphs]
