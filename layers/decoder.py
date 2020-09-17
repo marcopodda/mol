@@ -52,8 +52,9 @@ class Decoder(nn.Module):
         rnn_output, hidden = self.gru(rnn_input, hidden)
 
         # Final output layer (next word prediction) using the RNN hidden state and context vector
+        rnn_output = self.bn(rnn_output)
         output = rnn_output.reshape(-1, rnn_output.size(2))
-        logits = self.out(F.relu(self.bn(output))).squeeze(1)
+        logits = self.out(F.relu(output)).squeeze(1)
 
         # Return final output, hidden state, and attention weights (for visualization)
         return logits, hidden, attn_weights
