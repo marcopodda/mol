@@ -82,10 +82,9 @@ class Vocab:
         df = self.to_dataframe()
         df.to_csv(path)
 
-    def sample(self, uniform=False):
+    def sample(self, probs=None):
         num_words = len(self)
-        p = None if uniform is False else self.unigram_prob
-        index = np.random.choice(num_words, p=p)
+        index = np.random.choice(num_words, p=probs)
         return self[index]
 
     def prob(self, key):
@@ -94,10 +93,13 @@ class Vocab:
         return self.unigram_prob[self[key]]
 
     def condition(self, key):
+        if isinstance(key, int):
+            key = self[key]
         value = self.prob(key)
-        new_unigram_probs = self.unigram_prob.copy()
-        new_unigram_probs[new_unigram_probs>value] = 1e-9
-        return new_unigram_probs / new_unigram_probs.sum()
+        probs = self.unigram_prob.copy()
+        probs[probs>value] = 1e-9
+        probs[key] = 1e-9
+        return probs / probs.sum()
 
     @property
     def unigram_prob(self):
