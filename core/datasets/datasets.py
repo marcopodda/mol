@@ -11,7 +11,7 @@ from core.datasets.utils import pad, load_data
 from core.datasets.vocab import Tokens
 from core.mols.utils import mol_from_smiles, mol_to_smiles, mols_from_smiles
 from core.mols.split import join_fragments
-from core.mols.props import get_fingerprint, similarity
+from core.mols.props import get_fingerprint, similarity, drd2
 from core.utils.serialization import load_numpy, save_numpy
 
 
@@ -32,6 +32,7 @@ class BaseDataset:
         x_molecule, x_smiles = self.get_input_data(index)
         y_molecule, y_smiles = self.get_target_data(index)
         sim = similarity(x_smiles, y_smiles)
+        print(x_smiles, y_smiles, sim, drd2(x_smiles), drd2(y_smiles))
         target = torch.FloatTensor([[sim]])
         return x_molecule, y_molecule, target
 
@@ -79,35 +80,24 @@ class BaseDataset:
         seq = seq[:]
 
         # deletion
-        if np.random.rand() > 0.25 and len(seq) > 2:
-            delete_index = np.random.choice(len(seq)-1)
-            seq.pop(delete_index)
-
-        if np.random.rand() > 0.25 and len(seq) > 2:
-            delete_index = np.random.choice(len(seq)-1)
-            seq.pop(delete_index)
+        for _ in range(1):
+            if np.random.rand() > 0.25 and len(seq) > 2:
+                delete_index = np.random.choice(len(seq)-1)
+                seq.pop(delete_index)
 
         # replacement
-        if  np.random.rand() > 0.25:
-            mask_index = np.random.choice(len(seq)-1)
-            probs = self.vocab.condition(seq[mask_index])
-            seq[mask_index] = self.vocab.sample(probs=probs)
-
-        if  np.random.rand() > 0.25:
-            mask_index = np.random.choice(len(seq)-1)
-            probs = self.vocab.condition(seq[mask_index])
-            seq[mask_index] = self.vocab.sample(probs=probs)
+        for _ in range(1):
+            if  np.random.rand() > 0.25:
+                mask_index = np.random.choice(len(seq)-1)
+                probs = self.vocab.condition(seq[mask_index])
+                seq[mask_index] = self.vocab.sample(probs=probs)
 
         # insertion
-        if np.random.rand() > 0.25 and len(seq) + 2 <= self.max_length:
-            add_index = np.random.choice(len(seq)-1)
-            probs = self.vocab.condition(seq[add_index])
-            seq.insert(add_index, self.vocab.sample(probs=probs))
-
-        if np.random.rand() > 0.25 and len(seq) + 2 <= self.max_length:
-            add_index = np.random.choice(len(seq)-1)
-            probs = self.vocab.condition(seq[add_index])
-            seq.insert(add_index, self.vocab.sample(probs=probs))
+        for _ in range(1):
+            if np.random.rand() > 0.25 and len(seq) + 2 <= self.max_length:
+                add_index = np.random.choice(len(seq)-1)
+                probs = self.vocab.condition(seq[add_index])
+                seq.insert(add_index, self.vocab.sample(probs=probs))
 
         return seq
 
@@ -123,7 +113,7 @@ class BaseDataset:
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
         corrupt = bool(round(np.random.rand()))
-        data, smiles = self._get_data(mol_data.frags, corrupt=corrupt)
+        data, smiles = self._get_data(mol_data.frags, corrupt=True)
         return data, smiles
 
     def get_target_data(self, index):
