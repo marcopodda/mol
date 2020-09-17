@@ -93,7 +93,7 @@ class Vocab:
         return self.unigram_prob[self[key]]
 
     def condition(self, key):
-        if isinstance(key, int):
+        if isinstance(key, str):
             key = self[key]
         value = self.prob(key)
         probs = self.unigram_prob.copy()
