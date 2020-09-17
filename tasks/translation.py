@@ -21,15 +21,14 @@ class TranslationDataset(TrainDataset):
 
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
-        data, smiles = self._get_data(mol_data.frags, corrupt=True)
-        return data, smiles
+        data = self._get_data(mol_data.frags, corrupt=True)
+        return data, mol_data.smiles
 
     def get_target_data(self, index):
         smiles = self.data.iloc[index].target
         mol_data = self.data[self.data.smiles==smiles].iloc[0]
-        # mol_data = self.data.iloc[index]
-        data, smiles = self._get_data(mol_data.frags, corrupt=False)
-        return data, smiles
+        data = self._get_data(mol_data.frags, corrupt=False)
+        return data, mol_data.smiles
 
 
 class TranslationWrapper(Wrapper):
