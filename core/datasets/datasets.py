@@ -31,7 +31,8 @@ class BaseDataset:
     def __getitem__(self, index):
         x_molecule, x_smiles = self.get_input_data(index)
         y_molecule, y_smiles = self.get_target_data(index)
-        target = torch.FloatTensor([[similarity(x_smiles, y_smiles)]])
+        sim = similarity(x_smiles, y_smiles)
+        target = torch.FloatTensor([[sim]])
         return x_molecule, y_molecule, target
 
     def _initialize_token(self, name):
