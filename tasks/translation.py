@@ -16,6 +16,9 @@ from tasks.runner import TaskRunner
 
 
 class TranslationDataset(TrainDataset):
+    def __len__(self):
+        return self.data[self.data.is_x==True].shape[0]
+
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
         data = self._get_data(mol_data.frags, corrupt=False)
