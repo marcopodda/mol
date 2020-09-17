@@ -128,7 +128,7 @@ class EvalDataset(BaseDataset):
 
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
-        data, _ = self._get_data(mol_data.frags, corrupt=False)
+        data = self._get_data(mol_data.frags, corrupt=False)
         return data
 
 
