@@ -9,9 +9,9 @@ from core.datasets.features import mol2nx, FINGERPRINT_DIM
 from core.datasets.settings import DATA_DIR
 from core.datasets.utils import pad, load_data
 from core.datasets.vocab import Tokens
-from core.mols.utils import mol_from_smiles, mol_to_smiles, mols_to_smiles
+from core.mols.utils import mol_from_smiles, mol_to_smiles, mols_from_smiles
 from core.mols.split import join_fragments
-from core.mols.props import get_fingerprint
+from core.mols.props import get_fingerprint, similarity
 from core.utils.serialization import load_numpy, save_numpy
 
 
@@ -62,7 +62,7 @@ class BaseDataset:
     def _get_data(self, frags_smiles, corrupt=False):
         if corrupt is True:
             frags_smiles = self._corrupt_input_seq(frags_smiles)
-        smiles = mol_to_smiles(join_frags(mols_to_smiles(frags_smiles)))
+        smiles = mol_to_smiles(join_fragments(mols_from_smiles(frags_smiles)))
 
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]

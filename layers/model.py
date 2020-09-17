@@ -107,6 +107,6 @@ class Model(nn.Module):
         decoder_outputs, decoder_bag_of_frags = self.decode(decoder_batch, decoder_inputs, encoder_hidden, encoder_outputs)
 
         # compute outputs
-        mlp_outputs = self.mlp(torch.cat([decoder_bag_of_frags, encoder_bag_of_frags]), dim=0)
+        mlp_outputs = self.mlp(torch.cat([decoder_bag_of_frags, encoder_bag_of_frags], dim=-1))
 
         return decoder_outputs, mlp_outputs, (decoder_bag_of_frags, encoder_bag_of_frags)
