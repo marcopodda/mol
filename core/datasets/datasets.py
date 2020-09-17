@@ -129,6 +129,7 @@ class EvalDataset(BaseDataset):
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
         data = self._get_data(mol_data.frags, corrupt=False)
+        print(mol_data.smiles)
         return data
 
 
