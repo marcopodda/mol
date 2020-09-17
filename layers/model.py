@@ -48,7 +48,7 @@ class Model(nn.Module):
 
         self.mlp = MLP(
             hparams=hparams,
-            dim_input=self.embedder_dim_output,
+            dim_input=self.embedder_dim_output*2,
             dim_hidden=64,
             dim_output=1,
             num_layers=2
@@ -107,6 +107,6 @@ class Model(nn.Module):
         decoder_outputs, decoder_bag_of_frags = self.decode(decoder_batch, decoder_inputs, encoder_hidden, encoder_outputs)
 
         # compute outputs
-        mlp_outputs = self.mlp(decoder_bag_of_frags)
+        mlp_outputs = self.mlp(torch.cat([decoder_bag_of_frags, encoder_bag_of_frags]), dim=0)
 
         return decoder_outputs, mlp_outputs, (decoder_bag_of_frags, encoder_bag_of_frags)

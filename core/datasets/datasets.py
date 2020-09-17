@@ -9,7 +9,8 @@ from core.datasets.features import mol2nx, FINGERPRINT_DIM
 from core.datasets.settings import DATA_DIR
 from core.datasets.utils import pad, load_data
 from core.datasets.vocab import Tokens
-from core.mols.utils import mol_from_smiles
+from core.mols.utils import mol_from_smiles, mol_to_smiles, mols_to_smiles
+from core.mols.split import join_fragments
 from core.mols.props import get_fingerprint
 from core.utils.serialization import load_numpy, save_numpy
 
@@ -28,14 +29,9 @@ class BaseDataset:
         return self.data.shape[0]
 
     def __getitem__(self, index):
-        keep_prob = bool(round(np.random.rand()))
-        if keep_prob:
-            x_molecule = self.get_input_data(index)
-            y_molecule = self.get_target_data(index)
-        else:
-            y_molecule = self.get_input_data(index)
-            x_molecule = self.get_target_data(index)
-        target = torch.FloatTensor([[keep_prob]])
+        x_molecule, x_smiles = self.get_input_data(index)
+        y_molecule, y_smiles = self.get_target_data(index)
+        target = torch.FloatTensor([[similarity(x_smiles, y_smiles)]])
         return x_molecule, y_molecule, target
 
     def _initialize_token(self, name):
@@ -65,6 +61,7 @@ class BaseDataset:
     def _get_data(self, frags_smiles, corrupt=False):
         if corrupt is True:
             frags_smiles = self._corrupt_input_seq(frags_smiles)
+        smiles = mol_to_smiles(join_frags(mols_to_smiles(frags_smiles)))
 
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]
@@ -75,7 +72,7 @@ class BaseDataset:
         data["frags_batch"] = torch.cat(frags_batch)
         data["length"] = torch.LongTensor([len(frags_list)])
         data["target"] = self._get_target_sequence(frags_smiles)
-        return data
+        return data, smiles
 
     def _corrupt_input_seq(self, seq):
         seq = seq[:]
@@ -124,7 +121,8 @@ class BaseDataset:
 
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
-        data = self._get_data(mol_data.frags, corrupt=True)
+        corrupt = bool(round(np.random.rand()))
+        data = self._get_data(mol_data.frags, corrupt=corrupt)
         return data
 
     def get_target_data(self, index):

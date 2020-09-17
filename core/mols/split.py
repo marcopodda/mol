@@ -168,47 +168,49 @@ def get_join_list(mol):
 def join_fragments(fragments):
     """Join a list of fragments toghether into a molecule
        Throws an exception if it is not possible to join all fragments."""
+    try:
+        to_join = []
+        bonds = []
+        pairs = []
+        del_atoms = []
+        new_mol = fragments[0]
 
-    to_join = []
-    bonds = []
-    pairs = []
-    del_atoms = []
-    new_mol = fragments[0]
+        j, b, r = get_join_list(fragments[0])
+        to_join += j
+        del_atoms += r
+        bonds += b
+        offset = fragments[0].GetNumAtoms()
 
-    j, b, r = get_join_list(fragments[0])
-    to_join += j
-    del_atoms += r
-    bonds += b
-    offset = fragments[0].GetNumAtoms()
+        for f in fragments[1:]:
+            j, b, r = get_join_list(f)
+            p = to_join.pop()
+            pb = bonds.pop()
 
-    for f in fragments[1:]:
-        j, b, r = get_join_list(f)
-        p = to_join.pop()
-        pb = bonds.pop()
+            # Check bond types if b[:-1] == pb
+            if b[:-1] != pb:
+                assert("Can't connect bonds")
 
-        # Check bond types if b[:-1] == pb
-        if b[:-1] != pb:
-            assert("Can't connect bonds")
+            pairs.append((p, j[-1] + offset, pb))
 
-        pairs.append((p, j[-1] + offset, pb))
+            for x in j[:-1]:
+                to_join.append(x + offset)
 
-        for x in j[:-1]:
-            to_join.append(x + offset)
+            for x in r:
+                del_atoms.append(x + offset)
 
-        for x in r:
-            del_atoms.append(x + offset)
+            bonds += b[:-1]
+            offset += f.GetNumAtoms()
+            new_mol = Chem.CombineMols(new_mol, f)
 
-        bonds += b[:-1]
-        offset += f.GetNumAtoms()
-        new_mol = Chem.CombineMols(new_mol, f)
+        new_mol = Chem.EditableMol(new_mol)
 
-    new_mol = Chem.EditableMol(new_mol)
+        for a1, a2, b in pairs:
+            new_mol.AddBond(a1, a2, order=b)
 
-    for a1, a2, b in pairs:
-        new_mol.AddBond(a1, a2, order=b)
+        # Remove atom with greatest number first:
+        for s in sorted(del_atoms, reverse=True):
+            new_mol.RemoveAtom(s)
 
-    # Remove atom with greatest number first:
-    for s in sorted(del_atoms, reverse=True):
-        new_mol.RemoveAtom(s)
-
-    return new_mol.GetMol()
+        return new_mol.GetMol()
+    except:
+        return Chem.MolFromSmiles("*")
