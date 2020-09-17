@@ -49,7 +49,7 @@ class TranslationWrapper(Wrapper):
         cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags)
         cos_sim = -F.logsigmoid(cos_sim).mean(dim=0)
 
-        total_loss = decoder_ce_loss + cos_sim
+        total_loss = decoder_ce_loss  # + cos_sim
         result = pl.TrainResult(minimize=total_loss)
         result.log('ce', decoder_ce_loss, prog_bar=True)
         result.log('cs', cos_sim, prog_bar=True)

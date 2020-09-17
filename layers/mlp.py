@@ -29,5 +29,5 @@ class MLP(nn.Module):
     def forward(self, x):
         x = F.relu(self.input_layer(x))
         for hidden_layer, bn in zip(self.hidden_layers, self.bns):
-            x = F.relu(bn(hidden_layer(x)))
+            x = bn(F.relu(hidden_layer(x)))
         return self.output_layer(x)
