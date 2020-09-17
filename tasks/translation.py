@@ -32,7 +32,7 @@ class TranslationWrapper(Wrapper):
     dataset_class = TranslationDataset
 
     def get_batch_size(self):
-        return self.hparams.translation_batch_size
+        return self.hparams.translate_batch_size
 
 
 class TranslationSampler(Sampler):
