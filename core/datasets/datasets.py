@@ -123,13 +123,13 @@ class BaseDataset:
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
         corrupt = bool(round(np.random.rand()))
-        data = self._get_data(mol_data.frags, corrupt=corrupt)
-        return data
+        data, smiles = self._get_data(mol_data.frags, corrupt=corrupt)
+        return data, smiles
 
     def get_target_data(self, index):
         mol_data = self.data.iloc[index]
-        data = self._get_data(mol_data.frags, corrupt=False)
-        return data
+        data, smiles = self._get_data(mol_data.frags, corrupt=False)
+        return data, smiles
 
 
 class TrainDataset(BaseDataset):
@@ -151,7 +151,7 @@ class EvalDataset(BaseDataset):
 
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
-        data = self._get_data(mol_data.frags, corrupt=False)
+        data, _ = self._get_data(mol_data.frags, corrupt=False)
         return data
 
 
