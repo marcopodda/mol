@@ -38,8 +38,8 @@ class Decoder(nn.Module):
             dim_input=self.dim_attention_input,
             dim_output=self.dim_attention_output)
 
+        self.bn = nn.BatchNorm1d(self.dim_state)
         self.out = nn.Linear(self.dim_state, self.dim_output)
-        self.bn = nn.BatchNorm1d(self.dim_output)
 
     def decode_with_attention(self, x, hidden, enc_outputs):
         # Note: we run this one step at a time
