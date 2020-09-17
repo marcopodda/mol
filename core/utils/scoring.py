@@ -64,7 +64,8 @@ def score(exp_dir, dataset_name, epoch=0):
     fun = kw["prop_fun"]
 
     # improvement
-    gen_prop, ref_prop = [fun(g) for g in gen], [fun(r) for r in ref]
+    ref_prop, gen_prop = [fun(r) for r in ref], [fun(g) for g in gen]
+    ref_mean, ref_std = np.mean(ref_prop), np.std(ref_prop)
     gen_mean, gen_std = np.mean(gen_prop), np.std(gen_prop)
     impr = [g - r for (g, r) in zip(gen_prop, ref_prop)]
     impr_mean, impr_std = np.mean(impr), np.std(impr)
@@ -82,7 +83,8 @@ def score(exp_dir, dataset_name, epoch=0):
         "valid": f"{len(valid) / len(samples):.4f}",
         "unique": f"{len(unique) / len(valid):.4f}",
         "novel": f"{sum(novel) / len(valid):.4f}",
-        "property": f"{gen_mean:.4f} +/- {gen_std:.4f}",
+        "ref_property": f"{ref_mean:.4f} +/- {ref_std:.4f}",
+        "gen_property": f"{gen_mean:.4f} +/- {gen_std:.4f}",
         "similar": f"{sum(similar) / len(similar):.4f}",
         "avg_similarity": f"{sim_mean:.4f} +/- {sim_std:.4f}",
         "improved": f"{sum(improved) / len(improved):.4f}",
