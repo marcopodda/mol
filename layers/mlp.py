@@ -17,14 +17,17 @@ class MLP(nn.Module):
         self.input_layer = nn.Linear(self.dim_input, self.dim_hidden)
 
         self.hidden_layers = nn.ModuleList([])
+        self.bns = nn.ModuleList([])
         for _ in range(num_layers):
             layer = nn.Linear(self.dim_hidden, self.dim_hidden)
+            bn = nn.BatchNorm1d(self.dim_hidden)
             self.hidden_layers.append(layer)
+            self.bns.append(bn)
 
         self.output_layer = nn.Linear(self.dim_hidden, self.dim_output)
 
     def forward(self, x):
         x = F.relu(self.input_layer(x))
-        for hidden_layer in self.hidden_layers:
-            x = F.relu(hidden_layer(x))
+        for hidden_layer, bn in zip(self.hidden_layers, self.bns):
+            x = F.relu(bn(hidden_layer(x)))
         return self.output_layer(x)

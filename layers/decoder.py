@@ -38,6 +38,7 @@ class Decoder(nn.Module):
             dim_output=self.dim_attention_output)
 
         self.out = nn.Linear(self.dim_state, self.dim_output)
+        self.bn = nn.BatchNorm1d(self.dim_output)
 
     def decode_with_attention(self, x, hidden, enc_outputs):
         # Note: we run this one step at a time
@@ -51,7 +52,7 @@ class Decoder(nn.Module):
 
         # Final output layer (next word prediction) using the RNN hidden state and context vector
         output = rnn_output.reshape(-1, rnn_output.size(2))
-        logits = self.out(output).squeeze(1)
+        logits = self.out(F.relu(self.bn(output))).squeeze(1)
 
         # Return final output, hidden state, and attention weights (for visualization)
         return logits, hidden, attn_weights

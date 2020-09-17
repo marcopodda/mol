@@ -71,7 +71,7 @@ class GNN(nn.Module):
     def forward(self, x, edge_index, edge_attr, frag_batch, graph_batch):
         for conv, bn in zip(self.convs, self.bns):
             x = conv(x, edge_index, edge_attr=edge_attr)
-            x = bn(F.relu(x))
+            x = F.relu(bn(x))
 
         nodes_per_graph = scatter_add(torch.ones_like(frag_batch), frag_batch)
         nodes_per_graph = nodes_per_graph.repeat_interleave(nodes_per_graph.view(-1))
