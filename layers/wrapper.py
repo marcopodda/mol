@@ -35,7 +35,7 @@ class Wrapper(pl.LightningModule):
 
     def prepare_data(self):
         train_loader = TrainDataLoader(self.hparams, self.dataset)
-        batch_size = self.hparams.pretrain_batch_size if self.pretrain else self.hparams.translate_batch_size
+        batch_size = self.get_batch_size()
         self.training_loader = train_loader(batch_size=batch_size, shuffle=True)
 
     def train_dataloader(self):
