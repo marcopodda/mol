@@ -21,13 +21,13 @@ class TranslationDataset(TrainDataset):
 
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
-        data = self._get_data(mol_data.frags, corrupt=False)
+        data = self._get_data(mol_data.frags, corrupt=True)
         return data, mol_data.smiles
 
     def get_target_data(self, index):
         smiles = self.data.iloc[index].target.rstrip()
         mol_data = self.data[self.data.smiles==smiles].iloc[0]
-        data = self._get_data(mol_data.frags, corrupt=False)
+        data = self._get_data(mol_data.frags, corrupt=True)
         return data, mol_data.smiles
 
 
@@ -47,12 +47,6 @@ class TranslationWrapper(Wrapper):
         decoder_ce_loss = F.cross_entropy(decoder_outputs, decoder_batch.target, ignore_index=0)
         cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags)
         cos_sim = -F.logsigmoid(cos_sim).mean(dim=0)
-
-        # decoder_outputs = decoder_outputs.view(2, 15, -1)[0]
-        # probs = torch.log_softmax(decoder_outputs, dim=-1)
-        # print("tar", decoder_batch.target[:10][:8])
-        # print("out", torch.argmax(probs, dim=-1).view(-1)[:8])
-        # print("grad", probs.grad)
 
         total_loss = decoder_ce_loss  # + cos_sim
         result = pl.TrainResult(minimize=total_loss)
