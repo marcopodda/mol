@@ -83,8 +83,9 @@ def score(exp_dir, dataset_name, fun=None, epoch=0):
     samples_dir = exp_dir / "samples"
     samples_filename = f"samples_{epoch}.yml"
     scores_filename = f"samples_{epoch}_scores_{fun}.yml"
+    scores_path = samples_dir / scores_filename
 
-    if not scores_filename.exists():
+    if not scores_path.exists():
         samples = load_yaml(samples_dir / samples_filename)
 
         ref = [s["ref"] for s in samples]
@@ -115,7 +116,7 @@ def score(exp_dir, dataset_name, fun=None, epoch=0):
 
         save_yaml(data, samples_dir / scores_filename)
 
-    return load_yaml(samples_dir / scores_filename)
+    return load_yaml(scores_path)
 
 
 def convert_metrics_dict(metrics_dict):
