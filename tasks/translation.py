@@ -38,12 +38,15 @@ class TranslationDataset(TrainDataset):
         return data, mol_data.smiles
 
     def __getitem__(self, index):
-        x_molecule, y_molecule, target = super().__getitem__(index)
+        x_molecule, x_smiles = self.get_input_data(index)
+        y_molecule, y_smiles = self.get_target_data(index)
         prop_fun = self.get_property_function()
-        prop1, prop2 = prop_fun(x_molecule), prop_fun(y_molecule)
+        prop1, prop2 = prop_fun(x_smiles), prop_fun(y_smiles)
+
         if prop1 >= prop2:
-            return x_molecule, y_molecule, target
-        return y_molecule, x_molecule, target
+            return x_molecule, y_molecule, torch.FloatTensor([[0.0]])
+
+        return y_molecule, x_molecule, torch.FloatTensor([[0.0]])
 
 
 class TranslationWrapper(Wrapper):
