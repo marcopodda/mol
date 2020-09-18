@@ -28,7 +28,7 @@ class TranslationDataset(TrainDataset):
 
     def get_target_data(self, index):
         print(f"getting target at index {index}")
-        smiles = self.data.iloc[index].target
+        smiles = self.data.iloc[index].target.rstrip()
         print(f"found, getting target {smiles}")
         mol_data = self.data[self.data.smiles==smiles]
         print(f"found {mol_data}")
