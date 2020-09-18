@@ -20,20 +20,13 @@ class TranslationDataset(TrainDataset):
         return self.data[self.data.is_x==True].shape[0]
 
     def get_input_data(self, index):
-        print(f"getting input at index {index}")
         mol_data = self.data.iloc[index]
-        print(f"found")
         data = self._get_data(mol_data.frags, corrupt=False)
         return data, mol_data.smiles
 
     def get_target_data(self, index):
-        print(f"getting target at index {index}")
         smiles = self.data.iloc[index].target.rstrip()
-        print(f"found, getting target {smiles}")
-        mol_data = self.data[self.data.smiles==smiles]
-        print(f"found {mol_data}")
-        mol_data = mol_data.iloc[0]
-        print(index, self.data.iloc[index].smiles, self.data.iloc[index].target, mol_data)
+        mol_data = self.data[self.data.smiles==smiles].iloc[0]
         data = self._get_data(mol_data.frags, corrupt=False)
         return data, mol_data.smiles
 
@@ -45,7 +38,6 @@ class TranslationWrapper(Wrapper):
         return self.hparams.translate_batch_size
 
     def training_step(self, batch, batch_idx):
-        print(self.dataset.max_length, file=open("hey.txt", "w"))
         batch_data, mlp_targets, _, _ = batch
         encoder_batch, decoder_batch = batch_data
 

@@ -86,7 +86,7 @@ class TaskRunner:
             gradient_clip_val=self.hparams.clip_norm,
             progress_bar_refresh_rate=10,
             fast_dev_run=self.debug,
-            overfit_batches=10,
+            overfit_batches=100,
             gpus=self.gpu)
 
         trainer.fit(wrapper)
