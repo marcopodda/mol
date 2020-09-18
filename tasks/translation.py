@@ -39,9 +39,9 @@ class TranslationDataset(TrainDataset):
 
     def __getitem__(self, index):
         x_molecule, y_molecule, target = super().__getitem__(index)
-        prop = self.get_property_function()
-        p1, p2 = prop(x_molecule), prop(y_molecule)
-        if p1 >= p2:
+        prop_fun = self.get_property_function()
+        prop1, prop2 = prop_fun(x_molecule), prop_fun(y_molecule)
+        if prop1 >= prop2:
             return x_molecule, y_molecule, target
         return y_molecule, x_molecule, target
 
