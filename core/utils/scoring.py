@@ -77,7 +77,7 @@ def success_rate(similar, improved):
     return round(sum(scores) / len(scores), 4)
 
 
-def score(exp_dir, dataset_name, epoch=0):
+def score(exp_dir, dataset_name, fun=None, epoch=0):
     exp_dir = Path(exp_dir)
     samples_dir = exp_dir / "samples"
     samples_filename = f"samples_{epoch}.yml"
@@ -86,7 +86,7 @@ def score(exp_dir, dataset_name, epoch=0):
 
     ref = [s["ref"] for s in samples]
     gen = [s["gen"] for s in samples]
-    kwargs = SR_KWARGS[dataset_name]
+    kwargs = SR_KWARGS[fun or dataset_name]
 
     valid_samples, validity_score = validity(ref, gen)
     valid, valid_gen = zip(*valid_samples)
