@@ -121,18 +121,13 @@ class TrainDataset(BaseDataset):
 
 class EvalDataset(BaseDataset):
     def __getitem__(self, index):
-        x_molecule = self.get_input_data(index)
+        x_molecule, _ = self.get_input_data(index, corrupt=False)
         return x_molecule
 
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()
         data = data[data.is_val == True].reset_index(drop=True)
         return data, vocab, max_length
-
-    def get_input_data(self, index):
-        mol_data = self.data.iloc[index]
-        data = self._get_data(mol_data.frags, corrupt=False)
-        return data
 
 
 class VocabDataset:
