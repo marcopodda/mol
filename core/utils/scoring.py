@@ -5,7 +5,7 @@ from moses import get_all_metrics
 
 from core.datasets.utils import load_data
 from core.utils.serialization import load_yaml
-from core.mols.props import drd2, qed, logp, similarity
+from core.mols.props import drd2, qed, logp, similarity as sim
 from core.mols.utils import mol_from_smiles
 
 
@@ -19,17 +19,62 @@ SR_KWARGS = {
 }
 
 
-def is_similar(x, y, similarity_thres):
-    return similarity(x, y) >= similarity_thres
+def validity(ref, gen):
+    valid = [(x, y) for (x, y) in zip(ref, gen) if y and mol_from_smiles(y)]
+    return valid, round(len(valid) / len(ref), 4)
 
 
-def is_improved(y, prop_fun, improvement_thres):
-    return prop_fun(y) >= improvement_thres
+def novelty(dataset_name, valid_gen):
+    data, _, _ = load_data(dataset_name)
+    training_set = set(data[data.is_train == True].smiles.tolist())
+    novel = [g not in training_set for g in valid_gen]
+    return round(sum(novel) / len(valid_gen), 4)
 
 
-def success_rate(x, y, prop_fun, similarity_thres, improvement_thres):
-    sim, prop = similarity(x, y), prop_fun(y)
-    return sim >= similarity_thres and prop >= improvement_thres
+def uniqueness(valid_gen):
+    unique = set(valid_gen)
+    return round(len(unique) / len(valid_gen), 4)
+
+
+def similarity(valid_samples, kwargs):
+    scores = np.array([sim(x, y) for (x, y) in valid_samples])
+    mean, std = scores.mean(), scores.std()
+    similar = scores > kwargs["similarity_thres"]
+    score = sum(similar) / len(similar)
+    return similar, {
+        "score": round(score, 4),
+        "mean": round(mean, 4),
+        "std": round(std, 4)
+    }
+
+
+def diversity(valid_samples):
+    diverse = np.array([1.0 - sim(x, z) for (x, y) in valid_samples for (_, z) in valid_samples])
+    mean, std = diverse.mean(), diverse.std()
+    return diverse, {
+        "mean": round(mean, 4),
+        "std": round(std, 4)
+    }
+
+
+def improvement(valid_samples, kwargs):
+    prop_fun = kwargs["prop_fun"]
+    ref_score = np.array([prop_fun(v[0]) for v in valid_samples])
+    gen_score = np.array([prop_fun(v[1]) for v in valid_samples])
+    scores = gen_score - ref_score
+    mean, std = scores.mean(), scores.std()
+    improved = scores > kwargs["improvement_thres"]
+    score = sum(improved) / len(improved)
+    return improved, {
+        "score": round(score, 4),
+        "mean": round(mean, 4),
+        "std": round(std, 4)
+    }
+
+
+def success_rate(similar, improved):
+    scores = similar & improved
+    return sum(scores) / len(scores)
 
 
 def score(exp_dir, dataset_name, epoch=0):
@@ -41,56 +86,26 @@ def score(exp_dir, dataset_name, epoch=0):
 
     ref = [s["ref"] for s in samples]
     gen = [s["gen"] for s in samples]
+    kwargs = SR_KWARGS[dataset_name]
 
-    # valid samples
-    valid = [(x, y) for (x, y) in zip(ref, gen) if y and mol_from_smiles(y)]
-    ref, gen = zip(*valid)
-
-    # novel samples
-    data, _, _ = load_data(dataset_name)
-    training_set = set(data[data.is_train == True].smiles.tolist())
-    novel = [g not in training_set for g in gen]
-
-    # unique samples
-    unique = set(gen)
-
-    # similarity
-    kw = SR_KWARGS[dataset_name].copy()
-    sims = [similarity(x, y) for (x, y) in valid]
-    sim_mean, sim_std = np.mean(sims), np.std(sims)
-    similar = [s >= kw["similarity_thres"] for s in sims]
-
-    # property
-    fun = kw["prop_fun"]
-
-    # improvement
-    ref_prop, gen_prop = [fun(r) for r in ref], [fun(g) for g in gen]
-    ref_mean, ref_std = np.mean(ref_prop), np.std(ref_prop)
-    gen_mean, gen_std = np.mean(gen_prop), np.std(gen_prop)
-    impr = [g - r for (g, r) in zip(gen_prop, ref_prop)]
-    impr_mean, impr_std = np.mean(impr), np.std(impr)
-    improved = [fun(g) >= kw["improvement_thres"] for g in gen]
-
-    # success
-    success = [x and y for (x, y) in zip(similar, improved)]
-
-    # reconstructed
-    recon = [x == y for (x, y) in valid]
+    valid_samples, validity_score = validity(ref, gen)
+    valid, valid_gen = zip(*valid_samples)
+    novelty_score = novelty(dataset_name, valid_gen)
+    uniqueness_score = uniqueness(valid_gen)
+    similar, similarity_scores = similarity(valid_samples, kwargs)
+    diverse, diversity_scores = diversity(valid_samples)
+    improved, improvement_scores = improvement(valid_samples, kwargs)
+    success_rate_score = success_rate(similar, improved)
 
     return {
         "scoring": dataset_name,
         "num_samples": len(samples),
-        "valid": f"{len(valid) / len(samples):.4f}",
-        "unique": f"{len(unique) / len(valid):.4f}",
-        "novel": f"{sum(novel) / len(valid):.4f}",
-        "ref_property": f"{ref_mean:.4f} +/- {ref_std:.4f}",
-        "gen_property": f"{gen_mean:.4f} +/- {gen_std:.4f}",
-        "similar": f"{sum(similar) / len(similar):.4f}",
-        "avg_similarity": f"{sim_mean:.4f} +/- {sim_std:.4f}",
-        "improved": f"{sum(improved) / len(improved):.4f}",
-        "avg_improvement": f"{impr_mean:.4f} +/- {impr_std:.4f}",
-        "success_rate": f"{sum(success) / len(success):.4f}",
-        "recon_rate": f"{sum(recon) / len(recon):.4f}"
+        "valid": validity_score,
+        "unique": uniqueness_score,
+        "novel": novelty_score,
+        "similar": similarity_scores,
+        "improved": improvement_scores,
+        "success_rate": success_rate_score,
     }
 
 
