@@ -42,9 +42,9 @@ def similarity(valid_samples, kwargs):
     similar = scores > kwargs["similarity_thres"]
     score = sum(similar) / len(similar)
     return similar, {
-        "score": round(score, 4),
-        "mean": round(mean, 4),
-        "std": round(std, 4)
+        "score": round(score.item(), 4),
+        "mean": round(mean.item(), 4),
+        "std": round(std.item(), 4)
     }
 
 
@@ -52,8 +52,8 @@ def diversity(valid_samples):
     diverse = np.array([1.0 - sim(x, z) for (x, y) in valid_samples for (_, z) in valid_samples])
     mean, std = diverse.mean(), diverse.std()
     return diverse, {
-        "mean": round(mean, 4),
-        "std": round(std, 4)
+        "mean": round(mean.item(), 4),
+        "std": round(std.item(), 4)
     }
 
 
@@ -66,15 +66,15 @@ def improvement(valid_samples, kwargs):
     improved = scores > kwargs["improvement_thres"]
     score = sum(improved) / len(improved)
     return improved, {
-        "score": round(score, 4),
-        "mean": round(mean, 4),
-        "std": round(std, 4)
+        "score": round(score.item(), 4),
+        "mean": round(mean.item(), 4),
+        "std": round(std.item(), 4)
     }
 
 
 def success_rate(similar, improved):
     scores = similar & improved
-    return round(sum(scores) / len(scores), 4)
+    return round(scores.mean().item(), 4)
 
 
 def score(exp_dir, dataset_name, fun=None, epoch=0):
