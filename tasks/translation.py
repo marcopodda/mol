@@ -33,7 +33,7 @@ class TranslationDataset(TrainDataset):
 
     def get_target_data(self, index):
         mol_data = self.data.iloc[index]
-        data = self._get_data(mol_data.frags, corrupt=False)
+        data = self._get_data(mol_data.frags, corrupt=True)
         return data, mol_data.smiles
 
     def get_target_data(self, index):
