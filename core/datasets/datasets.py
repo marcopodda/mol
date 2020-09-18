@@ -93,6 +93,16 @@ class BaseDataset:
         data, vocab, max_length = load_data(self.dataset_name)
         return data, vocab, max_length
 
+    def get_input_data(self, index, corrupt=True):
+        mol_data = self.data.iloc[index]
+        data = self._get_data(mol_data.frags, corrupt=corrupt)
+        return data, mol_data.smiles
+
+    def get_target_data(self, index, corrupt=False):
+        mol_data = self.data.iloc[index]
+        data = self._get_data(mol_data.frags, corrupt=corrupt)
+        return data, mol_data.smiles
+
 
 class TrainDataset(BaseDataset):
     def __getitem__(self, index):
@@ -107,16 +117,6 @@ class TrainDataset(BaseDataset):
         data, vocab, max_length = super().get_dataset()
         data = data[data.is_train == True].reset_index(drop=True)
         return data, vocab, max_length
-
-    def get_input_data(self, index, corrupt=True):
-        mol_data = self.data.iloc[index]
-        data = self._get_data(mol_data.frags, corrupt=corrupt)
-        return data, mol_data.smiles
-
-    def get_target_data(self, index, corrupt=False):
-        mol_data = self.data.iloc[index]
-        data = self._get_data(mol_data.frags, corrupt=corrupt)
-        return data, mol_data.smiles
 
 
 class EvalDataset(BaseDataset):
