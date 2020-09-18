@@ -39,7 +39,7 @@ class TranslationDataset(TrainDataset):
     def get_target_data(self, index):
         smiles = self.data.iloc[index].target.rstrip()
         mol_data = self.data[self.data.smiles==smiles].iloc[0]
-        data = self._get_data(mol_data.frags, corrupt=False)
+        data = self._get_data(mol_data.frags, corrupt=True)
         return data, mol_data.smiles
 
     def __getitem__(self, index):
