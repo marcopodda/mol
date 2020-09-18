@@ -58,7 +58,7 @@ class TranslationWrapper(Wrapper):
 
 class TranslationSampler(Sampler):
     def prepare_data(self):
-        indices = self.dataset.data[self.dataset.data.is_train == True].index.tolist()
+        indices = self.dataset.data[self.dataset.data.is_val == True].index.tolist()
         loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
         smiles = self.dataset.data.iloc[indices].smiles.tolist()
         return smiles, loader(batch_size=self.hparams.translate_batch_size, shuffle=False)
