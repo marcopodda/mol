@@ -67,4 +67,4 @@ class Decoder(nn.Module):
             outputs.append(logits.unsqueeze(1))
 
         outputs = torch.cat(outputs, dim=1)
-        return outputs.view(-1, outputs.size(2))
+        return outputs.view(-1, self.dim_output)
