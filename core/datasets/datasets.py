@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import networkx as nx
 
@@ -38,6 +39,8 @@ class BaseDataset:
             token = torch.FloatTensor(load_numpy(path))
         else:
             token = torch.randn((1, self.hparams.frag_dim_embed))
+            stdv = 1. / math.sqrt(token.size(1))
+            token.data.uniform_(-stdv, stdv)
             save_numpy(token.numpy(), path)
         return token
 
