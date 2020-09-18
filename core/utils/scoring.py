@@ -74,7 +74,7 @@ def improvement(valid_samples, kwargs):
 
 def success_rate(similar, improved):
     scores = similar & improved
-    return sum(scores) / len(scores)
+    return round(sum(scores) / len(scores), 4)
 
 
 def score(exp_dir, dataset_name, epoch=0):
