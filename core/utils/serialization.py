@@ -23,7 +23,7 @@ def save_pickle(obj, path):
 
 def load_yaml(path):
     path = Path(path)
-    return yaml.load(open(path, "r"), Loader=yaml.SafeLoader)
+    return yaml.load(open(path, "r"), Loader=yaml.Loader)
 
 
 def save_yaml(obj, path):
