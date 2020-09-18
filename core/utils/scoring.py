@@ -54,9 +54,9 @@ def diversity(valid_gen):
     return round(cumsum / tot, 4)
 
 
-def improvement(gen_samples, kwargs):
+def improvement(valid_gen, kwargs):
     prop_fun = kwargs["prop_fun"]
-    gen_score = np.array([prop_fun(g) for g in gen_samples])
+    gen_score = np.array([prop_fun(g) for g in valid_gen])
     improved = gen_score > kwargs["improvement_thres"]
     return improved, round(improved.mean().item(), 4)
 
@@ -86,9 +86,9 @@ def score(exp_dir, dataset_name, fun=None, epoch=0):
         valid, valid_gen = zip(*valid_samples)
         novelty_score = novelty(valid_gen, dataset_name)
         uniqueness_score = uniqueness(valid_gen)
-        similar, similarity_scores = similarity(valid_gen, kwargs)
+        similar, similarity_scores = similarity(valid_samples, kwargs)
         diversity_scores = diversity(valid_gen)
-        improved, improvement_scores = improvement(valid_samples, kwargs)
+        improved, improvement_scores = improvement(valid_gen, kwargs)
         success_rate_score = success_rate(similar, improved)
 
         data = {
@@ -121,7 +121,7 @@ def moses_score(exp_dir, epoch=0, n_jobs=40):
     samples = load_yaml(samples_path)
 
     ref_samples = [s["ref"] for s in samples]
-    gen_samples = [s["gen"] for s in samples]
+    valid_gen = [s["gen"] for s in samples]
 
-    scores = get_all_metrics(gen_samples, test=ref_samples, n_jobs=n_jobs)
+    scores = get_all_metrics(valid_gen, test=ref_samples, n_jobs=n_jobs)
     return convert_metrics_dict(scores)
