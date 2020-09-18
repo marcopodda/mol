@@ -27,6 +27,7 @@ class TranslationDataset(TrainDataset):
     def get_target_data(self, index):
         smiles = self.data.iloc[index].target
         mol_data = self.data[self.data.smiles==smiles].iloc[0]
+        print(index, self.data.iloc[index].smiles, self.data.iloc[index].target, mol_data)
         data = self._get_data(mol_data.frags, corrupt=False)
         return data, mol_data.smiles
 
