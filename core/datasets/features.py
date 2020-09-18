@@ -10,17 +10,17 @@ ATOMS = ["C", "N", "S", "O", "F", "Cl", "Br"]
 
 ATOM_FEATURES = {
     'atomic_num': [6, 7, 8, 9, 16, 17, 35, 70, 71, 73, 74, 75, 76, 77, 78, 79, 81, 82, 83],  # [6, 7, 8, 9, 16, 17, 35],
-    # 'degree': [0, 1, 2, 3, 4, 5],
-    # 'formal_charge': [-1, -2, 1, 2, 0],
-    # 'chiral_tag': [0, 1, 2, 3],
-    # 'num_Hs': [0, 1, 2, 3, 4],
-    # 'hybridization': [
-    #     Chem.rdchem.HybridizationType.SP,
-    #     Chem.rdchem.HybridizationType.SP2,
-    #     Chem.rdchem.HybridizationType.SP3,
-    #     Chem.rdchem.HybridizationType.SP3D,
-    #     Chem.rdchem.HybridizationType.SP3D2
-    # ],
+    'degree': [0, 1, 2, 3, 4, 5],
+    'formal_charge': [-1, -2, 1, 2, 0],
+    'chiral_tag': [0, 1, 2, 3],
+    'num_Hs': [0, 1, 2, 3, 4],
+    'hybridization': [
+        Chem.rdchem.HybridizationType.SP,
+        Chem.rdchem.HybridizationType.SP2,
+        Chem.rdchem.HybridizationType.SP3,
+        Chem.rdchem.HybridizationType.SP3D,
+        Chem.rdchem.HybridizationType.SP3D2
+    ],
 }
 ATOM_FDIM = sum(len(choices) + 1 for choices in ATOM_FEATURES.values()) + 1
 
