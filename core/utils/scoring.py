@@ -5,7 +5,7 @@ from moses import get_all_metrics
 
 from core.datasets.utils import load_data
 from core.utils.serialization import load_yaml, save_yaml
-from core.mols.props import drd2, qed, logp, similarity as sim
+from core.mols.props import drd2, qed, logp, similarity as sim, bulk_tanimoto
 from core.mols.utils import mol_from_smiles
 
 
