@@ -32,6 +32,11 @@ class TranslationDataset(TrainDataset):
         return PROP_FUNS[self.dataset_name]
 
     def get_target_data(self, index):
+        mol_data = self.data.iloc[index]
+        data = self._get_data(mol_data.frags, corrupt=True)
+        return data, mol_data.smiles
+
+    def get_target_data(self, index):
         smiles = self.data.iloc[index].target.rstrip()
         mol_data = self.data[self.data.smiles==smiles].iloc[0]
         data = self._get_data(mol_data.frags, corrupt=False)
