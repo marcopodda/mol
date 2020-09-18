@@ -63,10 +63,10 @@ def get_bond_features(bond):
         bt == Chem.rdchem.BondType.DOUBLE,
         bt == Chem.rdchem.BondType.TRIPLE,
         bt == Chem.rdchem.BondType.AROMATIC,
-        bond.GetIsConjugated(),
-        bond.IsInRing()
+        # bond.GetIsConjugated(),
+        # bond.IsInRing()
     ]
-    fbond += onek_encoding_unk(int(bond.GetStereo()), BOND_FEATURES['stereo'])
+    # fbond += onek_encoding_unk(int(bond.GetStereo()), BOND_FEATURES['stereo'])
     return fbond
 
 
