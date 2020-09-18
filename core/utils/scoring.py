@@ -4,7 +4,7 @@ from pathlib import Path
 from moses import get_all_metrics
 
 from core.datasets.utils import load_data
-from core.utils.serialization import load_yaml
+from core.utils.serialization import load_yaml, save_yaml
 from core.mols.props import drd2, qed, logp, similarity as sim
 from core.mols.utils import mol_from_smiles
 
@@ -79,35 +79,43 @@ def success_rate(similar, improved):
 
 def score(exp_dir, dataset_name, fun=None, epoch=0):
     exp_dir = Path(exp_dir)
+    fun = fun or dataset_name
     samples_dir = exp_dir / "samples"
     samples_filename = f"samples_{epoch}.yml"
+    scores_filename = f"samples_{epoch}_scores_{fun}.yml"
 
-    samples = load_yaml(samples_dir / samples_filename)
+    if not scores_filename.exists():
+        samples = load_yaml(samples_dir / samples_filename)
 
-    ref = [s["ref"] for s in samples]
-    gen = [s["gen"] for s in samples]
-    kwargs = SR_KWARGS[fun or dataset_name]
+        ref = [s["ref"] for s in samples]
+        gen = [s["gen"] for s in samples]
 
-    valid_samples, validity_score = validity(ref, gen)
-    valid, valid_gen = zip(*valid_samples)
-    novelty_score = novelty(dataset_name, valid_gen)
-    uniqueness_score = uniqueness(valid_gen)
-    similar, similarity_scores = similarity(valid_samples, kwargs)
-    diverse, diversity_scores = diversity(valid_samples)
-    improved, improvement_scores = improvement(valid_samples, kwargs)
-    success_rate_score = success_rate(similar, improved)
+        kwargs = SR_KWARGS[fun]
 
-    return {
-        "scoring": dataset_name,
-        "num_samples": len(samples),
-        "valid": validity_score,
-        "unique": uniqueness_score,
-        "novel": novelty_score,
-        "similar": similarity_scores,
-        "diverse": diversity_scores,
-        "improved": improvement_scores,
-        "success_rate": success_rate_score,
-    }
+        valid_samples, validity_score = validity(ref, gen)
+        valid, valid_gen = zip(*valid_samples)
+        novelty_score = novelty(dataset_name, valid_gen)
+        uniqueness_score = uniqueness(valid_gen)
+        similar, similarity_scores = similarity(valid_samples, kwargs)
+        diverse, diversity_scores = diversity(valid_samples)
+        improved, improvement_scores = improvement(valid_samples, kwargs)
+        success_rate_score = success_rate(similar, improved)
+
+        data = {
+            "scoring": dataset_name,
+            "num_samples": len(samples),
+            "valid": validity_score,
+            "unique": uniqueness_score,
+            "novel": novelty_score,
+            "similar": similarity_scores,
+            "diverse": diversity_scores,
+            "improved": improvement_scores,
+            "success_rate": success_rate_score,
+        }
+
+        save_yaml(data, samples_dir / scores_filename)
+
+    return load_yaml(samples_dir / scores_filename)
 
 
 def convert_metrics_dict(metrics_dict):
