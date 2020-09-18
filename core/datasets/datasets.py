@@ -82,12 +82,17 @@ class BaseDataset:
         data["frags_batch"] = torch.cat(frags_batch)
         data["length"] = torch.LongTensor([len(frags_list)])
         data["target"] = self._get_target_sequence(frags_smiles)
-        return data
+        return data, frags_list
 
     def _get_target_sequence(self, frags_list):
         seq = [self.vocab[f] + len(Tokens) for f in frags_list] + [Tokens.EOS.value]
         padded_seq = pad(seq, self.max_length)
         return padded_seq
+
+    def compute_similarity(self, frags1, frags2):
+        joined1 = mol_to_smiles(join_fragments(frags1))
+        joined2 = mol_to_smiles(join_fragments(frags2))
+        return similarity(joined1, joined2)
 
     def get_dataset(self):
         data, vocab, max_length = load_data(self.dataset_name)
@@ -95,23 +100,21 @@ class BaseDataset:
 
     def get_input_data(self, index, corrupt=True):
         mol_data = self.data.iloc[index]
-        data = self._get_data(mol_data.frags, corrupt=corrupt)
-        return data, mol_data.smiles
+        data, frags_list = self._get_data(mol_data.frags, corrupt=corrupt)
+        return data, mol_data.smiles, frags_list
 
     def get_target_data(self, index, corrupt=False):
         mol_data = self.data.iloc[index]
-        data = self._get_data(mol_data.frags, corrupt=corrupt)
-        return data, mol_data.smiles
+        data, frags_list = self._get_data(mol_data.frags, corrupt=corrupt)
+        return data, mol_data.smiles, frags_list
 
 
 class TrainDataset(BaseDataset):
     def __getitem__(self, index):
-        x_molecule, x_smiles = self.get_input_data(index)
-        y_molecule, y_smiles = self.get_target_data(index)
-        sim = similarity(x_smiles, y_smiles)
-        target = torch.FloatTensor([[sim]])
-
-        return x_molecule, y_molecule, target
+        x_molecule, x_smiles, x_frags = self.get_input_data(index)
+        y_molecule, y_smiles, y_frags = self.get_target_data(index)
+        sim = self.compute_similarity(x_frags, y_frags)
+        return x_molecule, y_molecule, torch.FloatTensor([[sim]])
 
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()
@@ -121,7 +124,7 @@ class TrainDataset(BaseDataset):
 
 class EvalDataset(BaseDataset):
     def __getitem__(self, index):
-        x_molecule, _ = self.get_input_data(index, corrupt=False)
+        x_molecule, _, _ = self.get_input_data(index, corrupt=False)
         return x_molecule
 
     def get_dataset(self):

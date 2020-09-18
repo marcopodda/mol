@@ -33,17 +33,17 @@ class TranslationDataset(TrainDataset):
 
     def get_target_data(self, index, corrupt=False):
         smiles = self.data.iloc[index].target.rstrip()
-        mol_data = self.data[self.data.smiles==smiles].iloc[0]
+        mol_data, frags_list = self.data[self.data.smiles==smiles].iloc[0]
         data = self._get_data(mol_data.frags, corrupt=corrupt)
-        return data, mol_data.smiles
+        return data, mol_data.smiles, frags_list
 
     def __getitem__(self, index):
-        x_molecule, x_smiles = self.get_input_data(index, corrupt=True)
-        y_molecule, y_smiles = self.get_target_data(index, corrupt=False)
+        x_molecule, x_smiles, x_frags = self.get_input_data(index, corrupt=True)
+        y_molecule, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
         prop_fun = self.get_property_function()
         prop1, prop2 = prop_fun(x_smiles), prop_fun(y_smiles)
-        sim = similarity(x_smiles, y_smiles)
-        print(x_smiles, y_smiles, sim)
+        sim = self.compute_similarity(x_frags, y_frags)
+
         if prop2 >= prop1:
             return x_molecule, y_molecule, torch.FloatTensor([[sim]])
 
