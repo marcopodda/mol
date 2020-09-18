@@ -48,7 +48,7 @@ class TranslationDataset(TrainDataset):
         prop_fun = self.get_property_function()
         prop1, prop2 = prop_fun(x_smiles), prop_fun(y_smiles)
 
-        if prop1 >= prop2:
+        if prop2 >= prop1:
             return x_molecule, y_molecule, torch.FloatTensor([[0.0]])
 
         return y_molecule, x_molecule, torch.FloatTensor([[0.0]])
