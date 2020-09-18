@@ -113,6 +113,7 @@ class Embedder(nn.Module):
         x, bag_of_fragments = self.gnn(x, edge_index, edge_attr, frag_batch=data.frags_batch, graph_batch=data.batch)
 
         cumsum = 0
+
         for i, l in enumerate(data.length):
             offset = 1 if input is True else 0
             seq_element = x[cumsum:cumsum + l, :]

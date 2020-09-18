@@ -86,13 +86,13 @@ class Model(nn.Module):
 
     def encode(self, input_frags, encoder_inputs):
         encoder_inputs, bag_of_frags = self.embedder(input_frags, encoder_inputs, input=False)
-        encoder_inputs = F.dropout(encoder_inputs, p=self.embedder_dropout, training=self.training)
+        # encoder_inputs = F.dropout(encoder_inputs, p=self.embedder_dropout, training=self.training)
         encoder_outputs, encoder_hidden = self.encoder(encoder_inputs)
         return encoder_outputs, encoder_hidden, bag_of_frags
 
     def decode(self, output_frags, decoder_inputs, encoder_hidden, encoder_outputs):
         decoder_inputs, bag_of_frags = self.embedder(output_frags, decoder_inputs, input=True)
-        decoder_inputs = F.dropout(decoder_inputs, p=self.embedder_dropout, training=self.training)
+        # decoder_inputs[1:] = F.dropout(decoder_inputs[1:], p=self.embedder_dropout, training=self.training)
         decoder_outputs = self.decoder(decoder_inputs, encoder_hidden, encoder_outputs)
         return decoder_outputs, bag_of_frags
 
