@@ -71,10 +71,9 @@ def _fix_consistency(df):
     smiles = y_data.smiles.tolist()
 
     include = set(targets).intersection(set(smiles))
-    x_data[x_data.target.isin(include)]
-    y_data[y_data.smiles.isin(include)]
+    train_data = train_data[(train_data.target.isin(include)) | (train_data.smiles.isin(include))]
 
-    safe_data = pd.concat([x_data, y_data, val_data, test_data])
+    safe_data = pd.concat([train_data, val_data, test_data])
     return safe_data.reset_index(drop=True)
 
 
