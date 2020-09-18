@@ -21,13 +21,13 @@ class TranslationDataset(TrainDataset):
 
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
-        data = self._get_data(mol_data.frags, corrupt=True)
+        data = self._get_data(mol_data.frags, corrupt=False)
         return data, mol_data.smiles
 
     def get_target_data(self, index):
         smiles = self.data.iloc[index].target.rstrip()
         mol_data = self.data[self.data.smiles==smiles].iloc[0]
-        data = self._get_data(mol_data.frags, corrupt=True)
+        data = self._get_data(mol_data.frags, corrupt=False)
         return data, mol_data.smiles
 
 
@@ -58,8 +58,7 @@ class TranslationWrapper(Wrapper):
 
 class TranslationSampler(Sampler):
     def prepare_data(self):
-        # indices = self.dataset.data[self.dataset.data.is_train == True].index.tolist()
-        indices = self.dataset.data[self.dataset.data.is_train==True][:100].index.tolist()
+        indices = self.dataset.data[self.dataset.data.is_train == True].index.tolist()
         loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
         smiles = self.dataset.data.iloc[indices].smiles.tolist()
         return smiles, loader(batch_size=self.hparams.translate_batch_size, shuffle=False)
