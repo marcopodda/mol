@@ -60,16 +60,17 @@ def _clean_translation_dataset(raw_dir, info):
 
 
 def _fix_consistency(df):
-    return df
     val_data = df[df.is_val == True]
     test_data = df[df.is_test == True]
     train_data = df[df.is_train == True]
 
     x_data = train_data[train_data.is_x == True]
     targets = x_data.target.tolist()
-    assert "CCn1cc[nH+]c1CN1C[C@@H](c2cc(F)cc(F)c2)[C@@H]2[C@H]1C1CC[NH+]2CC1" in targets
     y_data = train_data[train_data.smiles.isin(targets)]
-    assert "CCn1cc[nH+]c1CN1C[C@@H](c2cc(F)cc(F)c2)[C@@H]2[C@H]1C1CC[NH+]2CC1" in y_data.smiles.tolist()
+
+    y_data = train_data[train_data.is_y == True]
+    smiles = y_data.smiles.tolist()
+    y_data = train_data[train_data.target.isin(smiles)]
 
     safe_data = pd.concat([x_data, y_data, val_data, test_data])
     return safe_data.reset_index(drop=True)
