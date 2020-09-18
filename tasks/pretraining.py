@@ -14,7 +14,7 @@ class PretrainingWrapper(Wrapper):
 
 class PretrainingSampler(Sampler):
     def prepare_data(self):
-        num_samples = min(1000, len(self.dataset))
+        num_samples = min(250, len(self.dataset))
         indices = np.random.choice(len(self.dataset), num_samples, replace=False)
         loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
         smiles = self.dataset.data.iloc[indices].smiles.tolist()
