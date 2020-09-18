@@ -56,7 +56,7 @@ def clean_mol(smi):
 def process_data(smiles, n_jobs):
     P = Parallel(n_jobs=n_jobs, verbose=1)
     data = P(delayed(clean_mol)(smi) for smi in smiles)
-    return pd.DataFrame(data, dtype=object).dropna().reset_index(drop=True)
+    return pd.DataFrame(data, dtype=object).reset_index(drop=True)
 
 
 def run_preprocess(dataset_name):
