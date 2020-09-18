@@ -22,10 +22,10 @@ ATOM_FEATURES = {
     #     Chem.rdchem.HybridizationType.SP3D2
     # ],
 }
-ATOM_FDIM = sum(len(choices) + 1 for choices in ATOM_FEATURES.values()) # + 1
+ATOM_FDIM = sum(len(choices) + 1 for choices in ATOM_FEATURES.values()) + 1
 
 BOND_FEATURES = {'stereo': [0, 1, 2, 3, 4, 5]}
-BOND_FDIM = 4 # 13
+BOND_FDIM = 13
 
 FINGERPRINT_DIM = 2048
 
@@ -47,12 +47,12 @@ def onek_encoding_unk(value, choices):
 
 def get_atom_features(atom):
     features = onek_encoding_unk(atom.GetAtomicNum(), ATOM_FEATURES['atomic_num'])
-    # features += onek_encoding_unk(atom.GetTotalDegree(), ATOM_FEATURES['degree'])
-    # features += onek_encoding_unk(atom.GetFormalCharge(), ATOM_FEATURES['formal_charge'])
-    # features += onek_encoding_unk(int(atom.GetChiralTag()), ATOM_FEATURES['chiral_tag'])
-    # features += onek_encoding_unk(int(atom.GetTotalNumHs()), ATOM_FEATURES['num_Hs'])
-    # features += onek_encoding_unk(int(atom.GetHybridization()), ATOM_FEATURES['hybridization'])
-    # features += [1 if atom.GetIsAromatic() else 0]
+    features += onek_encoding_unk(atom.GetTotalDegree(), ATOM_FEATURES['degree'])
+    features += onek_encoding_unk(atom.GetFormalCharge(), ATOM_FEATURES['formal_charge'])
+    features += onek_encoding_unk(int(atom.GetChiralTag()), ATOM_FEATURES['chiral_tag'])
+    features += onek_encoding_unk(int(atom.GetTotalNumHs()), ATOM_FEATURES['num_Hs'])
+    features += onek_encoding_unk(int(atom.GetHybridization()), ATOM_FEATURES['hybridization'])
+    features += [1 if atom.GetIsAromatic() else 0]
     return features
 
 
@@ -63,10 +63,10 @@ def get_bond_features(bond):
         bt == Chem.rdchem.BondType.DOUBLE,
         bt == Chem.rdchem.BondType.TRIPLE,
         bt == Chem.rdchem.BondType.AROMATIC,
-        # bond.GetIsConjugated(),
-        # bond.IsInRing()
+        bond.GetIsConjugated(),
+        bond.IsInRing()
     ]
-    # fbond += onek_encoding_unk(int(bond.GetStereo()), BOND_FEATURES['stereo'])
+    fbond += onek_encoding_unk(int(bond.GetStereo()), BOND_FEATURES['stereo'])
     return fbond
 
 
