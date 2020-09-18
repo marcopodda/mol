@@ -104,6 +104,7 @@ def score(exp_dir, dataset_name, epoch=0):
         "unique": uniqueness_score,
         "novel": novelty_score,
         "similar": similarity_scores,
+        "diverse": diversity_scores,
         "improved": improvement_scores,
         "success_rate": success_rate_score,
     }
