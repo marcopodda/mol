@@ -68,8 +68,8 @@ class TrainDataLoader(BaseDataLoader):
         D = self.hparams.frag_dim_embed
 
         lengths = [m.length for m in frags_x]
-        enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos, fill_at=lengths)
-        dec_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.sos, fill_at=0)
+        enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos.clone(), fill_at=lengths)
+        dec_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.sos.clone(), fill_at=0)
 
         targets = torch.cat(targets, dim=0)
 
