@@ -7,12 +7,13 @@ def _clean_translation_dataset(raw_dir, info):
     raw_data = pd.read_csv(raw_data_path, names=["x", "y"], **info["parse_args"])
     length = raw_data.shape[0]
 
-    all_smiles, targets, is_x, is_y, is_val, is_test = [], [], [], [], [], []
+    all_smiles, targets, is_x, is_y, is_train, is_val, is_test = [], [], [], [], [], [], []
 
     all_smiles += raw_data.x.tolist()
     targets += raw_data.y.tolist()
     is_x += [True] * length
     is_y += [False] * length
+    is_train += [True] * length
     is_val += [False] * length
     is_test += [False] * length
 
@@ -20,6 +21,7 @@ def _clean_translation_dataset(raw_dir, info):
     targets += ["*"] * length
     is_x += [False] * length
     is_y += [True] * length
+    is_train += [True] * length
     is_val += [False] * length
     is_test += [False] * length
 
@@ -31,17 +33,19 @@ def _clean_translation_dataset(raw_dir, info):
     targets += ["*"] * length
     is_x += [False] * length
     is_y += [False] * length
+    is_train += [False] * length
     is_val += [True] * length
     is_test += [False] * length
 
     raw_data_path = raw_dir / "test.txt"
-    raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])
+    raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])[:100]
     length = raw_data.shape[0]
 
     all_smiles += raw_data.smiles.tolist()
     targets += ["*"] * length
     is_x += [False] * length
     is_y += [False] * length
+    is_train += [False] * length
     is_val += [False] * length
     is_test += [True] * length
 
@@ -62,7 +66,10 @@ def _fix_consistency(df):
 
     x_data = train_data[train_data.is_x == True]
     y_data = train_data[train_data.is_y == True]
-    x_data = x_data[x_data.target.isin(y_data.smiles)]
+    inputs = y_data.smiles.tolist()
+    x_data = x_data[x_data.target.isin(inputs)]
+    targets = x_data.target.tolist()
+    y_data = y_data[y_data.smiles.isin(targets)]
 
     safe_data = pd.concat([x_data, y_data, val_data, test_data])
     return safe_data.reset_index(drop=True)

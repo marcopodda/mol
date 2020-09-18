@@ -100,6 +100,7 @@ class TrainDataset(BaseDataset):
         y_molecule, y_smiles = self.get_target_data(index)
         sim = similarity(x_smiles, y_smiles)
         target = torch.FloatTensor([[sim]])
+        print(x_smiles, y_smiles)
         return x_molecule, y_molecule, target
 
     def get_dataset(self):
@@ -132,7 +133,6 @@ class EvalDataset(BaseDataset):
     def get_input_data(self, index):
         mol_data = self.data.iloc[index]
         data = self._get_data(mol_data.frags, corrupt=False)
-        print(mol_data.smiles)
         return data
 
 
