@@ -54,7 +54,7 @@ def _clean_translation_dataset(raw_dir, info):
         "target": targets,
         "is_x": is_x,
         "is_y": is_y,
-        "is_train": [x or y for (x, y) in zip(is_x, is_y)],
+        "is_train": is_train,
         "is_val": is_val,
         "is_test": is_test})
 
@@ -64,8 +64,8 @@ def _fix_consistency(df):
     test_data = df[df.is_test == True]
     train_data = df[df.is_train == True]
 
-    x_data = train_data[train_data.is_x == True]
-    train_data = train_data[train_data.smiles.isin(x_data.target.tolist())]
+    targets = train_data[train_data.is_x == True].target.tolist()
+    train_data = train_data[train_data.smiles.isin(targets)]
 
     safe_data = pd.concat([train_data, val_data, test_data])
     return safe_data.reset_index(drop=True)
