@@ -65,7 +65,7 @@ def _fix_consistency(df):
     train_data = df[df.is_train == True]
 
     x_data = train_data[train_data.is_x == True]
-    train_data = train_data[train_data.smiles.isin(x_data.targets.tolist())]
+    train_data = train_data[train_data.smiles.isin(x_data.target.tolist())]
 
     safe_data = pd.concat([train_data, val_data, test_data])
     return safe_data.reset_index(drop=True)
