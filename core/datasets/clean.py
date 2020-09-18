@@ -61,15 +61,16 @@ def _clean_translation_dataset(raw_dir, info):
 
 def _fix_consistency(df):
     return df
-    # val_data = df[df.is_val == True]
-    # test_data = df[df.is_test == True]
-    # train_data = df[df.is_train == True]
+    val_data = df[df.is_val == True]
+    test_data = df[df.is_test == True]
+    train_data = df[df.is_train == True]
 
-    # targets = train_data[train_data.is_x == True].target.tolist()
-    # train_data = train_data[train_data.smiles.isin(targets)]
+    x_data = train_data[train_data.is_x == True]
+    targets = train_data.target.tolist()
+    y_data = train_data[train_data.smiles.isin(targets)]
 
-    # safe_data = pd.concat([train_data, val_data, test_data])
-    # return safe_data.reset_index(drop=True)
+    safe_data = pd.concat([x_data, y_data, val_data, test_data])
+    return safe_data.reset_index(drop=True)
 
 
 def _postprocess_translation_dataset(cleaned_data, raw_data):
