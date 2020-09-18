@@ -38,7 +38,7 @@ def _clean_translation_dataset(raw_dir, info):
     is_test += [False] * length
 
     raw_data_path = raw_dir / "test.txt"
-    raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])[:100]
+    raw_data = pd.read_csv(raw_data_path, names=["smiles"], **info["parse_args"])
     length = raw_data.shape[0]
 
     all_smiles += raw_data.smiles.tolist()
@@ -65,8 +65,14 @@ def _fix_consistency(df):
     train_data = df[df.is_train == True]
 
     x_data = train_data[train_data.is_x == True]
-    targets = set(x_data.target.tolist())
+    targets = x_data.target.tolist()
+
     y_data = train_data[train_data.smiles.isin(targets)]
+    smiles = y_data.smiles.tolist()
+
+    include = set(targets).intersection(set(smiles))
+    x_data[x_data.target.isin(include)]
+    y_data[y_data.smiles.isin(include)]
 
     safe_data = pd.concat([x_data, y_data, val_data, test_data])
     return safe_data.reset_index(drop=True)
