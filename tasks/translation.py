@@ -19,10 +19,10 @@ class TranslationDataset(TrainDataset):
     def __len__(self):
         return self.data[self.data.is_x==True].shape[0]
 
-    def get_input_data(self, index):
-        mol_data = self.data.iloc[index]
-        data = self._get_data(mol_data.frags, corrupt=False)
-        return data, mol_data.smiles
+    # def get_input_data(self, index):
+    #     mol_data = self.data.iloc[index]
+    #     data = self._get_data(mol_data.frags, corrupt=True)
+    #     return data, mol_data.smiles
 
     def get_target_data(self, index):
         smiles = self.data.iloc[index].target.rstrip()
@@ -58,7 +58,7 @@ class TranslationWrapper(Wrapper):
 
 class TranslationSampler(Sampler):
     def prepare_data(self):
-        indices = self.dataset.data[self.dataset.data.is_test == True].index.tolist()
+        indices = self.dataset.data[self.dataset.data.is_val == True].index.tolist()
         loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
         smiles = self.dataset.data.iloc[indices].smiles.tolist()
         return smiles, loader(batch_size=self.hparams.translate_batch_size, shuffle=False)
