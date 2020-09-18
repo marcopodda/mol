@@ -100,6 +100,7 @@ class TrainDataset(BaseDataset):
         y_molecule, y_smiles = self.get_target_data(index)
         sim = similarity(x_smiles, y_smiles)
         target = torch.FloatTensor([[sim]])
+        print(x_smiles, y_smiles)
         return x_molecule, y_molecule, target
 
     def get_dataset(self):
