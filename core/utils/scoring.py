@@ -24,7 +24,7 @@ def validity(ref, gen):
     return valid, round(len(valid) / len(ref), 4)
 
 
-def novelty(dataset_name, valid_gen):
+def novelty(valid_gen, dataset_name):
     data, _, _ = load_data(dataset_name)
     training_set = set(data[data.is_train == True].smiles.tolist())
     novel = [g not in training_set for g in valid_gen]
@@ -38,38 +38,20 @@ def uniqueness(valid_gen):
 
 def similarity(valid_samples, kwargs):
     scores = np.array([sim(x, y) for (x, y) in valid_samples])
-    mean, std = scores.mean(), scores.std()
     similar = scores > kwargs["similarity_thres"]
-    score = sum(similar) / len(similar)
-    return similar, {
-        "score": round(score.item(), 4),
-        "mean": round(mean.item(), 4),
-        "std": round(std.item(), 4)
-    }
+    return similar, round(similar.mean().item(), 4)
 
 
 def diversity(valid_samples):
     diverse = np.array([1.0 - sim(x, z) for (x, y) in valid_samples for (_, z) in valid_samples])
-    mean, std = diverse.mean(), diverse.std()
-    return diverse, {
-        "mean": round(mean.item(), 4),
-        "std": round(std.item(), 4)
-    }
+    return diverse, round(diverse.mean().item(), 4)
 
 
-def improvement(valid_samples, kwargs):
+def improvement(gen_samples, kwargs):
     prop_fun = kwargs["prop_fun"]
-    ref_score = np.array([prop_fun(v[0]) for v in valid_samples])
-    gen_score = np.array([prop_fun(v[1]) for v in valid_samples])
-    scores = gen_score - ref_score
-    mean, std = scores.mean(), scores.std()
-    improved = scores > kwargs["improvement_thres"]
-    score = sum(improved) / len(improved)
-    return improved, {
-        "score": round(score.item(), 4),
-        "mean": round(mean.item(), 4),
-        "std": round(std.item(), 4)
-    }
+    gen_score = np.array([prop_fun(g) for g in gen_samples])
+    improved = gen_score > kwargs["improvement_thres"]
+    return improved, round(improved.mean().item(), 4)
 
 
 def success_rate(similar, improved):
@@ -95,9 +77,9 @@ def score(exp_dir, dataset_name, fun=None, epoch=0):
 
         valid_samples, validity_score = validity(ref, gen)
         valid, valid_gen = zip(*valid_samples)
-        novelty_score = novelty(dataset_name, valid_gen)
+        novelty_score = novelty(valid_gen, dataset_name)
         uniqueness_score = uniqueness(valid_gen)
-        similar, similarity_scores = similarity(valid_samples, kwargs)
+        similar, similarity_scores = similarity(valid_gen, kwargs)
         diverse, diversity_scores = diversity(valid_samples)
         improved, improvement_scores = improvement(valid_samples, kwargs)
         success_rate_score = success_rate(similar, improved)
