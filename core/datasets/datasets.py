@@ -96,11 +96,13 @@ class BaseDataset:
 
 class TrainDataset(BaseDataset):
     def __getitem__(self, index):
+        print(index)
         x_molecule, x_smiles = self.get_input_data(index)
         y_molecule, y_smiles = self.get_target_data(index)
+        print(x_smiles, y_smiles)
         sim = similarity(x_smiles, y_smiles)
         target = torch.FloatTensor([[sim]])
-        print(x_smiles, y_smiles)
+
         return x_molecule, y_molecule, target
 
     def get_dataset(self):
