@@ -48,13 +48,11 @@ class TranslationWrapper(Wrapper):
         cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags)
         cos_sim = -F.logsigmoid(cos_sim).mean(dim=0)
 
-        print(decoder_outputs.size())
-
         decoder_outputs = decoder_outputs.view(-1, 15, 6004)[0]
         probs = torch.log_softmax(decoder_outputs, dim=-1)
-        print(probs.size())
-        print("tar", decoder_batch.target[:10])
-        print("out", torch.argmax(probs, dim=-1).view(-1))
+        print("tar", decoder_batch.target[:10][:8])
+        print("out", torch.argmax(probs, dim=-1).view(-1)[:8])
+        print("grad", probs.grad)
 
         total_loss = decoder_ce_loss  # + cos_sim
         result = pl.TrainResult(minimize=total_loss)
