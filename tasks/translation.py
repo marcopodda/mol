@@ -38,6 +38,8 @@ class TranslationWrapper(Wrapper):
         return self.hparams.translate_batch_size
 
     def training_step(self, batch, batch_idx):
+        print(self.dataset.max_length)
+        assert False
         batch_data, mlp_targets, _, _ = batch
         encoder_batch, decoder_batch = batch_data
 
