@@ -56,25 +56,6 @@ class TranslationWrapper(Wrapper):
     def get_batch_size(self):
         return self.hparams.translate_batch_size
 
-    def training_step(self, batch, batch_idx):
-        batch_data, mlp_targets, _, _ = batch
-        encoder_batch, decoder_batch = batch_data
-
-        decoder_outputs, mlp_outputs, bag_of_frags = self.model(batch)
-        decoder_bag_of_frags, encoder_bag_of_frags = bag_of_frags
-
-        decoder_ce_loss = F.cross_entropy(decoder_outputs, decoder_batch.target, ignore_index=0)
-        bce_loss = F.binary_cross_entropy_with_logits(mlp_outputs, mlp_targets)
-        cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags).mean(dim=0)
-
-        total_loss = decoder_ce_loss + bce_loss
-
-        result = pl.TrainResult(minimize=total_loss)
-        result.log('ce', decoder_ce_loss, prog_bar=True)
-        result.log('bce', bce_loss, prog_bar=True)
-        result.log('cs', cos_sim, prog_bar=True)
-        return result
-
 
 class TranslationSampler(Sampler):
     def prepare_data(self):
