@@ -62,8 +62,6 @@ class Decoder(nn.Module):
 
         outputs = []
         for i in range(S):
-            if i == 0:
-                print(dec_inputs[i,i])
             x = dec_inputs[:, i, :].unsqueeze(1)
             logits, hidden, attn_weights = self.decode_with_attention(x, hidden, enc_outputs)
             outputs.append(logits.unsqueeze(1))
