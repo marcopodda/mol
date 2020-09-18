@@ -38,8 +38,7 @@ class TranslationWrapper(Wrapper):
         return self.hparams.translate_batch_size
 
     def training_step(self, batch, batch_idx):
-        print(self.dataset.max_length)
-        assert False
+        print(self.dataset.max_length, file=open("hey.txt", "w"))
         batch_data, mlp_targets, _, _ = batch
         encoder_batch, decoder_batch = batch_data
 
@@ -50,7 +49,7 @@ class TranslationWrapper(Wrapper):
         cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags)
         cos_sim = -F.logsigmoid(cos_sim).mean(dim=0)
 
-        decoder_outputs = decoder_outputs.view(-1, 15, 6004)[0]
+        decoder_outputs = decoder_outputs.view(2, 15, -1)[0]
         probs = torch.log_softmax(decoder_outputs, dim=-1)
         print("tar", decoder_batch.target[:10][:8])
         print("out", torch.argmax(probs, dim=-1).view(-1)[:8])
