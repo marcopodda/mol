@@ -9,7 +9,7 @@ import pytorch_lightning as pl
 from core.hparams import HParams
 from core.datasets.datasets import TrainDataset
 from core.datasets.loaders import EvalDataLoader
-from core.mols.props import drd2, logp, qed
+from core.mols.props import drd2, logp, qed, similarity
 from core.utils.serialization import load_yaml, save_yaml
 from layers.sampler import Sampler
 from layers.wrapper import Wrapper
@@ -31,27 +31,23 @@ class TranslationDataset(TrainDataset):
     def get_property_function(self):
         return PROP_FUNS[self.dataset_name]
 
-    def get_target_data(self, index):
-        mol_data = self.data.iloc[index]
-        data = self._get_data(mol_data.frags, corrupt=True)
-        return data, mol_data.smiles
-
-    def get_target_data(self, index):
+    def get_target_data(self, index, corrupt=False):
         smiles = self.data.iloc[index].target.rstrip()
         mol_data = self.data[self.data.smiles==smiles].iloc[0]
-        data = self._get_data(mol_data.frags, corrupt=True)
+        data = self._get_data(mol_data.frags, corrupt=corrupt)
         return data, mol_data.smiles
 
     def __getitem__(self, index):
-        x_molecule, x_smiles = self.get_input_data(index)
-        y_molecule, y_smiles = self.get_target_data(index)
+        x_molecule, x_smiles = self.get_input_data(index, corrupt=True)
+        y_molecule, y_smiles = self.get_target_data(index, corrupt=False)
         prop_fun = self.get_property_function()
         prop1, prop2 = prop_fun(x_smiles), prop_fun(y_smiles)
+        sim = similarity(x_smiles, y_smiles)
 
         if prop2 >= prop1:
-            return x_molecule, y_molecule, torch.FloatTensor([[0.0]])
+            return x_molecule, y_molecule, torch.FloatTensor([[sim]])
 
-        return y_molecule, x_molecule, torch.FloatTensor([[0.0]])
+        return y_molecule, x_molecule, torch.FloatTensor([[sim]])
 
 
 class TranslationWrapper(Wrapper):
@@ -68,13 +64,15 @@ class TranslationWrapper(Wrapper):
         decoder_bag_of_frags, encoder_bag_of_frags = bag_of_frags
 
         decoder_ce_loss = F.cross_entropy(decoder_outputs, decoder_batch.target, ignore_index=0)
-        cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags).mean(dim=0)
+        bce_loss = F.binary_cross_entropy_with_logits(mlp_outputs, mlp_targets)
+        cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags)
 
-        total_loss = decoder_ce_loss
+        total_loss = decoder_ce_loss + bce_loss
+
         result = pl.TrainResult(minimize=total_loss)
         result.log('ce', decoder_ce_loss, prog_bar=True)
+        result.log('bce', bce_loss, prog_bar=True)
         result.log('cs', cos_sim, prog_bar=True)
-
         return result
 
 

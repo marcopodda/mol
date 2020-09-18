@@ -108,15 +108,14 @@ class TrainDataset(BaseDataset):
         data = data[data.is_train == True].reset_index(drop=True)
         return data, vocab, max_length
 
-    def get_input_data(self, index):
+    def get_input_data(self, index, corrupt=True):
         mol_data = self.data.iloc[index]
-        corrupt = np.random.rand() > 0.5
-        data = self._get_data(mol_data.frags, corrupt=True)
+        data = self._get_data(mol_data.frags, corrupt=corrupt)
         return data, mol_data.smiles
 
-    def get_target_data(self, index):
+    def get_target_data(self, index, corrupt=False):
         mol_data = self.data.iloc[index]
-        data = self._get_data(mol_data.frags, corrupt=False)
+        data = self._get_data(mol_data.frags, corrupt=corrupt)
         return data, mol_data.smiles
 
 
