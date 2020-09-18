@@ -20,11 +20,13 @@ class TranslationDataset(TrainDataset):
         return self.data[self.data.is_x==True].shape[0]
 
     def get_input_data(self, index):
+        index = 0
         mol_data = self.data.iloc[index]
         data = self._get_data(mol_data.frags, corrupt=False)
         return data, mol_data.smiles
 
     def get_target_data(self, index):
+        index = 0
         smiles = self.data.iloc[index].target
         mol_data = self.data[self.data.smiles==smiles].iloc[0]
         data = self._get_data(mol_data.frags, corrupt=False)
