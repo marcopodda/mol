@@ -65,11 +65,11 @@ def _fix_consistency(df):
     train_data = df[df.is_train == True]
 
     x_data = train_data[train_data.is_x == True]
-    targets = x_data.target.tolist()
+    targets = set(x_data.target)
     y_data = train_data[train_data.smiles.isin(targets)]
 
     y_data = train_data[train_data.is_y == True]
-    smiles = y_data.smiles.tolist()
+    smiles = set(y_data.smiles)
     y_data = train_data[train_data.target.isin(smiles)]
 
     safe_data = pd.concat([x_data, y_data, val_data, test_data])
