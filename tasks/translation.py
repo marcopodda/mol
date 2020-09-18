@@ -9,26 +9,41 @@ import pytorch_lightning as pl
 from core.hparams import HParams
 from core.datasets.datasets import TrainDataset
 from core.datasets.loaders import EvalDataLoader
+from core.mols.props import drd2, logp, qed
 from core.utils.serialization import load_yaml, save_yaml
 from layers.sampler import Sampler
 from layers.wrapper import Wrapper
 from tasks.runner import TaskRunner
 
 
+PROP_FUNS = {
+    "drd2": drd2,
+    "logp04": logp,
+    "logp06": logp,
+    "qed": qed
+}
+
+
 class TranslationDataset(TrainDataset):
     def __len__(self):
         return self.data[self.data.is_x==True].shape[0]
 
-    # def get_input_data(self, index):
-    #     mol_data = self.data.iloc[index]
-    #     data = self._get_data(mol_data.frags, corrupt=True)
-    #     return data, mol_data.smiles
+    def get_property_function(self):
+        return PROP_FUNS[self.dataset_name]
 
     def get_target_data(self, index):
         smiles = self.data.iloc[index].target.rstrip()
         mol_data = self.data[self.data.smiles==smiles].iloc[0]
         data = self._get_data(mol_data.frags, corrupt=False)
         return data, mol_data.smiles
+
+    def __getitem__(self, index):
+        x_molecule, y_molecule, target = super().__getitem__(index)
+        prop = self.get_property_function()
+        p1, p2 = prop(x_molecule), prop(y_molecule)
+        if p1 >= p2:
+            return x_molecule, y_molecule, target
+        return y_molecule, x_molecule, target
 
 
 class TranslationWrapper(Wrapper):
