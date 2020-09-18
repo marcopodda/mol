@@ -96,7 +96,6 @@ class BaseDataset:
 
 class TrainDataset(BaseDataset):
     def __getitem__(self, index):
-        print(index)
         x_molecule, x_smiles = self.get_input_data(index)
         y_molecule, y_smiles = self.get_target_data(index)
         sim = similarity(x_smiles, y_smiles)

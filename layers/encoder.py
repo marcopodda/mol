@@ -24,8 +24,8 @@ class Encoder(nn.Module):
     def forward(self, x):
         x = x.unsqueeze(0) if x.ndim == 2 else x
         output, hidden = self.gru(x)
-        batch_size = output.size(0)
 
+        batch_size = output.size(0)
         hidden = hidden.view(self.num_layers, 2, batch_size, self.dim_state).sum(dim=1)
         output = output[:, :, :self.dim_state] + output[:, :, self.dim_state:]
         return output, hidden
