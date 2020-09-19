@@ -40,7 +40,8 @@ class TranslationDataset(TrainDataset):
     def __getitem__(self, index):
         x_molecule, x_smiles, x_frags = self.get_input_data(index, corrupt=False)
         y_molecule, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
-        return x_molecule, y_molecule, torch.FloatTensor([[0.0]])
+        sim = self.compute_similarity(x_frags, y_frags)
+        return x_molecule, y_molecule, torch.FloatTensor([[sim]])
 
 
 class TranslationWrapper(Wrapper):
