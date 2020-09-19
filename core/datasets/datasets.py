@@ -98,7 +98,7 @@ class BaseDataset:
         data, vocab, max_length = load_data(self.dataset_name)
         return data, vocab, max_length
 
-    def get_input_data(self, index, corrupt, reps):
+    def get_input_data(self, index, corrupt, reps=1):
         mol_data = self.data.iloc[index]
         data, frags_list = self._get_data(mol_data.frags, corrupt=corrupt, reps=reps)
         return data, mol_data.smiles, frags_list

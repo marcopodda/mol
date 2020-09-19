@@ -58,14 +58,14 @@ class TranslationWrapper(Wrapper):
         decoder_bag_of_frags, encoder_bag_of_frags = bag_of_frags
 
         decoder_ce_loss = F.cross_entropy(decoder_outputs, decoder_batch.target, ignore_index=0)
-        mse_loss = F.mse_loss(torch.sigmoid(mlp_outputs), mlp_targets)
+        # mse_loss = F.mse_loss(torch.sigmoid(mlp_outputs), mlp_targets)
         cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags).mean(dim=0)
 
-        total_loss = decoder_ce_loss + mse_loss
+        total_loss = decoder_ce_loss # + mse_loss
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('ce', decoder_ce_loss, prog_bar=True)
-        result.log('mse', mse_loss, prog_bar=True)
+        # result.log('mse', mse_loss, prog_bar=True)
         result.log('cs', cos_sim, prog_bar=True)
 
         return result
