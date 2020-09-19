@@ -42,7 +42,7 @@ class Wrapper(pl.LightningModule):
         return self.training_loader
 
     def training_step(self, batch, batch_idx):
-        batch_data, _, _ = batch
+        batch_data, _ = batch
         _, _, decoder_batch = batch_data
 
         decoder_outputs, bag_of_frags = self.model(batch)
