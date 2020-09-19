@@ -98,7 +98,7 @@ class Embedder(nn.Module):
         self.dim_edge_embed = dim_edge_embed
         self.dim_hidden = dim_hidden
         self.dim_output = dim_output
-        self.dropout = hparams.embedder_dropout
+        self.dropout = self.hparams.embedder_dropout
 
         self.gnn = GNN(
             hparams=self.hparams,
