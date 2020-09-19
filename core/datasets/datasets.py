@@ -98,12 +98,12 @@ class BaseDataset:
         data, vocab, max_length = load_data(self.dataset_name)
         return data, vocab, max_length
 
-    def get_input_data(self, index, corrupt=True):
+    def get_input_data(self, index, corrupt):
         mol_data = self.data.iloc[index]
         data, frags_list = self._get_data(mol_data.frags, corrupt=corrupt)
         return data, mol_data.smiles, frags_list
 
-    def get_target_data(self, index, corrupt=False):
+    def get_target_data(self, index, corrupt):
         mol_data = self.data.iloc[index]
         data, frags_list = self._get_data(mol_data.frags, corrupt=corrupt)
         return data, mol_data.smiles, frags_list
@@ -111,10 +111,10 @@ class BaseDataset:
 
 class TrainDataset(BaseDataset):
     def __getitem__(self, index):
-        x_molecule, x_smiles, x_frags = self.get_input_data(index)
-        y_molecule, y_smiles, y_frags = self.get_target_data(index)
+        x_data, x_smiles, x_frags = self.get_input_data(index, corrupt=True)
+        y_data, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
         sim = self.compute_similarity(x_frags, y_frags)
-        return x_molecule, y_molecule, torch.FloatTensor([[sim]])
+        return x_data, y_data, torch.FloatTensor([[sim]])
 
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()
