@@ -111,7 +111,7 @@ class BaseDataset:
 
 class TrainDataset(BaseDataset):
     def __getitem__(self, index):
-        x_data, x_smiles, x_frags = self.get_input_data(index, corrupt=False)
+        x_data, x_smiles, x_frags = self.get_input_data(index, corrupt=True)
         y_data, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
         sim = self.compute_similarity(x_frags, y_frags)
         return x_data, y_data, torch.FloatTensor([[sim]])
