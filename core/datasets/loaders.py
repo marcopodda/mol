@@ -60,19 +60,20 @@ class TrainDataLoader(BaseDataLoader):
     def collate(self, data_list):
         frags_x, frags_z, frags_y = zip(*data_list)
 
-        frags_x_batch = collate_frags(frags_x)
-        frags_z_batch = collate_frags(frags_z)
-        frags_y_batch = collate_frags(frags_y)
+        anc_batch = collate_frags(frags_x)
+        pos_batch = collate_frags(frags_z)
+        neg_batch = collate_frags(frags_y)
 
         B = len(frags_x)
         L = self.dataset.max_length
         D = self.hparams.frag_dim_embed
 
         lengths = [m.length for m in frags_x]
-        enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos.clone(), fill_at=lengths)
-        dec_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.sos.clone(), fill_at=0)
+        anc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos.clone(), fill_at=lengths)
+        pos_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.sos.clone(), fill_at=0)
+        neg_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos.clone(), fill_at=lengths)
 
-        return (frags_x_batch, frags_z_batch, frags_y_batch), enc_inputs, dec_inputs
+        return (anc_batch, pos_batch, neg_batch), anc_inputs, pos_inputs, neg_inputs
 
 
 class EvalDataLoader(BaseDataLoader):

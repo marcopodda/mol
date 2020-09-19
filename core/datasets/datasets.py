@@ -111,27 +111,27 @@ class BaseDataset:
 
 class TrainDataset(BaseDataset):
     def __getitem__(self, index):
-        x_data, x_smiles, x_frags = self.get_input_data(index, corrupt=True, reps=1)
-        z_data, z_smiles, z_frags = self.get_input_data(index, corrupt=True, reps=2)
-        y_data, y_smiles, y_frags = self.get_target_data(index)
+        anc, x_smiles, x_frags = self.get_input_data(index, corrupt=True, reps=1)
+        neg, z_smiles, z_frags = self.get_input_data(index, corrupt=True, reps=2)
+        pos, y_smiles, y_frags = self.get_target_data(index)
 
         sim1 = self.compute_similarity(x_frags, y_frags)
         sim2 = self.compute_similarity(z_frags, y_frags)
 
         while sim1 == sim2:
-            x_data, x_smiles, x_frags = self.get_input_data(index, corrupt=True, reps=1)
-            z_data, z_smiles, z_frags = self.get_input_data(index, corrupt=True, reps=2)
+            anc, x_smiles, x_frags = self.get_input_data(index, corrupt=True, reps=1)
+            neg, z_smiles, z_frags = self.get_input_data(index, corrupt=True, reps=2)
 
             sim1 = self.compute_similarity(x_frags, y_frags)
             sim2 = self.compute_similarity(z_frags, y_frags)
 
         if sim2 > sim1:
-            temp = x_data.clone()
-            x_data = z_data.clone()
-            z_data = temp.clone()
+            temp = anc.clone()
+            anc = neg.clone()
+            neg = temp.clone()
             del temp
 
-        return x_data, z_data, y_data
+        return anc, pos, neg
 
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()
