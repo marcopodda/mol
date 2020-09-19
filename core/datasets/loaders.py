@@ -58,22 +58,23 @@ class TrainDataLoader(BaseDataLoader):
             raise Exception("Works only for TrainDataset")
 
     def collate(self, data_list):
-        frags_x, frags_z, frags_y = zip(*data_list)
+        pos, neg, anc = zip(*data_list)
 
-        anc_batch = collate_frags(frags_x)
-        pos_batch = collate_frags(frags_z)
-        neg_batch = collate_frags(frags_y)
+        pos_batch = collate_frags(pos)
+        neg_batch = collate_frags(neg)
+        anc_batch = collate_frags(anc)
 
-        B = len(frags_x)
+        B = len(pos)
         L = self.dataset.max_length
         D = self.hparams.frag_dim_embed
 
-        lengths = [m.length for m in frags_x]
-        anc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos.clone(), fill_at=lengths)
-        pos_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.sos.clone(), fill_at=0)
+        lengths = [m.length for m in pos]
+        pos_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos.clone(), fill_at=lengths)
         neg_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos.clone(), fill_at=lengths)
+        anc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.sos.clone(), fill_at=0)
 
-        return (anc_batch, pos_batch, neg_batch), (anc_inputs, pos_inputs, neg_inputs)
+
+        return (pos_batch, neg_batch, anc_batch), (pos_inputs, neg_inputs, anc_inputs)
 
 
 class EvalDataLoader(BaseDataLoader):

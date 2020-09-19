@@ -80,14 +80,14 @@ class Model(nn.Module):
 
     def forward(self, batch):
         batch_data, batch_inputs = batch
-        anc_batch, pos_batch, neg_batch = batch_data
-        anc_inputs, pos_inputs, neg_inputs = batch_inputs
+        pos_batch, neg_batch, anc_batch = batch_data
+        pos_inputs, neg_inputs, anc_inputs = batch_inputs
 
         # embed fragment sequence
-        encoder_outputs, encoder_hidden, pos_bag_of_frags = self.encode(anc_batch, anc_inputs)
+        encoder_outputs, encoder_hidden, pos_bag_of_frags = self.encode(pos_batch, pos_inputs)
         _, _, neg_bag_of_frags = self.encode(neg_batch, neg_inputs)
 
         # decode fragment sequence
-        decoder_outputs, anc_bag_of_frags = self.decode(pos_batch, pos_inputs, encoder_hidden, encoder_outputs)
+        decoder_outputs, anc_bag_of_frags = self.decode(anc_batch, anc_inputs, encoder_hidden, encoder_outputs)
 
-        return decoder_outputs, (anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
+        return decoder_outputs, (pos_bag_of_frags, neg_bag_of_frags, anc_bag_of_frags)

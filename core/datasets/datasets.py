@@ -111,27 +111,27 @@ class BaseDataset:
 
 class TrainDataset(BaseDataset):
     def __getitem__(self, index):
-        anc, x_smiles, x_frags = self.get_input_data(index, corrupt=True, reps=1)
-        neg, z_smiles, z_frags = self.get_input_data(index, corrupt=True, reps=2)
-        pos, y_smiles, y_frags = self.get_target_data(index)
+        pos, pos_smiles, pos_frags = self.get_input_data(index, corrupt=True, reps=1)
+        neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=2)
+        anc, anc_smiles, anc_frags = self.get_target_data(index)
 
-        sim1 = self.compute_similarity(x_frags, y_frags)
-        sim2 = self.compute_similarity(z_frags, y_frags)
+        sim1 = self.compute_similarity(anc_frags, pos_frags)
+        sim2 = self.compute_similarity(anc_frags, neg_frags)
 
         while sim1 == sim2:
-            anc, x_smiles, x_frags = self.get_input_data(index, corrupt=True, reps=1)
-            neg, z_smiles, z_frags = self.get_input_data(index, corrupt=True, reps=2)
+            pos, pos_smiles, pos_frags = self.get_input_data(index, corrupt=True, reps=1)
+            neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=2)
 
-            sim1 = self.compute_similarity(x_frags, y_frags)
-            sim2 = self.compute_similarity(z_frags, y_frags)
+            sim1 = self.compute_similarity(pos_frags, anc_frags)
+            sim2 = self.compute_similarity(neg_frags, anc_frags)
 
         if sim2 > sim1:
-            temp = anc.clone()
-            anc = neg.clone()
+            temp = pos.clone()
+            pos = neg.clone()
             neg = temp.clone()
             del temp
 
-        return anc, pos, neg
+        return pos, neg, anc
 
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()
