@@ -36,8 +36,8 @@ def uniqueness(valid_gen):
     return round(len(unique) / len(valid_gen), 4)
 
 
-def similarity(valid_samples, kwargs):
-    scores = np.array([sim(x, y) for (x, y) in valid_samples])
+def similarity(valid_ref, valid_gen, kwargs):
+    scores = np.array([sim(x, y) for (x, y) in zip(valid_ref, valid_gen)])
     similar = scores > kwargs["similarity_thres"]
     return similar, round(similar.mean().item(), 4)
 
@@ -83,12 +83,12 @@ def score(exp_dir, dataset_name, fun=None, epoch=0):
         kwargs = SR_KWARGS[fun]
 
         valid_samples, validity_score = validity(ref, gen)
-        valid, valid_gen = zip(*valid_samples)
+        valid_ref, valid_gen = zip(*valid_samples)
         novelty_score = novelty(valid_gen, dataset_name)
         uniqueness_score = uniqueness(valid_gen)
-        similar, similarity_scores = similarity(valid_samples, kwargs)
         diversity_scores = diversity(valid_gen)
-        improved, improvement_scores = improvement(valid_gen, kwargs)
+        similar, similarity_score = similarity(valid_ref, valid_gen, kwargs)
+        improved, improvement_score = improvement(valid_gen, kwargs)
         success_rate_score = success_rate(similar, improved)
 
         data = {
@@ -97,9 +97,9 @@ def score(exp_dir, dataset_name, fun=None, epoch=0):
             "valid": validity_score,
             "unique": uniqueness_score,
             "novel": novelty_score,
-            "similar": similarity_scores,
+            "similar": similarity_score,
             "diverse": diversity_scores,
-            "improved": improvement_scores,
+            "improved": improvement_score,
             "success_rate": success_rate_score,
         }
 

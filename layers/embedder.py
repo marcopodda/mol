@@ -98,6 +98,7 @@ class Embedder(nn.Module):
         self.dim_edge_embed = dim_edge_embed
         self.dim_hidden = dim_hidden
         self.dim_output = dim_output
+        self.dropout = hparams.embedder_dropout
 
         self.gnn = GNN(
             hparams=self.hparams,
@@ -117,6 +118,7 @@ class Embedder(nn.Module):
         for i, l in enumerate(data.length):
             offset = 1 if input is True else 0
             seq_element = x[cumsum:cumsum + l, :]
+            seq_element = F.dropout(seq_element, p=self.dropout, training=self.training)
             mat[i, range(offset, l.item() + offset), :] = seq_element
             cumsum += l
 
