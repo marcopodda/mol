@@ -73,7 +73,7 @@ class TrainDataLoader(BaseDataLoader):
         pos_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.sos.clone(), fill_at=0)
         neg_inputs = prefilled_tensor(dims=(B, L, D), fill_with=self.dataset.eos.clone(), fill_at=lengths)
 
-        return (anc_batch, pos_batch, neg_batch), anc_inputs, pos_inputs, neg_inputs
+        return (anc_batch, pos_batch, neg_batch), (anc_inputs, pos_inputs, neg_inputs)
 
 
 class EvalDataLoader(BaseDataLoader):
