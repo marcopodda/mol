@@ -79,7 +79,7 @@ class Model(nn.Module):
         return decoder_outputs, bag_of_frags
 
     def forward(self, batch):
-        batch_data, _, encoder_inputs, decoder_inputs = batch
+        batch_data, encoder_inputs, decoder_inputs = batch
         anc_encoder_batch, neg_encoder_batch, decoder_batch = batch_data
 
         # embed fragment sequence
