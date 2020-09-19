@@ -42,21 +42,24 @@ class Wrapper(pl.LightningModule):
         return self.training_loader
 
     def training_step(self, batch, batch_idx):
-        batch_data, mlp_targets, _, _ = batch
+        batch_data, _, _ = batch
         encoder_batch, decoder_batch = batch_data
 
         decoder_outputs, mlp_outputs, bag_of_frags = self.model(batch)
-        decoder_bag_of_frags, encoder_bag_of_frags = bag_of_frags
+        anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags = bag_of_frags
 
         decoder_ce_loss = F.cross_entropy(decoder_outputs, decoder_batch.target, ignore_index=0)
-        mse_loss = F.mse_loss(torch.sigmoid(mlp_outputs), mlp_targets)
-        cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags).mean(dim=0)
+        triplet_loss = F.triplet_margin_loss(anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
 
-        total_loss = decoder_ce_loss + mse_loss
+        cos_sim1 = F.cosine_similarity(anc_bag_of_frags, pos_bag_of_frags).mean(dim=0)
+        cos_sim2 = F.cosine_similarity(anc_bag_of_frags, neg_bag_of_frags).mean(dim=0)
+
+        total_loss = decoder_ce_loss + triplet_loss
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('ce', decoder_ce_loss, prog_bar=True)
-        result.log('mse', mse_loss, prog_bar=True)
-        result.log('cs', cos_sim, prog_bar=True)
+        result.log('mse', triplet_loss, prog_bar=True)
+        result.log('csap', cos_sim1, prog_bar=True)
+        result.log('csan', cos_sim2, prog_bar=True)
 
         return result

@@ -10,7 +10,7 @@ from core.datasets.features import mol2nx, FINGERPRINT_DIM
 from core.datasets.settings import DATA_DIR
 from core.datasets.utils import pad, load_data
 from core.datasets.vocab import Tokens
-from core.mols.utils import mol_from_smiles, mol_to_smiles, mols_from_smiles
+from core.mols.utils import mol_from_smiles, mol_to_smiles, mols_from_smiles, mols_to_smiles
 from core.mols.split import join_fragments
 from core.mols.props import get_fingerprint, similarity, drd2, logp
 from core.utils.serialization import load_numpy, save_numpy
@@ -49,29 +49,29 @@ class BaseDataset:
 
         # deletion
         for _ in range(reps):
-            if np.random.rand() > 0.25 and len(seq) > 2:
+            if np.random.rand() > 0.1 and len(seq) > 2:
                 delete_index = np.random.choice(len(seq)-1)
                 seq.pop(delete_index)
 
         # replacement
         for _ in range(reps):
-            if  np.random.rand() > 0.25:
+            if  np.random.rand() > 0.1:
                 mask_index = np.random.choice(len(seq)-1)
                 probs = self.vocab.condition(seq[mask_index])
                 seq[mask_index] = self.vocab.sample(probs=probs)
 
         # insertion
         for _ in range(reps):
-            if np.random.rand() > 0.25 and len(seq) + 2 <= self.max_length:
+            if np.random.rand() > 0.1 and len(seq) + 2 <= self.max_length:
                 add_index = np.random.choice(len(seq)-1)
                 probs = self.vocab.condition(seq[add_index])
                 seq.insert(add_index, self.vocab.sample(probs=probs))
 
         return seq
 
-    def _get_data(self, frags_smiles, corrupt=False):
+    def _get_data(self, frags_smiles, corrupt=False, reps=1):
         if corrupt is True:
-            frags_smiles = self._corrupt_seq(frags_smiles)
+            frags_smiles = self._corrupt_seq(frags_smiles, reps=reps)
 
         frags_list = [mol_from_smiles(f) for f in frags_smiles]
         frag_graphs = [mol2nx(f) for f in frags_list]
@@ -98,23 +98,40 @@ class BaseDataset:
         data, vocab, max_length = load_data(self.dataset_name)
         return data, vocab, max_length
 
-    def get_input_data(self, index, corrupt):
+    def get_input_data(self, index, corrupt, reps):
         mol_data = self.data.iloc[index]
-        data, frags_list = self._get_data(mol_data.frags, corrupt=corrupt)
+        data, frags_list = self._get_data(mol_data.frags, corrupt=corrupt, reps=reps)
         return data, mol_data.smiles, frags_list
 
-    def get_target_data(self, index, corrupt):
+    def get_target_data(self, index):
         mol_data = self.data.iloc[index]
-        data, frags_list = self._get_data(mol_data.frags, corrupt=corrupt)
+        data, frags_list = self._get_data(mol_data.frags, corrupt=False)
         return data, mol_data.smiles, frags_list
 
 
 class TrainDataset(BaseDataset):
     def __getitem__(self, index):
-        x_data, x_smiles, x_frags = self.get_input_data(index, corrupt=True)
-        y_data, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
-        sim = self.compute_similarity(x_frags, y_frags)
-        return x_data, y_data, torch.FloatTensor([[sim]])
+        x_data, x_smiles, x_frags = self.get_input_data(index, corrupt=True, reps=1)
+        z_data, z_smiles, z_frags = self.get_input_data(index, corrupt=True, reps=2)
+        y_data, y_smiles, y_frags = self.get_target_data(index)
+
+        sim1 = self.compute_similarity(x_frags, y_frags)
+        sim2 = self.compute_similarity(z_frags, y_frags)
+
+        while sim1 == sim2:
+            x_data, x_smiles, x_frags = self.get_input_data(index, corrupt=True, reps=1)
+            z_data, z_smiles, z_frags = self.get_input_data(index, corrupt=True, reps=2)
+
+            sim1 = self.compute_similarity(x_frags, y_frags)
+            sim2 = self.compute_similarity(z_frags, y_frags)
+
+        if sim2 > sim1:
+            temp = x_data.clone()
+            x_data = z_data.clone()
+            z_data = temp.clone()
+            del temp
+
+        return x_data, z_data, y_data
 
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()

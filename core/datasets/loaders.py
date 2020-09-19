@@ -58,9 +58,10 @@ class TrainDataLoader(BaseDataLoader):
             raise Exception("Works only for TrainDataset")
 
     def collate(self, data_list):
-        frags_x, frags_y, targets = zip(*data_list)
+        frags_x, frags_z, frags_y = zip(*data_list)
 
         frags_x_batch = collate_frags(frags_x)
+        frags_z_batch = collate_frags(frags_z)
         frags_y_batch = collate_frags(frags_y)
 
         B = len(frags_x)
@@ -73,7 +74,7 @@ class TrainDataLoader(BaseDataLoader):
 
         targets = torch.cat(targets, dim=0)
 
-        return (frags_x_batch, frags_y_batch), targets, enc_inputs, dec_inputs
+        return (frags_x_batch, frags_z_batch, frags_y_batch), targets, enc_inputs, dec_inputs
 
 
 class EvalDataLoader(BaseDataLoader):

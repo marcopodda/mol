@@ -46,22 +46,6 @@ class Model(nn.Module):
             dim_attention_output=self.decoder_dim_attention_output,
             dropout=self.decoder_dropout)
 
-        self.mlp = MLP(
-            hparams=hparams,
-            dim_input=self.embedder_dim_output*2,
-            dim_hidden=64,
-            dim_output=1,
-            num_layers=2
-        )
-
-        # self.decoder_mlp =MLP(
-        #     hparams=hparams,
-        #     dim_input=self.embedder_dim_output,
-        #     dim_hidden=64,
-        #     dim_output=1,
-        #     num_layers=2
-        # )
-
     def set_dimensions(self):
         self.embedder_num_layers = self.hparams.gnn_num_layers
         self.embedder_dim_input = ATOM_FDIM
@@ -96,15 +80,13 @@ class Model(nn.Module):
 
     def forward(self, batch):
         batch_data, _, encoder_inputs, decoder_inputs = batch
-        encoder_batch, decoder_batch = batch_data
+        anc_encoder_batch, neg_encoder_batch, decoder_batch = batch_data
 
         # embed fragment sequence
-        encoder_outputs, encoder_hidden, encoder_bag_of_frags = self.encode(encoder_batch, encoder_inputs)
+        encoder_outputs, encoder_hidden, pos_bag_of_frags = self.encode(anc_encoder_batch, encoder_inputs)
+        _, _, neg_bag_of_frags = self.encode(neg_encoder_batch, encoder_inputs)
 
         # decode fragment sequence
-        decoder_outputs, decoder_bag_of_frags = self.decode(decoder_batch, decoder_inputs, encoder_hidden, encoder_outputs)
+        decoder_outputs, anc_bag_of_frags = self.decode(decoder_batch, decoder_inputs, encoder_hidden, encoder_outputs)
 
-        # compute outputs
-        mlp_outputs = self.mlp(torch.cat([decoder_bag_of_frags, encoder_bag_of_frags], dim=-1))
-
-        return decoder_outputs, mlp_outputs, (decoder_bag_of_frags, encoder_bag_of_frags)
+        return decoder_outputs, (anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
