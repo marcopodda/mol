@@ -27,11 +27,6 @@ PROP_FUNS = {
 
 
 class TranslationDataset(TrainDataset):
-    def __init__(self, hparams, dataset_name):
-        super().__init__(hparams, dataset_name)
-        train_pairs = pd.read_csv(DATA_DIR / dataset_name / "RAW" /"train_pairs.txt", sep=" ", header=None, names=["x", "y"])
-        self.train_pairs = {k:v for (k,v) in zip(train_pairs.x.tolist(), train_pairs.y.tolist())}
-
     def __len__(self):
         return self.data[self.data.is_x==True].shape[0]
 
@@ -39,10 +34,8 @@ class TranslationDataset(TrainDataset):
         return PROP_FUNS[self.dataset_name]
 
     def get_target_data(self, index):
-        smiles = self.data.iloc[index].smiles
-        target_smiles = self.train_pairs[smiles]
+        target_smiles = self.data.iloc[index].target
         mol_data = self.data[self.data.smiles==target_smiles].iloc[0]
-        print("expected", self.data.iloc[index].smiles, mol_data.smiles)
         data, frags_list = self._get_data(mol_data.frags, corrupt=False)
         return data, mol_data.smiles, frags_list
 
@@ -54,7 +47,6 @@ class TranslationDataset(TrainDataset):
         prop_func = self.get_property_function()
         prop_anc = prop_func(anc_smiles)
         prop_pos = prop_func(pos_smiles)
-        print("actual  ", anc_smiles, pos_smiles)
 
         return anc, pos, neg, torch.FloatTensor([[prop_anc]]), torch.FloatTensor([[prop_pos]])
 
