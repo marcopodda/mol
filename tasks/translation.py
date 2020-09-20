@@ -63,7 +63,7 @@ class TranslationWrapper(Wrapper):
 
         decoder_outputs, bag_of_frags, outputs = self.model(batch)
         anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags = bag_of_frags
-        anc_outputs, pos_outputs = outputs
+        anc_outputs, pos_outputs, neg_outputs = outputs
 
         decoder_ce_loss = F.cross_entropy(decoder_outputs, pos_batch.target, ignore_index=0)
         triplet_loss = F.triplet_margin_loss(anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
@@ -73,7 +73,7 @@ class TranslationWrapper(Wrapper):
 
         prop1 = F.mse_loss(torch.sigmoid(anc_outputs), anc_targets)
         prop2 = F.mse_loss(torch.sigmoid(pos_outputs), pos_targets)
-        prop3 = F.mse_loss(torch.sigmoid(pos_outputs), neg_targets)
+        prop3 = F.mse_loss(torch.sigmoid(neg_outputs), neg_targets)
 
         total_loss = decoder_ce_loss + triplet_loss + prop1 + prop2 + prop3
 
