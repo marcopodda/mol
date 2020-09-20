@@ -37,11 +37,11 @@ class TranslationDataset(TrainDataset):
         data, frags_list = self._get_data(mol_data.frags, corrupt=corrupt)
         return data, mol_data.smiles, frags_list
 
-    def __getitem__(self, index):
-        x_molecule, x_smiles, x_frags = self.get_input_data(index, corrupt=True)
-        y_molecule, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
-        sim = self.compute_similarity(x_frags, y_frags)
-        return x_molecule, y_molecule, torch.FloatTensor([[sim]])
+    # def __getitem__(self, index):
+    #     x_molecule, x_smiles, x_frags = self.get_input_data(index, corrupt=True)
+    #     y_molecule, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
+    #     sim = self.compute_similarity(x_frags, y_frags)
+    #     return x_molecule, y_molecule, torch.FloatTensor([[sim]])
 
 
 class TranslationWrapper(Wrapper):
@@ -49,26 +49,6 @@ class TranslationWrapper(Wrapper):
 
     def get_batch_size(self):
         return self.hparams.translate_batch_size
-
-    def training_step(self, batch, batch_idx):
-        batch_data, mlp_targets, _, _ = batch
-        encoder_batch, decoder_batch = batch_data
-
-        decoder_outputs, mlp_outputs, bag_of_frags = self.model(batch)
-        decoder_bag_of_frags, encoder_bag_of_frags = bag_of_frags
-
-        decoder_ce_loss = F.cross_entropy(decoder_outputs, decoder_batch.target, ignore_index=0)
-        # mse_loss = F.mse_loss(torch.sigmoid(mlp_outputs), mlp_targets)
-        cos_sim = F.cosine_similarity(decoder_bag_of_frags, encoder_bag_of_frags).mean(dim=0)
-
-        total_loss = decoder_ce_loss # + mse_loss
-
-        result = pl.TrainResult(minimize=total_loss)
-        result.log('ce', decoder_ce_loss, prog_bar=True)
-        # result.log('mse', mse_loss, prog_bar=True)
-        result.log('cs', cos_sim, prog_bar=True)
-
-        return result
 
 
 class TranslationSampler(Sampler):
