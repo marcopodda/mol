@@ -103,24 +103,22 @@ class BaseDataset:
         data, frags_list = self._get_data(mol_data.frags, corrupt=corrupt, reps=reps)
         return data, mol_data.smiles, frags_list
 
-    def get_target_data(self, index):
-        mol_data = self.data.iloc[index]
-        data, frags_list = self._get_data(mol_data.frags, corrupt=False)
-        return data, mol_data.smiles, frags_list
+    def get_target_data(self, index, corrupt, reps=1):
+        return self.get_input_data(index, corrupt=corrupt, reps=reps)
 
 
 class TrainDataset(BaseDataset):
     def __getitem__(self, index):
         anc, anc_smiles, anc_frags = self.get_input_data(index, corrupt=True, reps=1)
-        pos, pos_smiles, pos_frags = self.get_target_data(index)
-        neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=2)
+        pos, pos_smiles, pos_frags = self.get_target_data(index, corrupt=False)
+        neg, neg_smiles, neg_frags = self.get_target_data(index, corrupt=True, reps=2)
 
         sim1 = self.compute_similarity(anc_frags, pos_frags)
         sim2 = self.compute_similarity(anc_frags, neg_frags)
 
         while sim1 == sim2:
             anc, anc_smiles, anc_frags = self.get_input_data(index, corrupt=True, reps=1)
-            neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=2)
+            neg, neg_smiles, neg_frags = self.get_target_data(index, corrupt=True, reps=2)
 
             sim1 = self.compute_similarity(anc_frags, pos_frags)
             sim2 = self.compute_similarity(neg_frags, pos_frags)
@@ -133,8 +131,9 @@ class TrainDataset(BaseDataset):
 
         prop_anc = torch.FloatTensor([[0.0]])
         prop_pos = torch.FloatTensor([[0.0]])
+        prop_neg = torch.FloatTensor([[0.0]])
 
-        return anc, pos, neg, prop_anc, prop_pos
+        return anc, pos, neg, prop_anc, prop_pos, prop_neg
 
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()

@@ -58,7 +58,7 @@ class TrainDataLoader(BaseDataLoader):
             raise Exception("Works only for TrainDataset")
 
     def collate(self, data_list):
-        anc, pos, neg, prop_anc, prop_pos = zip(*data_list)
+        anc, pos, neg, prop_anc, prop_pos, prop_neg = zip(*data_list)
         sos = self.dataset.sos
         eos = self.dataset.eos
 
@@ -80,8 +80,9 @@ class TrainDataLoader(BaseDataLoader):
 
         prop_anc = torch.cat(prop_anc, dim=0)
         prop_pos = torch.cat(prop_pos, dim=0)
+        prop_neg = torch.cat(prop_neg, dim=0)
 
-        return (anc_batch, pos_batch, neg_batch), (anc_inputs, pos_inputs, neg_inputs), (prop_anc, prop_pos)
+        return (anc_batch, pos_batch, neg_batch), (anc_inputs, pos_inputs, neg_inputs), (prop_anc, prop_pos, prop_neg)
 
 
 class EvalDataLoader(BaseDataLoader):

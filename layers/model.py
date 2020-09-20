@@ -46,14 +46,7 @@ class Model(nn.Module):
             dim_attention_output=self.decoder_dim_attention_output,
             dropout=self.decoder_dropout)
 
-        self.mlp_anc_prop = MLP(
-            hparams=self.hparams,
-            dim_input=self.embedder_dim_output,
-            dim_hidden=64,
-            dim_output=1
-        )
-
-        self.mlp_pos_prop = MLP(
+        self.mlp_prop = MLP(
             hparams=self.hparams,
             dim_input=self.embedder_dim_output,
             dim_hidden=64,
@@ -104,7 +97,8 @@ class Model(nn.Module):
         # decode fragment sequence
         decoder_outputs, anc_bag_of_frags = self.decode(pos_batch, pos_inputs, encoder_hidden, encoder_outputs)
 
-        anc_outputs = self.mlp_anc_prop(anc_bag_of_frags)
-        pos_outputs = self.mlp_pos_prop(pos_bag_of_frags)
+        anc_outputs = self.mlp_prop(anc_bag_of_frags)
+        pos_outputs = self.mlp_prop(pos_bag_of_frags)
+        neg_outputs = self.mlp_prop(neg_bag_of_frags)
 
-        return decoder_outputs, (anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags), (anc_outputs, pos_outputs)
+        return decoder_outputs, (anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags), (anc_outputs, pos_outputs, neg_outputs)
