@@ -29,7 +29,7 @@ PROP_FUNS = {
 class TranslationDataset(TrainDataset):
     def __init__(self, hparams, dataset_name):
         super().__init__(hparams, dataset_name)
-        train_pairs = pd.load_csv(DATA_DIR / dataset_name / "RAW" /"train_pairs.txt", sep=" ", header=None, names=["x", "y"])
+        train_pairs = pd.read_csv(DATA_DIR / dataset_name / "RAW" /"train_pairs.txt", sep=" ", header=None, names=["x", "y"])
         self.train_pairs = {k:v for (k,v) in zip(train_pairs.x.tolist(), train_pairs.y.tolist())}
 
     def __len__(self):
