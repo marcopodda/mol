@@ -58,29 +58,22 @@ class TrainDataLoader(BaseDataLoader):
             raise Exception("Works only for TrainDataset")
 
     def collate(self, data_list):
-        anc, pos, neg, prop_anc, prop_pos, prop_neg = zip(*data_list)
+        x, y = zip(*data_list)
         sos = self.dataset.sos
         eos = self.dataset.eos
 
-        anc_batch = collate_frags(anc)
-        pos_batch = collate_frags(pos)
-        neg_batch = collate_frags(neg)
+        x_batch = collate_frags(x)
+        y_batch = collate_frags(y)
 
-        B = len(pos)
+        B = len(x)
         L = self.dataset.max_length
         D = self.hparams.frag_dim_embed
 
-        lengths = [m.length for m in pos]
-        anc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=lengths)
+        lengths = [m.length for m in x]
+        enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=lengths)
+        dec_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
 
-        pos_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
-        neg_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
-
-        prop_anc = torch.cat(prop_anc, dim=0)
-        prop_pos = torch.cat(prop_pos, dim=0)
-        prop_neg = torch.cat(prop_neg, dim=0)
-
-        return (anc_batch, pos_batch, neg_batch), (anc_inputs, pos_inputs, neg_inputs), (prop_anc, prop_pos, prop_neg)
+        return (x_batch, y_batch), (enc_inputs, dec_inputs)
 
 
 class EvalDataLoader(BaseDataLoader):

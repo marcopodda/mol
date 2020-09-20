@@ -42,23 +42,17 @@ class Wrapper(pl.LightningModule):
         return self.training_loader
 
     def training_step(self, batch, batch_idx):
-        (_, pos_batch, _), _, _ = batch
+        (_, dec_batch), _ = batch
 
-        decoder_outputs, bag_of_frags, _ = self.model(batch)
-        anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags = bag_of_frags
+        decoder_outputs, decoder_bag, encoder_bag = self.model(batch)
 
-        decoder_ce_loss = F.cross_entropy(decoder_outputs, pos_batch.target, ignore_index=0)
-        triplet_loss = F.triplet_margin_loss(anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
+        decoder_ce_loss = F.cross_entropy(decoder_outputs, dec_batch.target, ignore_index=0)
+        cos_sim = F.cosine_similarity(decoder_bag, decoder_bag).mean(dim=0)
 
-        cos_sim1 = F.cosine_similarity(anc_bag_of_frags, pos_bag_of_frags).mean(dim=0)
-        cos_sim2 = F.cosine_similarity(anc_bag_of_frags, neg_bag_of_frags).mean(dim=0)
-
-        total_loss = decoder_ce_loss + triplet_loss
+        total_loss = decoder_ce_loss
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('ce', decoder_ce_loss, prog_bar=True)
-        result.log('tl', triplet_loss, prog_bar=True)
-        result.log('ap', cos_sim1, prog_bar=True)
-        result.log('an', cos_sim2, prog_bar=True)
+        result.log('cs', cos_sim, prog_bar=True)
 
         return result

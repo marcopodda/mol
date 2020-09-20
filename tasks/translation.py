@@ -40,16 +40,9 @@ class TranslationDataset(TrainDataset):
         return data, mol_data.smiles, frags_list
 
     def __getitem__(self, index):
-        anc, anc_smiles, anc_frags = self.get_input_data(index, corrupt=False)
-        pos, pos_smiles, pos_frags = self.get_target_data(index, corrupt=False)
-        neg, neg_smiles, neg_frags = self.get_target_data(index, corrupt=True, reps=1)
-
-        prop_func = self.get_property_function()
-        prop_anc = torch.FloatTensor([[prop_func(anc_smiles)]])
-        prop_pos = torch.FloatTensor([[prop_func(pos_smiles)]])
-        prop_neg = torch.FloatTensor([[prop_func(neg_smiles)]])
-
-        return anc, pos, neg, prop_anc, prop_pos, prop_neg
+        x, x_smiles, x_frags = self.get_input_data(index, corrupt=False)
+        y, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
+        return x, y
 
 
 class TranslationWrapper(Wrapper):
@@ -57,34 +50,6 @@ class TranslationWrapper(Wrapper):
 
     def get_batch_size(self):
         return self.hparams.translate_batch_size
-
-    def training_step(self, batch, batch_idx):
-        (_, pos_batch, _), _, (anc_targets, pos_targets, neg_targets) = batch
-
-        decoder_outputs, bag_of_frags, outputs = self.model(batch)
-        anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags = bag_of_frags
-        anc_outputs, pos_outputs, neg_outputs = outputs
-
-        decoder_ce_loss = F.cross_entropy(decoder_outputs, pos_batch.target, ignore_index=0)
-        triplet_loss = F.triplet_margin_loss(anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
-
-        cos_sim1 = F.cosine_similarity(anc_bag_of_frags, pos_bag_of_frags).mean(dim=0)
-        cos_sim2 = F.cosine_similarity(anc_bag_of_frags, neg_bag_of_frags).mean(dim=0)
-
-        prop1 = F.mse_loss(torch.sigmoid(anc_outputs), anc_targets)
-        prop2 = F.mse_loss(torch.sigmoid(pos_outputs), pos_targets)
-        prop3 = F.mse_loss(torch.sigmoid(neg_outputs), neg_targets)
-
-        total_loss = decoder_ce_loss + prop1 + prop2 + prop3 + triplet_loss
-
-        result = pl.TrainResult(minimize=total_loss)
-        result.log('ce', decoder_ce_loss, prog_bar=True)
-        result.log('tl', triplet_loss, prog_bar=True)
-        result.log('ap', cos_sim1, prog_bar=True)
-        result.log('an', cos_sim2, prog_bar=True)
-        result.log('p', prop1 + prop2 + prop3, prog_bar=True)
-
-        return result
 
 
 class TranslationSampler(Sampler):

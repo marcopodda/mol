@@ -86,19 +86,12 @@ class Model(nn.Module):
         return decoder_outputs, bag_of_frags
 
     def forward(self, batch):
-        batch_data, batch_inputs, _ = batch
-        anc_batch, pos_batch, neg_batch = batch_data
-        anc_inputs, pos_inputs, neg_inputs = batch_inputs
+        (x_batch, y_batch), (enc_inputs, dec_inputs) = batch
 
         # embed fragment sequence
-        encoder_outputs, encoder_hidden, anc_bag_of_frags = self.encode(anc_batch, anc_inputs)
+        encoder_outputs, encoder_hidden, enc_bag_of_frags = self.encode(x_batch, enc_inputs)
 
         # decode fragment sequence
-        _, neg_bag_of_frags = self.decode(neg_batch, neg_inputs, encoder_hidden, encoder_outputs)
-        decoder_outputs, pos_bag_of_frags = self.decode(pos_batch, pos_inputs, encoder_hidden, encoder_outputs)
+        decoder_outputs, dec_bag_of_frags = self.decode(y_batch, dec_inputs, encoder_hidden, encoder_outputs)
 
-        anc_outputs = self.mlp_prop(anc_bag_of_frags)
-        pos_outputs = self.mlp_prop(pos_bag_of_frags)
-        neg_outputs = self.mlp_prop(neg_bag_of_frags)
-
-        return decoder_outputs, (anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags), (anc_outputs, pos_outputs, neg_outputs)
+        return decoder_outputs, enc_bag_of_frags, dec_bag_of_frags
