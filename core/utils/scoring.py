@@ -12,7 +12,7 @@ from core.mols.utils import mol_from_smiles
 SR_KWARGS = {
     "moses": {"prop_fun": drd2, "similarity_thres": 0.4, "improvement_thres": 0.6},
     "ZINC": {"prop_fun": drd2, "similarity_thres": 0.4, "improvement_thres": 0.6},
-    "drd2": {"prop_fun": drd2, "similarity_thres": 0.4, "improvement_thres": 0.6},
+    "drd2": {"prop_fun": drd2, "similarity_thres": 0.4, "improvement_thres": 0.5},
     "qed": {"prop_fun": qed, "similarity_thres": 0.4, "improvement_thres": 0.9},
     "logp04": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 0.8},
     "logp06": {"prop_fun": logp, "similarity_thres": 0.4, "improvement_thres": 0.8},
