@@ -47,7 +47,7 @@ class Wrapper(pl.LightningModule):
         decoder_outputs, decoder_bag, encoder_bag = self.model(batch)
 
         decoder_ce_loss = F.cross_entropy(decoder_outputs, dec_batch.target, ignore_index=0)
-        cos_sim = F.cosine_similarity(decoder_bag, decoder_bag).mean(dim=0)
+        cos_sim = F.cosine_similarity(encoder_bag, decoder_bag).mean(dim=0)
 
         total_loss = decoder_ce_loss
 
