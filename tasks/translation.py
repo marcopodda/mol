@@ -40,7 +40,24 @@ class TranslationDataset(TrainDataset):
     def __getitem__(self, index):
         anc, anc_smiles, anc_frags = self.get_target_data(index)
         pos, pos_smiles, pos_frags = self.get_input_data(index, corrupt=False)
-        neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=False)
+        neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=1)
+
+        sim1 = self.compute_similarity(anc_frags, pos_frags)
+        sim2 = self.compute_similarity(anc_frags, neg_frags)
+
+        while sim1 == sim2:
+            pos, pos_smiles, pos_frags = self.get_input_data(index, corrupt=False)
+            neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=1)
+
+            sim1 = self.compute_similarity(pos_frags, anc_frags)
+            sim2 = self.compute_similarity(neg_frags, anc_frags)
+
+        if sim2 > sim1:
+            temp = pos.clone()
+            pos = neg.clone()
+            neg = temp.clone()
+            del temp
+
         return anc, pos, neg
 
 
