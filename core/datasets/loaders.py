@@ -59,8 +59,8 @@ class TrainDataLoader(BaseDataLoader):
 
     def collate(self, data_list):
         anc, pos, neg = zip(*data_list)
-        sos = self.dataset.sos.clone()
-        eos = self.dataset.eos.clone()
+        sos = self.dataset.sos
+        eos = self.dataset.eos
 
         anc_batch = collate_frags(anc)
         pos_batch = collate_frags(pos)
@@ -70,13 +70,13 @@ class TrainDataLoader(BaseDataLoader):
         L = self.dataset.max_length
         D = self.hparams.frag_dim_embed
 
-        anc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos, fill_at=0)
+        anc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
 
         lengths = [m.length for m in pos]
-        pos_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos, fill_at=lengths)
+        pos_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=lengths)
 
         lengths = [m.length for m in neg]
-        neg_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos, fill_at=lengths)
+        neg_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=lengths)
 
         return (anc_batch, pos_batch, neg_batch), (anc_inputs, pos_inputs, neg_inputs)
 

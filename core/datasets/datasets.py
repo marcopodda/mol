@@ -84,8 +84,8 @@ class BaseDataset:
         data["target"] = self._get_target_sequence(frags_smiles)
         return data, frags_list
 
-    def _get_target_sequence(self, frags_list):
-        seq = [self.vocab[f] + len(Tokens) for f in frags_list] + [Tokens.EOS.value]
+    def _get_target_sequence(self, frags_smiles):
+        seq = [self.vocab[f] + len(Tokens) for f in frags_smiles] + [Tokens.EOS.value]
         padded_seq = pad(seq, self.max_length)
         return padded_seq
 
