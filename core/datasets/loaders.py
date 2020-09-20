@@ -76,7 +76,7 @@ class TrainDataLoader(BaseDataLoader):
         pos_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
         neg_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
 
-        propos = torch.cat(prop_anc, dim=0)
+        prop_anc = torch.cat(prop_anc, dim=0)
         prop_pos = torch.cat(prop_pos, dim=0)
         prop_neg = torch.cat(prop_neg, dim=0)
 
