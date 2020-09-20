@@ -34,6 +34,7 @@ class TranslationDataset(TrainDataset):
     def get_target_data(self, index):
         smiles = self.data.iloc[index].target.rstrip()
         mol_data = self.data[self.data.smiles==smiles].iloc[0]
+        print("expected", self.data.iloc[index].smiles, mol_data.smiles)
         data, frags_list = self._get_data(mol_data.frags, corrupt=False)
         return data, mol_data.smiles, frags_list
 
@@ -41,11 +42,11 @@ class TranslationDataset(TrainDataset):
         anc, anc_smiles, anc_frags = self.get_input_data(index, corrupt=False)
         pos, pos_smiles, pos_frags = self.get_target_data(index)
         neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=2)
-        print(anc_smiles, pos_smiles)
 
         prop_func = self.get_property_function()
         prop_anc = prop_func(anc_smiles)
         prop_pos = prop_func(pos_smiles)
+        print("actial", anc_smiles, pos_smiles)
 
         return anc, pos, neg, torch.FloatTensor([[prop_anc]]), torch.FloatTensor([[prop_pos]])
 
