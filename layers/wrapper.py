@@ -42,16 +42,20 @@ class Wrapper(pl.LightningModule):
         return self.training_loader
 
     def training_step(self, batch, batch_idx):
-        (anc_batch, _, _), _ = batch
+        (anc_batch, _, _), _, (anc_targets, pos_targets) = batch
 
-        decoder_outputs, bag_of_frags = self.model(batch)
+        decoder_outputs, bag_of_frags, outputs = self.model(batch)
         anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags = bag_of_frags
+        anc_outputs, pos_outputs = outputs
 
         decoder_ce_loss = F.cross_entropy(decoder_outputs, anc_batch.target, ignore_index=0)
         triplet_loss = F.triplet_margin_loss(anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
 
         cos_sim1 = F.cosine_similarity(anc_bag_of_frags, pos_bag_of_frags).mean(dim=0)
         cos_sim2 = F.cosine_similarity(anc_bag_of_frags, neg_bag_of_frags).mean(dim=0)
+
+        prop1 = F.mse(torch.sigmoid(anc_outputs), anc_targets)
+        prop2 = F.mse(torch.sigmoid(pos_outputs), pos_targets)
 
         total_loss = decoder_ce_loss + triplet_loss
 

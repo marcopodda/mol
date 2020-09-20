@@ -131,7 +131,10 @@ class TrainDataset(BaseDataset):
             neg = temp.clone()
             del temp
 
-        return anc, pos, neg
+        prop_anc = torch.FloatTensor([[0.0]])
+        prop_pos = torch.FloatTensor([[0.0]])
+
+        return anc, pos, neg, prop_anc, prop_pos
 
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()

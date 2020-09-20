@@ -58,7 +58,11 @@ class TranslationDataset(TrainDataset):
             neg = temp.clone()
             del temp
 
-        return anc, pos, neg
+        prop_func = self.get_property_function()
+        prop_anc = prop_func(anc_smiles)
+        prop_pos = prop_func(pos_smiles)
+
+        return anc, pos, neg, torch.FloatTensor([[prop_anc]]), torch.FloatTensor([[prop_pos]])
 
 
 class TranslationWrapper(Wrapper):
@@ -68,10 +72,11 @@ class TranslationWrapper(Wrapper):
         return self.hparams.translate_batch_size
 
     def training_step(self, batch, batch_idx):
-        (anc_batch, _, _), _ = batch
+        (anc_batch, _, _), _, (anc_targets, pos_targets) = batch
 
-        decoder_outputs, bag_of_frags = self.model(batch)
+        decoder_outputs, bag_of_frags, outputs = self.model(batch)
         anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags = bag_of_frags
+        anc_outputs, pos_outputs = outputs
 
         decoder_ce_loss = F.cross_entropy(decoder_outputs, anc_batch.target, ignore_index=0)
         triplet_loss = F.triplet_margin_loss(anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
@@ -79,13 +84,18 @@ class TranslationWrapper(Wrapper):
         cos_sim1 = F.cosine_similarity(anc_bag_of_frags, pos_bag_of_frags).mean(dim=0)
         cos_sim2 = F.cosine_similarity(anc_bag_of_frags, neg_bag_of_frags).mean(dim=0)
 
-        total_loss = decoder_ce_loss + triplet_loss
+        prop1 = F.mse(torch.sigmoid(anc_outputs), anc_targets)
+        prop2 = F.mse(torch.sigmoid(pos_outputs), pos_targets)
+
+        total_loss = decoder_ce_loss + triplet_loss + prop1 + prop2
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('ce', decoder_ce_loss, prog_bar=True)
         result.log('tl', triplet_loss, prog_bar=True)
         result.log('ap', cos_sim1, prog_bar=True)
         result.log('an', cos_sim2, prog_bar=True)
+        result.log('p1', prop1, prog_bar=True)
+        result.log('p2', prop2, prog_bar=True)
 
         return result
 

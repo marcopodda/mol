@@ -58,7 +58,7 @@ class TrainDataLoader(BaseDataLoader):
             raise Exception("Works only for TrainDataset")
 
     def collate(self, data_list):
-        anc, pos, neg = zip(*data_list)
+        anc, pos, neg, prop_anc, prop_pos = zip(*data_list)
         sos = self.dataset.sos
         eos = self.dataset.eos
 
@@ -78,7 +78,10 @@ class TrainDataLoader(BaseDataLoader):
         lengths = [m.length for m in neg]
         neg_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=lengths)
 
-        return (anc_batch, pos_batch, neg_batch), (anc_inputs, pos_inputs, neg_inputs)
+        prop_anc = torch.cat(prop_anc, dim=0)
+        prop_pos = torch.cat(prop_pos, dim=0)
+
+        return (anc_batch, pos_batch, neg_batch), (anc_inputs, pos_inputs, neg_inputs), (prop_anc, prop_pos)
 
 
 class EvalDataLoader(BaseDataLoader):
