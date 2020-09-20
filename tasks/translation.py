@@ -46,7 +46,7 @@ class TranslationDataset(TrainDataset):
         prop_func = self.get_property_function()
         prop_anc = prop_func(anc_smiles)
         prop_pos = prop_func(pos_smiles)
-        print("actial", anc_smiles, pos_smiles)
+        print("actual  ", anc_smiles, pos_smiles)
 
         return anc, pos, neg, torch.FloatTensor([[prop_anc]]), torch.FloatTensor([[prop_pos]])
 
