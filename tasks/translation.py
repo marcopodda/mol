@@ -39,8 +39,8 @@ class TranslationDataset(TrainDataset):
 
     def __getitem__(self, index):
         anc, anc_smiles, anc_frags = self.get_target_data(index)
-        pos, pos_smiles, pos_frags = self.get_input_data(index, corrupt=True, reps=1)
-        neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=2)
+        pos, pos_smiles, pos_frags = self.get_target_data(index) # self.get_input_data(index, corrupt=True, reps=1)
+        neg, neg_smiles, neg_frags = self.get_target_data(index) # self.get_input_data(index, corrupt=True, reps=2)
         return anc, pos, neg
 
 
