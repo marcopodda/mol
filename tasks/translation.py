@@ -37,6 +37,12 @@ class TranslationDataset(TrainDataset):
         data, frags_list = self._get_data(mol_data.frags, corrupt=corrupt)
         return data, mol_data.smiles, frags_list
 
+    def __getitem__(self, index):
+        anc, anc_smiles, anc_frags = self.get_target_data(index)
+        pos, pos_smiles, pos_frags = self.get_input_data(index, corrupt=True, reps=1)
+        neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=2)
+        return anc, pos, neg
+
 
 class TranslationWrapper(Wrapper):
     dataset_class = TranslationDataset
