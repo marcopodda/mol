@@ -20,7 +20,7 @@ SR_KWARGS = {
 
 
 def validity(ref, gen):
-    valid = [(x, y) for (x, y) in zip(ref, gen) if y and mol_from_smiles(y)]
+    valid = [(x, y) for (x, y) in zip(ref, gen) if y and y != "*" and mol_from_smiles(y)]
     return valid, round(len(valid) / len(ref), 4)
 
 
