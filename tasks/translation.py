@@ -31,16 +31,16 @@ class TranslationDataset(TrainDataset):
     def get_property_function(self):
         return PROP_FUNS[self.dataset_name]
 
-    def get_target_data(self, index, corrupt=False):
+    def get_target_data(self, index):
         smiles = self.data.iloc[index].target.rstrip()
         mol_data = self.data[self.data.smiles==smiles].iloc[0]
-        data, frags_list = self._get_data(mol_data.frags, corrupt=corrupt)
+        data, frags_list = self._get_data(mol_data.frags, corrupt=False)
         return data, mol_data.smiles, frags_list
 
     def __getitem__(self, index):
         anc, anc_smiles, anc_frags = self.get_target_data(index)
-        pos, pos_smiles, pos_frags = self.get_target_data(index) # self.get_input_data(index, corrupt=True, reps=1)
-        neg, neg_smiles, neg_frags = self.get_target_data(index) # self.get_input_data(index, corrupt=True, reps=2)
+        pos, pos_smiles, pos_frags = self.get_input_data(index, corrupt=False)
+        neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=False)
         return anc, pos, neg
 
 
