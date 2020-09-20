@@ -40,24 +40,7 @@ class TranslationDataset(TrainDataset):
     def __getitem__(self, index):
         anc, anc_smiles, anc_frags = self.get_target_data(index)
         pos, pos_smiles, pos_frags = self.get_input_data(index, corrupt=False)
-        neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=1)
-
-        sim1 = self.compute_similarity(anc_frags, pos_frags)
-        sim2 = self.compute_similarity(anc_frags, neg_frags)
-
-        while sim1 == sim2:
-            pos, pos_smiles, pos_frags = self.get_input_data(index, corrupt=False)
-            neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=1)
-
-            sim1 = self.compute_similarity(pos_frags, anc_frags)
-            sim2 = self.compute_similarity(neg_frags, anc_frags)
-
-        if sim2 > sim1:
-            temp = pos.clone()
-            pos = neg.clone()
-            neg = temp.clone()
-            del temp
-
+        neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=False)
         return anc, pos, neg
 
 
@@ -67,27 +50,27 @@ class TranslationWrapper(Wrapper):
     def get_batch_size(self):
         return self.hparams.translate_batch_size
 
-    # def training_step(self, batch, batch_idx):
-    #     (anc_batch, _, _), _ = batch
+    def training_step(self, batch, batch_idx):
+        (anc_batch, _, _), _ = batch
 
-    #     decoder_outputs, bag_of_frags = self.model(batch)
-    #     anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags = bag_of_frags
+        decoder_outputs, bag_of_frags = self.model(batch)
+        anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags = bag_of_frags
 
-    #     decoder_ce_loss = F.cross_entropy(decoder_outputs, anc_batch.target, ignore_index=0)
-    #     # triplet_loss = F.triplet_margin_loss(anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
+        decoder_ce_loss = F.cross_entropy(decoder_outputs, anc_batch.target, ignore_index=0)
+        # triplet_loss = F.triplet_margin_loss(anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
 
-    #     cos_sim1 = F.cosine_similarity(anc_bag_of_frags, pos_bag_of_frags).mean(dim=0)
-    #     cos_sim2 = F.cosine_similarity(anc_bag_of_frags, neg_bag_of_frags).mean(dim=0)
+        cos_sim1 = F.cosine_similarity(anc_bag_of_frags, pos_bag_of_frags).mean(dim=0)
+        cos_sim2 = F.cosine_similarity(anc_bag_of_frags, neg_bag_of_frags).mean(dim=0)
 
-    #     total_loss = decoder_ce_loss # + triplet_loss
+        total_loss = decoder_ce_loss # + triplet_loss
 
-    #     result = pl.TrainResult(minimize=total_loss)
-    #     result.log('ce', decoder_ce_loss, prog_bar=True)
-    #     # result.log('tl', triplet_loss, prog_bar=True)
-    #     result.log('csap', cos_sim1, prog_bar=True)
-    #     result.log('csan', cos_sim2, prog_bar=True)
+        result = pl.TrainResult(minimize=total_loss)
+        result.log('ce', decoder_ce_loss, prog_bar=True)
+        # result.log('tl', triplet_loss, prog_bar=True)
+        result.log('ap', cos_sim1, prog_bar=True)
+        result.log('an', cos_sim2, prog_bar=True)
 
-    #     return result
+        return result
 
 
 class TranslationSampler(Sampler):

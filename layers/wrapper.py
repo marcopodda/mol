@@ -58,7 +58,7 @@ class Wrapper(pl.LightningModule):
         result = pl.TrainResult(minimize=total_loss)
         result.log('ce', decoder_ce_loss, prog_bar=True)
         result.log('tl', triplet_loss, prog_bar=True)
-        result.log('csap', cos_sim1, prog_bar=True)
-        result.log('csan', cos_sim2, prog_bar=True)
+        result.log('ap', cos_sim1, prog_bar=True)
+        result.log('an', cos_sim2, prog_bar=True)
 
         return result
