@@ -84,10 +84,10 @@ class Model(nn.Module):
         anc_inputs, pos_inputs, neg_inputs = batch_inputs
 
         # embed fragment sequence
-        encoder_outputs, encoder_hidden, pos_bag_of_frags = self.encode(pos_batch, pos_inputs)
+        encoder_outputs, encoder_hidden, pos_bag_of_frags = self.encode(anc_batch, anc_inputs)
         _, _, neg_bag_of_frags = self.encode(neg_batch, neg_inputs)
 
         # decode fragment sequence
-        decoder_outputs, anc_bag_of_frags = self.decode(anc_batch, anc_inputs, encoder_hidden, encoder_outputs)
+        decoder_outputs, anc_bag_of_frags = self.decode(pos_batch, pos_inputs, encoder_hidden, encoder_outputs)
 
         return decoder_outputs, (anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
