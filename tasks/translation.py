@@ -75,7 +75,7 @@ class TranslationWrapper(Wrapper):
         prop2 = F.mse_loss(torch.sigmoid(pos_outputs), pos_targets)
         prop3 = F.mse_loss(torch.sigmoid(neg_outputs), neg_targets)
 
-        total_loss = decoder_ce_loss + triplet_loss + prop1 + prop2 + prop3
+        total_loss = decoder_ce_loss + triplet_loss # + prop1 + prop2 + prop3
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('ce', decoder_ce_loss, prog_bar=True)
