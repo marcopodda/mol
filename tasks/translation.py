@@ -67,27 +67,27 @@ class TranslationWrapper(Wrapper):
     def get_batch_size(self):
         return self.hparams.translate_batch_size
 
-    def training_step(self, batch, batch_idx):
-        (anc_batch, _, _), _ = batch
+    # def training_step(self, batch, batch_idx):
+    #     (anc_batch, _, _), _ = batch
 
-        decoder_outputs, bag_of_frags = self.model(batch)
-        anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags = bag_of_frags
+    #     decoder_outputs, bag_of_frags = self.model(batch)
+    #     anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags = bag_of_frags
 
-        decoder_ce_loss = F.cross_entropy(decoder_outputs, anc_batch.target, ignore_index=0)
-        # triplet_loss = F.triplet_margin_loss(anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
+    #     decoder_ce_loss = F.cross_entropy(decoder_outputs, anc_batch.target, ignore_index=0)
+    #     # triplet_loss = F.triplet_margin_loss(anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
 
-        cos_sim1 = F.cosine_similarity(anc_bag_of_frags, pos_bag_of_frags).mean(dim=0)
-        cos_sim2 = F.cosine_similarity(anc_bag_of_frags, neg_bag_of_frags).mean(dim=0)
+    #     cos_sim1 = F.cosine_similarity(anc_bag_of_frags, pos_bag_of_frags).mean(dim=0)
+    #     cos_sim2 = F.cosine_similarity(anc_bag_of_frags, neg_bag_of_frags).mean(dim=0)
 
-        total_loss = decoder_ce_loss # + triplet_loss
+    #     total_loss = decoder_ce_loss # + triplet_loss
 
-        result = pl.TrainResult(minimize=total_loss)
-        result.log('ce', decoder_ce_loss, prog_bar=True)
-        # result.log('tl', triplet_loss, prog_bar=True)
-        result.log('csap', cos_sim1, prog_bar=True)
-        result.log('csan', cos_sim2, prog_bar=True)
+    #     result = pl.TrainResult(minimize=total_loss)
+    #     result.log('ce', decoder_ce_loss, prog_bar=True)
+    #     # result.log('tl', triplet_loss, prog_bar=True)
+    #     result.log('csap', cos_sim1, prog_bar=True)
+    #     result.log('csan', cos_sim2, prog_bar=True)
 
-        return result
+    #     return result
 
 
 class TranslationSampler(Sampler):
