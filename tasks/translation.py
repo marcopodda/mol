@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from pathlib import Path
 
 import torch
@@ -9,6 +10,7 @@ import pytorch_lightning as pl
 from core.hparams import HParams
 from core.datasets.datasets import TrainDataset
 from core.datasets.loaders import EvalDataLoader
+from core.datasets.settings import DATA_DIR
 from core.mols.props import drd2, logp, qed, similarity
 from core.utils.serialization import load_yaml, save_yaml
 from layers.sampler import Sampler
@@ -25,6 +27,11 @@ PROP_FUNS = {
 
 
 class TranslationDataset(TrainDataset):
+    def __init__(self, hparams, dataset_name):
+        super().__init__(hparams, dataset_name)
+        train_pairs = pd.load_csv(DATA_DIR / dataset_name / "RAW" /"train_pairs.txt", sep=" ", header=None, names=["x", "y"])
+        self.train_pairs = {k:v for (k,v) in zip(train_pairs.x.tolist(), train_pairs.y.tolist())}
+
     def __len__(self):
         return self.data[self.data.is_x==True].shape[0]
 
@@ -32,8 +39,9 @@ class TranslationDataset(TrainDataset):
         return PROP_FUNS[self.dataset_name]
 
     def get_target_data(self, index):
-        smiles = self.data.iloc[index].target.rstrip()
-        mol_data = self.data[self.data.smiles==smiles].iloc[0]
+        smiles = self.data.iloc[index].smiles
+        target_smiles = self.train_pairs[smiles]
+        mol_data = self.data[self.data.smiles==target_smiles].iloc[0]
         print("expected", self.data.iloc[index].smiles, mol_data.smiles)
         data, frags_list = self._get_data(mol_data.frags, corrupt=False)
         return data, mol_data.smiles, frags_list
