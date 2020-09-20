@@ -111,9 +111,9 @@ class BaseDataset:
 
 class TrainDataset(BaseDataset):
     def __getitem__(self, index):
+        anc, anc_smiles, anc_frags = self.get_target_data(index)
         pos, pos_smiles, pos_frags = self.get_input_data(index, corrupt=True, reps=1)
         neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=2)
-        anc, anc_smiles, anc_frags = self.get_target_data(index)
 
         sim1 = self.compute_similarity(anc_frags, pos_frags)
         sim2 = self.compute_similarity(anc_frags, neg_frags)
@@ -131,7 +131,7 @@ class TrainDataset(BaseDataset):
             neg = temp.clone()
             del temp
 
-        return pos, neg, anc
+        return anc, pos, neg
 
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()

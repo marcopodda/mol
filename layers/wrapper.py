@@ -46,7 +46,7 @@ class Wrapper(pl.LightningModule):
         _, _, decoder_batch = batch_data
 
         decoder_outputs, bag_of_frags = self.model(batch)
-        pos_bag_of_frags, neg_bag_of_frags, anc_bag_of_frags = bag_of_frags
+        anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags = bag_of_frags
 
         decoder_ce_loss = F.cross_entropy(decoder_outputs, decoder_batch.target, ignore_index=0)
         triplet_loss = F.triplet_margin_loss(anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
