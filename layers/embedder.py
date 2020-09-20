@@ -73,10 +73,12 @@ class GNN(nn.Module):
             x = conv(x, edge_index, edge_attr=edge_attr)
             x = bn(F.relu(x))
 
+        # aggregate each fragment in the sequence
         nodes_per_graph = scatter_add(torch.ones_like(frag_batch), frag_batch)
         nodes_per_graph = nodes_per_graph.repeat_interleave(nodes_per_graph.view(-1))
         output = global_add_pool(x / nodes_per_graph.view(-1, 1), frag_batch)
 
+        # aggregate all fragments in the sequence into a bag of frags
         nodes_per_graph = scatter_add(torch.ones_like(graph_batch), graph_batch)
         nodes_per_graph = nodes_per_graph.repeat_interleave(nodes_per_graph.view(-1))
         graph_output = global_add_pool(x / nodes_per_graph.view(-1, 1), graph_batch)
