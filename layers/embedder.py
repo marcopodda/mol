@@ -26,6 +26,7 @@ class GNN(nn.Module):
 
         for i in range(self.num_layers):
             dim_input = self.dim_input if i == 0 else self.dim_hidden
+            dim_edge_features = self.dim_edge_features if i == 0 else self.dim_hidden
             dim_output = self.dim_output if i == self.num_layers - 1 else self.dim_hidden
 
             conv = GINEConv(nn=MLP(
