@@ -184,8 +184,6 @@ class Sampler:
 
             # decode for one step using decoder
             x = embedder(token)
-            # hidden = hidden.view(1, -1)
-            print(x.size(), hidden.size(), enc_outputs.size())
             logits, hidden, _ = model.decoder.decode_with_attention(x, hidden, enc_outputs)
             logits = torch.log_softmax(logits, dim=-1)
 
@@ -224,10 +222,9 @@ class Sampler:
 
             utterance = utterance[::-1]
             utterances.append(utterance)
-        utterances = np.array(utterances)
-        print(utterances)
-        for i in range(utterances.shape[0]):
-            vec = utterances[i] - len(Tokens)
+
+        for utterance in utterances:
+            vec = utterance - len(Tokens)
             vec = vec[vec >= 0]
             vec = [int(i) for i in vec]
             frags.append([self.vocab[i] for i in vec])
