@@ -43,8 +43,8 @@ class TranslationDataset(TrainDataset):
         x, x_smiles, x_frags = self.get_input_data(index, corrupt=False)
         y, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
 
-        x_fingerprint = torch.FloatTensor([[get_fingerprint(x_smiles)]])
-        y_fingerprint = torch.FloatTensor([[get_fingerprint(y_smiles)]])
+        x_fingerprint = torch.FloatTensor([get_fingerprint(x_smiles)])
+        y_fingerprint = torch.FloatTensor([get_fingerprint(y_smiles)])
 
         return x, y, x_fingerprint, y_fingerprint
 

@@ -116,8 +116,8 @@ class TrainDataset(BaseDataset):
             y, y_smiles, y_frags = self.get_input_data(index, corrupt=False)
             sim = self.compute_similarity(x_frags, y_frags)
 
-        x_fingerprint = torch.FloatTensor([[get_fingerprint(x_smiles)]])
-        y_fingerprint = torch.FloatTensor([[get_fingerprint(y_smiles)]])
+        x_fingerprint = torch.FloatTensor([get_fingerprint(x_smiles)])
+        y_fingerprint = torch.FloatTensor([get_fingerprint(y_smiles)])
 
         return x, y, x_fingerprint, y_fingerprint
 
