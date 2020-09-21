@@ -26,9 +26,10 @@ def validity(ref, gen):
 
 def novelty(valid_gen, dataset_name):
     data, _, _ = load_data(dataset_name)
-    training_set = set(data[data.is_train == True].smiles.tolist())
-    novel = [g not in training_set for g in valid_gen]
-    return round(sum(novel) / len(valid_gen), 4)
+    targets = set(data[data.is_y == True].smiles.tolist())
+    valid_gen = set(valid_gen)
+    seen = targets & valid_gen
+    return round(1.0 - sum(seen) / len(valid_gen), 4)
 
 
 def uniqueness(valid_gen):
