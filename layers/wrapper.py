@@ -48,13 +48,13 @@ class Wrapper(pl.LightningModule):
         encoder_bag, decoder_bag = bags
 
         decoder_ce_loss = F.cross_entropy(decoder_outputs, dec_batch.target, ignore_index=0)
-        mse_loss = F.binary_cross_entropy_with_logits(output_fingerprints, target_fingerprints)
+        bce_loss = F.binary_cross_entropy_with_logits(output_fingerprints, target_fingerprints)
         cos_sim = F.cosine_similarity(encoder_bag, decoder_bag).mean(dim=0)
 
-        total_loss = decoder_ce_loss + mse_loss
+        total_loss = decoder_ce_loss + bce_loss
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('ce', decoder_ce_loss, prog_bar=True)
-        result.log('fl', mse_loss, prog_bar=True)
+        result.log('fl', bce_loss, prog_bar=True)
         result.log('cs', cos_sim, prog_bar=True)
         return result
