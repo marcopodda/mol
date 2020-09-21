@@ -108,7 +108,7 @@ class Sampler:
         batch_size = enc_outputs.size(0)
 
         autoencoder_hidden = model.autoencoder.encode(fingerprints)
-        print(hidden.size(), autoencoder_hidden.size())
+        # print(hidden.size(), autoencoder_hidden.size())
         hidden += autoencoder_hidden.transpose(0, 1).repeat(self.hparams.rnn_num_layers, 1, 1)
 
         x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1)
