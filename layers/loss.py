@@ -15,19 +15,20 @@ class ContrastiveLoss(nn.Module):
         emb_i and emb_j are batches of embeddings, where corresponding indices are pairs
         z_i, z_j as per SimCLR paper
         """
+        batch_size = emb_i.size(0)
         z_i = F.normalize(emb_i, dim=1)
         z_j = F.normalize(emb_j, dim=1)
 
         representations = torch.cat([z_i, z_j], dim=0)
         similarity_matrix = F.cosine_similarity(representations.unsqueeze(1), representations.unsqueeze(0), dim=2)
 
-        sim_ij = torch.diag(similarity_matrix, self.batch_size)
-        sim_ji = torch.diag(similarity_matrix, -self.batch_size)
+        sim_ij = torch.diag(similarity_matrix, batch_size)
+        sim_ji = torch.diag(similarity_matrix, -batch_size)
         positives = torch.cat([sim_ij, sim_ji], dim=0)
 
         nominator = torch.exp(positives / self.temperature)
-        denominator = self.negatives_mask * torch.exp(similarity_matrix / self.temperature)
+        denominator = self.negatives_mask[:batch_size, :batch_size] * torch.exp(similarity_matrix / self.temperature)
 
         loss_partial = -torch.log(nominator / torch.sum(denominator, dim=1))
-        loss = torch.sum(loss_partial) / (2 * self.batch_size)
+        loss = torch.sum(loss_partial) / (2 * batch_size)
         return loss
