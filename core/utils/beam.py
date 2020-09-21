@@ -41,22 +41,21 @@ class BeamSearchNode:
         return str(self.token)
 
 
-def beam_decode(data, dataset, model, embedder, max_length, beam_width=20):
-    topk = beam_width  # how many sentence do you want to generate
+def beam_decode(decoder, hidden, max_length, beam_width=32):
+    topk = 1  # how many sentence do you want to generate
 
-    frags, enc_inputs = data
+    hidden = hidden.view(1, -1)
+    # encoder_output = encoder_outputs[:,idx, :].unsqueeze(1)
 
-    enc_outputs, hidden, _ = model.encode(frags, enc_inputs)
-    batch_size = enc_outputs.size(0)
-
-    x = dataset.sos.repeat(batch_size, 1).unsqueeze(1)
+    # Start with the start of the sentence token
+    token = torch.LongTensor([[Tokens.SOS.value]], device="cpu")
+    x = decoder.embedder(token)
 
     # Number of sentence to generate
     endnodes = []
     number_required = min((topk + 1), topk - len(endnodes))
 
     # starting node -  hidden vector, previous node, word id, logp, length
-    token = Tokens.SOS.value
     node = BeamSearchNode(hidden, None, token, 0, 1)
     nodes = PriorityQueue()
 
@@ -73,7 +72,7 @@ def beam_decode(data, dataset, model, embedder, max_length, beam_width=20):
         # fetch the best node
         score, n = nodes.get()
         token = n.token
-        x = embedder(token)
+        x = decoder.embedder(token)
         hidden = n.h
 
         if n.token.item() == Tokens.EOS.value and n.prev_node is not None:
@@ -84,15 +83,11 @@ def beam_decode(data, dataset, model, embedder, max_length, beam_width=20):
 
         # decode for one step using decoder
         hidden = hidden.view(1, -1)
-        logits, hidden, _ = model.decoder.decode_with_attention(x, hidden, enc_outputs)
+        logits, hidden = decoder.rnn(x, hidden)
         logits = F.log_softmax(logits, dim=-1)
 
         # PUT HERE REAL BEAM SEARCH OF TOP
         log_prob, indexes = torch.topk(logits, beam_width)
-
-        x = embedder(indexes)
-        x = x.view(batch_size, 1, -1)
-
         nextnodes = []
 
         for new_k in range(beam_width):
@@ -126,4 +121,4 @@ def beam_decode(data, dataset, model, embedder, max_length, beam_width=20):
         utterance = utterance[::-1]
         utterances.append(utterance)
 
-    return np.array(utterances)
+    return np.array(utterances).reshape(-1).tolist()

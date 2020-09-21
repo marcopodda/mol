@@ -161,7 +161,7 @@ class Sampler:
         number_required = min((topk + 1), topk - len(endnodes))
 
         # starting node -  hidden vector, previous node, word id, logp, length
-        token = Tokens.SOS.value
+        token = torch.LongTensor([[Tokens.SOS.value]])
         node = BeamSearchNode(hidden, None, token, 0, 1)
         nodes = PriorityQueue()
 
@@ -178,7 +178,6 @@ class Sampler:
             # fetch the best node
             score, n = nodes.get()
             token = n.token
-            x = embedder(token)
             hidden = n.h
 
             if n.token.item() == Tokens.EOS.value and n.prev_node is not None:
@@ -188,15 +187,13 @@ class Sampler:
                     break
 
             # decode for one step using decoder
+            x = embedder(token)
             hidden = hidden.view(1, -1)
             logits, hidden, _ = model.decoder.decode_with_attention(x, hidden, enc_outputs)
             logits = torch.log_softmax(logits, dim=-1)
 
             # PUT HERE REAL BEAM SEARCH OF TOP
             log_prob, indexes = torch.topk(logits, beam_size)
-
-            x = embedder(indexes)
-            x = x.view(batch_size, 1, -1)
 
             nextnodes = []
 
