@@ -58,7 +58,7 @@ class TrainDataLoader(BaseDataLoader):
             raise Exception("Works only for TrainDataset")
 
     def collate(self, data_list):
-        x, y = zip(*data_list)
+        x, y, sims = zip(*data_list)
         sos = self.dataset.sos
         eos = self.dataset.eos
 
@@ -73,7 +73,9 @@ class TrainDataLoader(BaseDataLoader):
         enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=lengths)
         dec_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
 
-        return (x_batch, y_batch), (enc_inputs, dec_inputs)
+        sims = torch.cat(sims, dim=0)
+
+        return (x_batch, y_batch), (enc_inputs, dec_inputs), sims
 
 
 class EvalDataLoader(BaseDataLoader):

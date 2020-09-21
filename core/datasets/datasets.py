@@ -90,7 +90,7 @@ class BaseDataset:
     def compute_similarity(self, frags1, frags2):
         joined1 = mol_to_smiles(join_fragments(frags1))
         joined2 = mol_to_smiles(join_fragments(frags2))
-        return similarity(joined1, joined2)
+        return joined1, joined2, similarity(joined1, joined2)
 
     def get_dataset(self):
         data, vocab, max_length = load_data(self.dataset_name)
@@ -106,7 +106,14 @@ class TrainDataset(BaseDataset):
     def __getitem__(self, index):
         x, x_smiles, x_frags = self.get_input_data(index, corrupt=True, reps=1)
         y, y_smiles, y_frags = self.get_input_data(index, corrupt=False)
-        return x, y
+        x_smiles, y_smiles, sim = self.compute_similarity(x_frags, y_frags)
+
+        while not 0.05 < sim < 1.0:
+            x, x_smiles, x_frags = self.get_input_data(index, corrupt=True, reps=1)
+            y, y_smiles, y_frags = self.get_input_data(index, corrupt=False)
+            _, _, sim = self.compute_similarity(x_frags, y_frags)
+
+        return x, y, torch.FloatTensor([[sim]])
 
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()

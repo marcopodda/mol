@@ -46,6 +46,13 @@ class Model(nn.Module):
             dim_attention_output=self.decoder_dim_attention_output,
             dropout=self.decoder_dropout)
 
+        self.mlp = MLP(
+            hparams=self.hparams,
+            dim_input=self.embedder_dim_output * 2,
+            dim_hidden=128,
+            dim_output=1
+        )
+
     def set_dimensions(self):
         self.embedder_num_layers = self.hparams.gnn_num_layers
         self.embedder_dim_input = ATOM_FDIM
@@ -79,7 +86,7 @@ class Model(nn.Module):
         return decoder_outputs, bag_of_frags
 
     def forward(self, batch):
-        (x_batch, y_batch), (enc_inputs, dec_inputs) = batch
+        (x_batch, y_batch), (enc_inputs, dec_inputs), _ = batch
 
         # embed fragment sequence
         encoder_outputs, encoder_hidden, enc_bag_of_frags = self.encode(x_batch, enc_inputs)
@@ -87,4 +94,7 @@ class Model(nn.Module):
         # decode fragment sequence
         decoder_outputs, dec_bag_of_frags = self.decode(y_batch, dec_inputs, encoder_hidden, encoder_outputs)
 
-        return decoder_outputs, enc_bag_of_frags, dec_bag_of_frags
+        # compute similarities
+        sim_outputs = self.mlp(torch.cat([enc_bag_of_frags, dec_bag_of_frags], dim=-1))
+
+        return decoder_outputs, enc_bag_of_frags, dec_bag_of_frags, sim_outputs
