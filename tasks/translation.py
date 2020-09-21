@@ -11,7 +11,7 @@ from core.hparams import HParams
 from core.datasets.datasets import TrainDataset
 from core.datasets.loaders import EvalDataLoader
 from core.datasets.settings import DATA_DIR
-from core.mols.props import drd2, logp, qed, similarity
+from core.mols.props import drd2, logp, qed, similarity, get_fingerprint
 from core.utils.serialization import load_yaml, save_yaml
 from layers.sampler import Sampler
 from layers.wrapper import Wrapper
@@ -42,8 +42,11 @@ class TranslationDataset(TrainDataset):
     def __getitem__(self, index):
         x, x_smiles, x_frags = self.get_input_data(index, corrupt=False)
         y, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
-        _, _, sim = self.compute_similarity(x_frags, y_frags)
-        return x, y, torch.FloatTensor([[sim]])
+
+        x_fingerprint = torch.FloatTensor([[get_fingerprint(x_smiles)]])
+        y_fingerprint = torch.FloatTensor([[get_fingerprint(y_smiles)]])
+
+        return x, y, x_fingerprint, y_fingerprint
 
 
 class TranslationWrapper(Wrapper):

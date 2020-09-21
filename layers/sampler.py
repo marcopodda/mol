@@ -102,10 +102,13 @@ class Sampler:
         return samples
 
     def generate_batch(self, data, model, embedder, temp, greedy):
-        frags, enc_inputs = data
+        frags, fingerprints, enc_inputs = data
 
         enc_outputs, hidden, _ = model.encode(frags, enc_inputs)
         batch_size = enc_outputs.size(0)
+
+        _, autoencoder_hidden = model.autoencoder(fingerprints)
+        hidden += autoencoder_hidden
 
         x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1)
 

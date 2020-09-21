@@ -46,7 +46,7 @@ class Model(nn.Module):
             dim_attention_output=self.decoder_dim_attention_output,
             dropout=self.decoder_dropout)
 
-        self.mlp = MLP(
+        self.autoencoder = Autoencoder(
             hparams=self.hparams,
             dim_input=self.embedder_dim_output * 2,
             dim_hidden=128,
@@ -75,6 +75,9 @@ class Model(nn.Module):
         self.decoder_dim_output = self.dim_output
         self.decoder_dropout = self.encoder_dropout
 
+        self.autoencoder_dim_input = FINGERPRINT_DIM
+        self.autoencoder_dim_hidden = self.encoder_dim_state
+
     def encode(self, input_frags, encoder_inputs):
         encoder_inputs, bag_of_frags = self.embedder(input_frags, encoder_inputs, input=False)
         encoder_outputs, encoder_hidden = self.encoder(encoder_inputs)
@@ -86,15 +89,18 @@ class Model(nn.Module):
         return decoder_outputs, bag_of_frags
 
     def forward(self, batch):
-        (x_batch, y_batch), (enc_inputs, dec_inputs), _ = batch
+        (x_batch, y_batch), (x_fingerprint, _), (enc_inputs, dec_inputs), _ = batch
 
         # embed fragment sequence
         encoder_outputs, encoder_hidden, enc_bag_of_frags = self.encode(x_batch, enc_inputs)
 
+        # denoise fingerprint
+        y_fingerprint_outputs, autoencoder_hidden = self.autoencoder(x_fingerprint)
+
+        # construct hidden state
+        encoder_hidden += autoencoder_hidden
+
         # decode fragment sequence
         decoder_outputs, dec_bag_of_frags = self.decode(y_batch, dec_inputs, encoder_hidden, encoder_outputs)
 
-        # compute similarities
-        sim_outputs = self.mlp(torch.cat([enc_bag_of_frags, dec_bag_of_frags], dim=-1))
-
-        return decoder_outputs, enc_bag_of_frags, dec_bag_of_frags, sim_outputs
+        return decoder_outputs, y_fingerprint_outputs, (enc_bag_of_frags, dec_bag_of_frags)
