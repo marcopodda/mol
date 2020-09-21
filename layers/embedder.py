@@ -39,7 +39,7 @@ class GNN(nn.Module):
             self.bns.append(bn)
 
             dim_output = self.dim_input if i == 0 else self.dim_hidden
-            edge_net = nn.Linear(self.dim_edge_features, dim_output)
+            edge_net = nn.Linear(self.dim_edge_features, dim_output, bias=False)
             self.edge_nets.append(edge_net)
 
         for p in self.parameters():
