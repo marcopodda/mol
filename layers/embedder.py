@@ -28,7 +28,11 @@ class GNN(nn.Module):
             dim_input = self.dim_input if i == 0 else self.dim_hidden
             dim_output = self.dim_output if i == self.num_layers - 1 else self.dim_hidden
 
-            conv = GINEConv(nn=nn.Sequential(nn.Linear(dim_input, dim_output), nn.ReLU()))
+            conv = GINEConv(nn=nn.Sequential(
+                nn.Linear(dim_input, self.dim_hidden),
+                nn.ReLU(),
+                nn.Linear(self.dim_hidden, dim_output),
+                nn.ReLU()))
             self.convs.append(conv)
 
             bn = nn.BatchNorm1d(dim_output, track_running_stats=False)
@@ -44,16 +48,14 @@ class GNN(nn.Module):
 
     def embed_single(self, x, edge_index, edge_attr, batch):
         for i, (conv, en, bn) in enumerate(zip(self.convs, self.edge_nets, self.bns)):
-            layer_edge_attr = en(edge_attr)
-            x = conv(x, edge_index, edge_attr=layer_edge_attr)
+            x = bn(conv(x, edge_index, edge_attr=en(edge_attr)))
 
         output = self.aggregate_nodes(x, batch)
         return output
 
     def forward(self, x, edge_index, edge_attr, frag_batch, graph_batch):
         for i, (conv, en, bn) in enumerate(zip(self.convs, self.edge_nets, self.bns)):
-            layer_edge_attr = en(edge_attr)
-            x = conv(x, edge_index, edge_attr=layer_edge_attr)
+            x = bn(conv(x, edge_index, edge_attr=en(edge_attr)))
 
         # aggregate each fragment in the sequence
         output = self.aggregate_nodes(x, frag_batch)
