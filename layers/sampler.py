@@ -150,11 +150,7 @@ class Sampler:
         topk = beam_size  # how many sentence do you want to generate
 
         frags, enc_inputs = data
-
         enc_outputs, hidden, _ = model.encode(frags, enc_inputs)
-        batch_size = enc_outputs.size(0)
-
-        x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1)
 
         # Number of sentence to generate
         endnodes = []
@@ -188,7 +184,8 @@ class Sampler:
 
             # decode for one step using decoder
             x = embedder(token)
-            hidden = hidden.view(1, -1)
+            # hidden = hidden.view(1, -1)
+            print(x.size(), hidden.size(), enc_outputs.size())
             logits, hidden, _ = model.decoder.decode_with_attention(x, hidden, enc_outputs)
             logits = torch.log_softmax(logits, dim=-1)
 
