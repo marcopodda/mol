@@ -26,10 +26,9 @@ def validity(ref, gen):
 
 def novelty(valid_gen, dataset_name):
     data, _, _ = load_data(dataset_name)
-    targets = set(data[data.is_y == True].smiles.tolist())
-    valid_gen = set(valid_gen)
-    seen = targets & valid_gen
-    return round(1.0 - len(seen) / len(valid_gen), 4)
+    targets = set(data[data.is_y == True].smiles)
+    seen = targets & set(valid_gen)
+    return round(1.0 - len(seen) / len(targets), 4)
 
 
 def uniqueness(valid_gen):
