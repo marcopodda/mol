@@ -74,7 +74,7 @@ class GNN(nn.Module):
         nodes_per_graph = scatter_add(torch.ones_like(batch), batch)
         nodes_per_graph = nodes_per_graph.repeat_interleave(nodes_per_graph.view(-1))
         nodes_per_graph = nodes_per_graph.view(-1, 1)
-        nodes_per_graph = torch.sqrt(nodes_per_graph.float()).round().long()
+        nodes_per_graph = torch.sqrt(nodes_per_graph.float())
         graph_repr = global_add_pool(nodes_repr / nodes_per_graph, batch)
         return graph_repr
 
