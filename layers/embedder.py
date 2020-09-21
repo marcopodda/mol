@@ -27,15 +27,11 @@ class GNN(nn.Module):
             dim_input = self.dim_input if i == 0 else self.dim_hidden
             dim_output = self.dim_output if i == self.num_layers - 1 else self.dim_hidden
 
-            net = MLP(
+            conv = GINEConv(nn=MLP(
                 hparams=self.hparams,
                 dim_input=dim_input,
                 dim_hidden=self.dim_hidden,
-                dim_output=dim_output,
-            )
-
-            conv = GINEConv(nn=net)
-
+                dim_output=dim_output))
             self.convs.append(conv)
 
             bn = nn.BatchNorm1d(dim_output, track_running_stats=False)
