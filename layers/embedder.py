@@ -103,6 +103,7 @@ class Embedder(nn.Module):
         for i, l in enumerate(data.length):
             offset = 1 if input is True else 0
             seq_element = x[cumsum:cumsum + l, :]
+            seq_element = F.dropout(seq_element, p=0.25, training=self.training)
             mat[i, range(offset, l.item() + offset), :] = seq_element
             cumsum += l
 
