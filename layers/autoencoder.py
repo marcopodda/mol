@@ -31,6 +31,7 @@ class Autoencoder(nn.Module):
         return self.output(F.relu(x))
 
     def forward(self, batch):
+        print(batch.size())
         hidden = self.encode(batch)
         output = self.decode(hidden)
         hidden = hidden.unsqueeze(0).repeat(self.num_layers, 1, 1)
