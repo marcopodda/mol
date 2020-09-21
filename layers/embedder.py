@@ -57,8 +57,8 @@ class GNN(nn.Module):
 
     def forward(self, x, edge_index, edge_attr, frag_batch, graph_batch):
         for i, (conv, en, bn) in enumerate(zip(self.convs, self.edge_nets, self.bns)):
+            print(edge_attr.size(), en.in_features, en.out_features)
             edge_attr = en(edge_attr)
-            print(edge_attr.size(), x.size())
             x = conv(x, edge_index, edge_attr=edge_attr)
             x = bn(F.relu(x))
 
