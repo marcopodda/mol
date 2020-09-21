@@ -85,7 +85,7 @@ class EvalDataLoader(BaseDataLoader):
             raise Exception("Works only for EvalDataset")
 
     def collate(self, data_list):
-        frags_batch, fingerprints = data_list
+        frags_batch, fingerprints = zip(*data_list)
 
         frags_x_batch = collate_frags(frags_batch)
 
