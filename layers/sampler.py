@@ -1,7 +1,12 @@
+import operator
+from queue import PriorityQueue
+import numpy as np
+
 import torch
 from torch import nn
 from torch.distributions import Categorical
 
+from core.utils.beam import BeamSearchNode
 from core.hparams import HParams
 from core.datasets.datasets import VocabDataset
 from core.datasets.loaders import VocabDataLoader
@@ -50,7 +55,7 @@ class Sampler:
         embedder = nn.Embedding.from_pretrained(embeddings)
         return embedder
 
-    def run(self, temp=1.0, greedy=True):
+    def run(self, temp=1.0, greedy=True, beam_size=20):
         model = self.model
         model.eval()
 
@@ -63,17 +68,22 @@ class Sampler:
             batch_size = loader.batch_size
 
             for idx, batch in enumerate(loader):
-                gens = self.generate_batch(
+                # gens = self.generate_batch(
+                #     data=batch,
+                #     model=model,
+                #     embedder=embedder,
+                #     temp=temp,
+                #     greedy=greedy)
+                gens = self.beam_decode(
                     data=batch,
                     model=model,
                     embedder=embedder,
-                    temp=temp,
-                    greedy=greedy)
+                    beam_size=beam_size)
 
                 batch_length = batch[-1].size(0)
                 start = idx * batch_size
                 end = start + batch_length
-                refs = smiles[start:end]
+                refs = smiles[start:end] * 20
 
                 for ref, gen in zip(refs, gens):
                     if len(gen) >= 2:
@@ -134,3 +144,98 @@ class Sampler:
             vec = [int(i) for i in vec]
             frags.append([self.vocab[i] for i in vec])
         return frags
+
+
+    def beam_decode(self, data, model, embedder, beam_size=20):
+        topk = beam_size  # how many sentence do you want to generate
+
+        frags, enc_inputs = data
+
+        enc_outputs, hidden, _ = model.encode(frags, enc_inputs)
+        batch_size = enc_outputs.size(0)
+
+        x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1)
+
+        # Number of sentence to generate
+        endnodes = []
+        number_required = min((topk + 1), topk - len(endnodes))
+
+        # starting node -  hidden vector, previous node, word id, logp, length
+        token = Tokens.SOS.value
+        node = BeamSearchNode(hidden, None, token, 0, 1)
+        nodes = PriorityQueue()
+
+        # start the queue
+        nodes.put((-node.eval(), node))
+        qsize = 1
+
+        # start beam search
+        while True:
+            # give up when decoding takes too long
+            if qsize > beam_size * self.max_length:
+                break
+
+            # fetch the best node
+            score, n = nodes.get()
+            token = n.token
+            x = embedder(token)
+            hidden = n.h
+
+            if n.token.item() == Tokens.EOS.value and n.prev_node is not None:
+                endnodes.append((score, n))
+                # if we reached maximum # of sentences required
+                if len(endnodes) >= number_required:
+                    break
+
+            # decode for one step using decoder
+            hidden = hidden.view(1, -1)
+            logits, hidden, _ = model.decoder.decode_with_attention(x, hidden, enc_outputs)
+            logits = torch.log_softmax(logits, dim=-1)
+
+            # PUT HERE REAL BEAM SEARCH OF TOP
+            log_prob, indexes = torch.topk(logits, beam_size)
+
+            x = embedder(indexes)
+            x = x.view(batch_size, 1, -1)
+
+            nextnodes = []
+
+            for new_k in range(beam_size):
+                decoded_t = indexes[0][new_k].view(1, -1)
+                log_p = log_prob[0][new_k].item()
+
+                node = BeamSearchNode(hidden, n, decoded_t, n.logp + log_p, n.length + 1)
+                score = -node.eval()
+                nextnodes.append((score, node))
+
+            # put them into queue
+            for i in range(len(nextnodes)):
+                score, nn = nextnodes[i]
+                nodes.put((score, nn))
+                # increase qsize
+            qsize += len(nextnodes) - 1
+
+        # choose nbest paths, back trace them
+        if len(endnodes) == 0:
+            endnodes = [nodes.get() for _ in range(topk)]
+
+        utterances = []
+        for score, n in sorted(endnodes, key=operator.itemgetter(0)):
+            utterance = []
+            utterance.append(n.token.item())
+            # back trace
+            while n.prev_node is not None:
+                n = n.prev_node
+                utterance.append(n.token.item())
+
+            utterance = utterance[::-1]
+            utterances.append(utterance)
+        utterances = np.array(utterances)
+
+        for i in range(utterances.shape[0]):
+            vec = utterances[i] - len(Tokens)
+            vec = vec[vec >= 0]
+            vec = [int(i) for i in vec]
+            frags.append([self.vocab[i] for i in vec])
+
+        return utterances
