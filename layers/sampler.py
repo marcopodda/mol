@@ -107,8 +107,8 @@ class Sampler:
         enc_outputs, hidden, _ = model.encode(frags, enc_inputs)
         batch_size = enc_outputs.size(0)
 
-        _, autoencoder_hidden = model.autoencoder(fingerprints)
-        hidden += autoencoder_hidden
+        autoencoder_hidden = model.autoencoder.encode(fingerprints)
+        hidden += autoencoder_hidden.repeat(hidden.size(0), hidden.size(1), 1)
 
         x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1)
 

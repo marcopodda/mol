@@ -96,7 +96,7 @@ class Model(nn.Module):
         y_fingerprint_outputs, autoencoder_hidden = self.autoencoder(x_fingerprint)
 
         # construct hidden state
-        encoder_hidden += autoencoder_hidden
+        encoder_hidden += autoencoder_hidden.repeat(self.decoder_num_layers, 1, 1)
 
         # decode fragment sequence
         decoder_outputs, dec_bag_of_frags = self.decode(y_batch, dec_inputs, encoder_hidden, encoder_outputs)
