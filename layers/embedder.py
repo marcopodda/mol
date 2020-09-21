@@ -54,13 +54,13 @@ class GINEConv(MessagePassing):
     def forward(self, x, edge_index, edge_attr=None, size=None):
         """"""
         if isinstance(x, Tensor):
-            x: OptPairTensor = (x, x)
+            x = (x, x)
 
         # Node and edge feature dimensionalites need to match.
-        if isinstance(edge_index, Tensor):
-            assert edge_attr is not None
-            assert x[0].size(-1) == edge_attr.size(-1)
-        elif isinstance(edge_index, SparseTensor):
+        # if isinstance(edge_index, Tensor):
+        #     assert edge_attr is not None
+        #     assert x[0].size(-1) == edge_attr.size(-1)
+        # elif isinstance(edge_index, SparseTensor):
             assert x[0].size(-1) == edge_index.size(-1)
 
         # propagate_type: (x: OptPairTensor, edge_attr: OptTensor)
