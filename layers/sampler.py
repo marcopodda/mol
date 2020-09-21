@@ -189,6 +189,7 @@ class Sampler:
 
             # PUT HERE REAL BEAM SEARCH OF TOP
             log_prob, indexes = torch.topk(logits, beam_size)
+            print(indexes, indexes.size())
 
             nextnodes = []
 
@@ -197,8 +198,7 @@ class Sampler:
                 log_p = log_prob[0][new_k].item()
 
                 node = BeamSearchNode(hidden, n, decoded_t, n.logp + log_p, n.length + 1)
-                score = -node.eval()
-                nextnodes.append((score, node))
+                nextnodes.append((-node.eval(), node))
 
             # put them into queue
             for i in range(len(nextnodes)):
