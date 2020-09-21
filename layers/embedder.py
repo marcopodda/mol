@@ -56,12 +56,14 @@ class GNN(nn.Module):
     def forward(self, x, edge_index, edge_attr, frag_batch, graph_batch):
         for i, (conv, en, bn) in enumerate(zip(self.convs, self.edge_nets, self.bns)):
             x = bn(conv(x, edge_index, edge_attr=en(edge_attr)))
+        x = F.dropout(x, p=0.25, training=self.training)
 
         # aggregate each fragment in the sequence
         output = self.aggregate_nodes(x, frag_batch)
 
         # aggregate all fragments in the sequence into a bag of frags
         graph_output = self.aggregate_nodes(x, graph_batch)
+
         return output, graph_output
 
     def aggregate_nodes(self, nodes_repr, batch):
@@ -103,7 +105,6 @@ class Embedder(nn.Module):
         for i, l in enumerate(data.length):
             offset = 1 if input is True else 0
             seq_element = x[cumsum:cumsum + l, :]
-            seq_element = F.dropout(seq_element, p=0.25, training=self.training)
             mat[i, range(offset, l.item() + offset), :] = seq_element
             cumsum += l
 
