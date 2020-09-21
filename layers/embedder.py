@@ -56,13 +56,14 @@ class GNN(nn.Module):
     def forward(self, x, edge_index, edge_attr, frag_batch, graph_batch):
         for i, (conv, en, bn) in enumerate(zip(self.convs, self.edge_nets, self.bns)):
             x = bn(conv(x, edge_index, edge_attr=en(edge_attr)))
-        x = F.dropout(x, p=0.25, training=self.training)
 
         # aggregate each fragment in the sequence
         output = self.aggregate_nodes(x, frag_batch)
+        output = F.dropout(output, p=0.25, training=self.training)
 
         # aggregate all fragments in the sequence into a bag of frags
         graph_output = self.aggregate_nodes(x, graph_batch)
+        graph_output = F.dropout(graph_output, p=0.25, training=self.training)
 
         return output, graph_output
 
