@@ -22,7 +22,6 @@ class GNN(nn.Module):
 
         self.convs = nn.ModuleList([])
         self.edge_nets = nn.ModuleList([])
-        self.bns = nn.ModuleList([])
 
         for i in range(self.num_layers):
             dim_input = self.dim_input if i == 0 else self.dim_hidden
@@ -31,12 +30,11 @@ class GNN(nn.Module):
             conv = GINEConv(nn=nn.Sequential(
                 nn.Linear(dim_input, self.dim_hidden),
                 nn.ReLU(),
+                nn.BatchNorm1d(self.dim_hidden),
                 nn.Linear(self.dim_hidden, dim_output),
-                nn.ReLU()))
+                nn.ReLU(),
+                nn.BatchNorm1d(dim_output)))
             self.convs.append(conv)
-
-            bn = nn.BatchNorm1d(dim_output, track_running_stats=False)
-            self.bns.append(bn)
 
             dim_output = self.dim_input if i == 0 else self.dim_hidden
             edge_net = nn.Linear(self.dim_edge_features, dim_output, bias=False)
@@ -47,15 +45,17 @@ class GNN(nn.Module):
                 nn.init.xavier_uniform_(p, gain=nn.init.calculate_gain('relu'))
 
     def embed_single(self, x, edge_index, edge_attr, batch):
-        for i, (conv, en, bn) in enumerate(zip(self.convs, self.edge_nets, self.bns)):
-            x = bn(conv(x, edge_index, edge_attr=en(edge_attr)))
+        for conv, edge_net in zip(self.convs, self.edge_nets):
+            x = conv(x, edge_index, edge_attr=edge_net(edge_attr))
 
         output = self.aggregate_nodes(x, batch)
+        output = F.dropout(output, p=0.25, training=self.training)
+
         return output
 
     def forward(self, x, edge_index, edge_attr, frag_batch, graph_batch):
-        for i, (conv, en, bn) in enumerate(zip(self.convs, self.edge_nets, self.bns)):
-            x = bn(conv(x, edge_index, edge_attr=en(edge_attr)))
+        for conv, edge_net in zip(self.convs, self.edge_nets):
+            x = conv(x, edge_index, edge_attr=edge_net(edge_attr))
 
         # aggregate each fragment in the sequence
         output = self.aggregate_nodes(x, frag_batch)
