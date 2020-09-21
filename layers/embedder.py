@@ -47,9 +47,9 @@ class GNN(nn.Module):
                 nn.init.xavier_uniform_(p, gain=nn.init.calculate_gain('relu'))
 
     def embed_single(self, x, edge_index, edge_attr, batch):
-        for conv, en, bn in zip(self.convs, self.edge_nets, self.bns):
-            edge_attr = en(edge_attr)
-            x = conv(x, edge_index, edge_attr=edge_attr)
+        for i, (conv, en, bn) in enumerate(zip(self.convs, self.edge_nets, self.bns)):
+            layer_edge_attr = en(edge_attr)
+            x = conv(x, edge_index, edge_attr=layer_edge_attr)
             x = bn(F.relu(x))
 
         output = self.aggregate_nodes(x, batch)
@@ -57,9 +57,8 @@ class GNN(nn.Module):
 
     def forward(self, x, edge_index, edge_attr, frag_batch, graph_batch):
         for i, (conv, en, bn) in enumerate(zip(self.convs, self.edge_nets, self.bns)):
-            print(edge_attr.size(), en.in_features, en.out_features)
-            edge_attr = en(edge_attr)
-            x = conv(x, edge_index, edge_attr=edge_attr)
+            layer_edge_attr = en(edge_attr)
+            x = conv(x, edge_index, edge_attr=layer_edge_attr)
             x = bn(F.relu(x))
 
         # aggregate each fragment in the sequence
