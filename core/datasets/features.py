@@ -57,7 +57,7 @@ def get_bond_features(bond):
         bond.IsInRing()
     ]
     fbond += onek_encoding_unk(int(bond.GetStereo()), BOND_FEATURES['stereo'])
-    return fbond
+    return fbond + [0] * (ATOM_FDIM - BOND_FDIM)
 
 
 def mol2nx(mol):
