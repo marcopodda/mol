@@ -48,7 +48,7 @@ class Model(nn.Module):
 
         self.autoencoder = Autoencoder(
             hparams=self.hparams,
-            dim_input=self.embedder_dim_output * 2,
+            dim_input=self.autoencoder_dim_input,
             dim_hidden=self.autoencoder_dim_hidden)
 
     def set_dimensions(self):
