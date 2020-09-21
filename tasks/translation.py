@@ -58,7 +58,7 @@ class TranslationSampler(Sampler):
         indices = self.dataset.data[self.dataset.data.is_val == True].index.tolist()
         loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
         smiles = self.dataset.data.iloc[indices].smiles.tolist()
-        return smiles, loader(batch_size=self.hparams.translate_batch_size, shuffle=False)
+        return smiles, loader(batch_size=1, shuffle=False)
 
 
 class TranslationTaskRunner(TaskRunner):
