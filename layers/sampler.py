@@ -189,7 +189,6 @@ class Sampler:
 
             # PUT HERE REAL BEAM SEARCH OF TOP
             log_prob, indexes = torch.topk(logits, beam_size)
-            print(indexes, indexes.size())
 
             nextnodes = []
 
