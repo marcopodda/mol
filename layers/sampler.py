@@ -146,7 +146,7 @@ class Sampler:
         return frags
 
 
-    def beam_decode(self, data, model, embedder, beam_size=20):
+    def beam_decode(self, data, model, embedder, beam_size=32):
         topk = beam_size  # how many sentence do you want to generate
 
         frags, enc_inputs = data
