@@ -20,8 +20,10 @@ class ContrastiveLoss(nn.Module):
         z_j = F.normalize(emb_j, dim=1)
 
         similarity_matrix = F.cosine_similarity(z_i.unsqueeze(1), z_j.unsqueeze(0), dim=2)
+        print(similarity_matrix)
 
         positives = torch.diag(similarity_matrix, batch_size)
+        print(positives)
         # sim_ji = torch.diag(similarity_matrix, -batch_size)
         # positives = torch.cat([sim_ij, sim_ji], dim=0)
 
