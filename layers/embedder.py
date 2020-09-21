@@ -65,8 +65,6 @@ class GINEConv(MessagePassing):
 
         # propagate_type: (x: OptPairTensor, edge_attr: OptTensor)
         out = self.propagate(edge_index, x=x, edge_attr=edge_attr, size=size)
-        print(out, out.size())
-        print(x, x[1].size())
 
         x_r = x[1]
         if x_r is not None:
@@ -75,9 +73,8 @@ class GINEConv(MessagePassing):
         return self.nn(out)
 
     def message(self, x_j, edge_attr):
-        print(x_j.size(), edge_attr.size())
-        catted = torch.cat([x_j, edge_attr], dim=-1)
-        return F.relu(catted)
+        x_j[:, edge_attr.size(1):] = edge_attr
+        return F.relu(x_j)
 
     def __repr__(self):
         return '{}(nn={})'.format(self.__class__.__name__, self.nn)
