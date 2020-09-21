@@ -67,6 +67,7 @@ class GINEConv(MessagePassing):
         out = self.propagate(edge_index, x=x, edge_attr=edge_attr, size=size)
 
         x_r = x[1]
+        print(out.size(), x_r.size())
         if x_r is not None:
             out += (1 + self.eps) * x_r
 
