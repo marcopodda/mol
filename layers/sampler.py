@@ -83,7 +83,7 @@ class Sampler:
                 batch_length = batch[-1].size(0)
                 start = idx * batch_size
                 end = start + batch_length
-                refs = smiles[start:end] * 20
+                refs = smiles[start:end] * len(gens)
 
                 for ref, gen in zip(refs, gens):
                     if len(gen) >= 2:
@@ -227,6 +227,6 @@ class Sampler:
             vec = np.array(utterance) - len(Tokens)
             vec = vec[vec >= 0]
             vec = [int(i) for i in vec]
-            samples.add([self.vocab[i] for i in vec])
+            samples.add(tuple(self.vocab[i] for i in vec))
 
         return samples
