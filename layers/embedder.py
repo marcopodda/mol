@@ -29,9 +29,9 @@ class GNN(nn.Module):
 
             conv = GINEConv(nn=MLP(
                 hparams=self.hparams,
-                dim_input=dim_input + dim_edge_features,
+                dim_input=dim_input,
                 dim_hidden=self.dim_hidden,
-                dim_output=dim_output + dim_edge_features))
+                dim_output=dim_output))
             self.convs.append(conv)
 
             bn = nn.BatchNorm1d(dim_output, track_running_stats=False)
