@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torch_geometric.nn import NNConv, global_add_pool
+from torch_geometric.nn import NNConv, GINEConv, global_add_pool
 from torch_scatter import scatter_add
 
 from core.hparams import HParams
@@ -27,19 +27,14 @@ class GNN(nn.Module):
             dim_input = self.dim_input if i == 0 else self.dim_hidden
             dim_output = self.dim_output if i == self.num_layers - 1 else self.dim_hidden
 
-            edge_net = MLP(
+            net = MLP(
                 hparams=self.hparams,
-                dim_input=self.dim_edge_features,
-                dim_hidden=self.dim_edge_embed,
-                dim_output=dim_input * dim_output,
+                dim_input=dim_input,
+                dim_hidden=self.dim_hidden,
+                dim_output=dim_output,
             )
 
-            conv = NNConv(
-                in_channels=dim_input,
-                out_channels=dim_output,
-                nn=edge_net,
-                root_weight=False,
-                bias=False)
+            conv = GINEConv(nn=net)
 
             self.convs.append(conv)
 
