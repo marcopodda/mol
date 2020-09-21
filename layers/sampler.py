@@ -109,7 +109,7 @@ class Sampler:
 
         autoencoder_hidden = model.autoencoder.encode(fingerprints)
         print(hidden.size(), autoencoder_hidden.size())
-        hidden += autoencoder_hidden.repeat(hidden.size(0), hidden.size(1), 1)
+        hidden += autoencoder_hidden.transpose(0, 1).repeat(self.hparams.rnn_num_layers, 1, 1)
 
         x = self.dataset.sos.repeat(batch_size, 1).unsqueeze(1)
 
