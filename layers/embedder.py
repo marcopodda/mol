@@ -21,6 +21,7 @@ class GNN(nn.Module):
         self.dim_output = dim_output
 
         self.convs = nn.ModuleList([])
+        self.edge_nets = nn.ModuleList([])
         self.bns = nn.ModuleList([])
 
         for i in range(self.num_layers):
@@ -34,6 +35,9 @@ class GNN(nn.Module):
                 dim_output=dim_output))
             self.convs.append(conv)
 
+            edge_net = nn.Linear(dim_edge_features, dim_output)
+            self.edge_nets.append(edge_net)
+
             bn = nn.BatchNorm1d(dim_output, track_running_stats=False)
             self.bns.append(bn)
 
@@ -42,7 +46,8 @@ class GNN(nn.Module):
                 nn.init.xavier_uniform_(p, gain=nn.init.calculate_gain('relu'))
 
     def embed_single(self, x, edge_index, edge_attr, batch):
-        for conv, bn in zip(self.convs, self.bns):
+        for conv, en, bn in zip(self.convs, self.edge_nets, self.bns):
+            edge_attr = en(edge_attr)
             x = conv(x, edge_index, edge_attr=edge_attr)
             x = bn(F.relu(x))
 
