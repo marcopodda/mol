@@ -26,7 +26,8 @@ def validity(ref, gen):
 
 def novelty(valid_gen, dataset_name):
     data, _, _ = load_data(dataset_name)
-    targets = set(data[data.is_y == True].smiles)
+    col = ["is_y" if dataset_name in ["drd2", "qed", "logp04", "logp06"] else "is_train"]
+    targets = set(data[data[col] == True].smiles)
     seen = targets & set(valid_gen)
     return round(1.0 - len(seen) / len(targets), 4)
 
