@@ -19,6 +19,7 @@ class ContrastiveLoss(nn.Module):
         z_i = F.normalize(emb_i, dim=1)
         z_j = F.normalize(emb_j, dim=1)
 
+        print(z_i.size(), z_j.size())
         similarity_matrix = F.cosine_similarity(z_i.unsqueeze(1), z_j.unsqueeze(0), dim=2)
         print(similarity_matrix)
 
