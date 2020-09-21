@@ -47,21 +47,19 @@ class BaseDataset:
     def _corrupt_seq(self, seq, reps=1):
         seq = seq[:]
 
-        # deletion
         for _ in range(reps):
+            # deletion
             if np.random.rand() > 0.1 and len(seq) > 2:
                 delete_index = np.random.choice(len(seq)-1)
                 seq.pop(delete_index)
 
-        # replacement
-        for _ in range(reps):
+            # replacement
             if  np.random.rand() > 0.1:
                 mask_index = np.random.choice(len(seq)-1)
                 probs = self.vocab.condition(seq[mask_index])
                 seq[mask_index] = self.vocab.sample(probs=probs)
 
-        # insertion
-        for _ in range(reps):
+            # insertion
             if np.random.rand() > 0.1 and len(seq) + 2 <= self.max_length:
                 add_index = np.random.choice(len(seq)-1)
                 probs = self.vocab.condition(seq[add_index])
