@@ -26,8 +26,6 @@ class GNN(nn.Module):
 
         for i in range(self.num_layers):
             dim_input = self.dim_input if i == 0 else self.dim_hidden
-            dim_edge_features = self.dim_edge_features if i == 0 else self.dim_hidden
-            dim_edge_features_out = self.dim_input if i == 0 else self.dim_hidden
             dim_output = self.dim_output if i == self.num_layers - 1 else self.dim_hidden
 
             conv = GINEConv(nn=MLP(
@@ -37,11 +35,12 @@ class GNN(nn.Module):
                 dim_output=dim_output))
             self.convs.append(conv)
 
-            edge_net = nn.Linear(dim_edge_features, dim_edge_features_out)
-            self.edge_nets.append(edge_net)
-
             bn = nn.BatchNorm1d(dim_output, track_running_stats=False)
             self.bns.append(bn)
+
+            dim_output = self.dim_input if i == 0 else self.dim_hidden
+            edge_net = nn.Linear(self.dim_edge_features, dim_output)
+            self.edge_nets.append(edge_net)
 
         for p in self.parameters():
             if p.dim() > 1 and p.requires_grad:
