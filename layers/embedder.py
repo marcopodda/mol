@@ -50,6 +50,7 @@ class GNN(nn.Module):
         return output
 
     def forward(self, x, edge_index, edge_attr, frag_batch, graph_batch):
+        print(x.size(), edge_attr.size())
         for conv, bn in zip(self.convs, self.bns):
             x = conv(x, edge_index, edge_attr=edge_attr)
             x = bn(F.relu(x))
