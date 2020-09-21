@@ -73,8 +73,7 @@ class GINEConv(MessagePassing):
         return self.nn(out)
 
     def message(self, x_j, edge_attr):
-        print(x_j.size(), edge_attr.size())
-        x_j[:, edge_attr.size(1):] = edge_attr
+        x_j = torch.cat([x_j, edge_attr], dim=-1)
         return F.relu(x_j)
 
     def __repr__(self):

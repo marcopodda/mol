@@ -44,7 +44,7 @@ def get_atom_features(atom):
     features += onek_encoding_unk(atom.GetFormalCharge(), ATOM_FEATURES['formal_charge'])
     features += onek_encoding_unk(int(atom.GetChiralTag()), ATOM_FEATURES['chiral_tag'])
     features += [1 if atom.GetIsAromatic() else 0]
-    return features + [0] * BOND_FDIM
+    return features
 
 
 def get_bond_features(bond):
