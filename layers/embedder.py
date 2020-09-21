@@ -59,11 +59,11 @@ class GNN(nn.Module):
 
         # aggregate each fragment in the sequence
         output = self.aggregate_nodes(x, frag_batch)
-        output = F.dropout(output, p=0.25, training=self.training)
+        # output = F.dropout(output, p=0.25, training=self.training)
 
         # aggregate all fragments in the sequence into a bag of frags
         graph_output = self.aggregate_nodes(x, graph_batch)
-        graph_output = F.dropout(graph_output, p=0.25, training=self.training)
+        # graph_output = F.dropout(graph_output, p=0.25, training=self.training)
 
         return output, graph_output
 
