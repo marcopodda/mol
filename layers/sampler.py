@@ -223,10 +223,11 @@ class Sampler:
             utterance = utterance[::-1]
             utterances.append(utterance)
 
+        samples = []
         for utterance in utterances:
             vec = np.array(utterance) - len(Tokens)
             vec = vec[vec >= 0]
             vec = [int(i) for i in vec]
-            frags.append([self.vocab[i] for i in vec])
+            samples.append([self.vocab[i] for i in vec])
 
-        return utterances
+        return samples
