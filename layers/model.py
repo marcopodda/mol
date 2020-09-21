@@ -46,13 +46,6 @@ class Model(nn.Module):
             dim_attention_output=self.decoder_dim_attention_output,
             dropout=self.decoder_dropout)
 
-        self.mlp_prop = MLP(
-            hparams=self.hparams,
-            dim_input=self.embedder_dim_output,
-            dim_hidden=64,
-            dim_output=1
-        )
-
     def set_dimensions(self):
         self.embedder_num_layers = self.hparams.gnn_num_layers
         self.embedder_dim_input = ATOM_FDIM

@@ -25,30 +25,26 @@ class GNN(nn.Module):
 
         for i in range(self.num_layers):
             dim_input = self.dim_input if i == 0 else self.dim_hidden
+            dim_output = self.dim_output if i == self.num_layers - 1 else self.dim_hidden
 
             edge_net = MLP(
                 hparams=self.hparams,
                 dim_input=self.dim_edge_features,
                 dim_hidden=self.dim_edge_embed,
-                dim_output=dim_input * self.dim_hidden,
+                dim_output=dim_input * dim_output,
             )
 
             conv = NNConv(
                 in_channels=dim_input,
-                out_channels=self.dim_hidden,
+                out_channels=dim_output,
                 nn=edge_net,
                 root_weight=False,
                 bias=False)
 
             self.convs.append(conv)
 
-            bn = nn.BatchNorm1d(self.dim_hidden, track_running_stats=False)
+            bn = nn.BatchNorm1d(dim_output, track_running_stats=False)
             self.bns.append(bn)
-
-        if self.dim_output != self.dim_hidden:
-            self.readout = nn.Linear(self.dim_hidden, self.dim_output)
-        else:
-            self.readout = None
 
         for p in self.parameters():
             if p.dim() > 1 and p.requires_grad:
@@ -60,10 +56,6 @@ class GNN(nn.Module):
             x = bn(F.relu(x))
 
         output = self.aggregate_nodes(x, batch)
-
-        if self.readout is not None:
-            output = self.readout(output)
-
         return output
 
     def forward(self, x, edge_index, edge_attr, frag_batch, graph_batch):
@@ -76,17 +68,13 @@ class GNN(nn.Module):
 
         # aggregate all fragments in the sequence into a bag of frags
         graph_output = self.aggregate_nodes(x, graph_batch)
-
-        if self.readout is not None:
-            output = self.readout(output)
-
         return output, graph_output
 
     def aggregate_nodes(self, nodes_repr, batch):
         nodes_per_graph = scatter_add(torch.ones_like(batch), batch)
         nodes_per_graph = nodes_per_graph.repeat_interleave(nodes_per_graph.view(-1))
-        output = global_add_pool(nodes_repr / nodes_per_graph.view(-1, 1), batch)
-        return output
+        graph_repr = global_add_pool(nodes_repr / nodes_per_graph.view(-1, 1), batch)
+        return graph_repr
 
 
 class Embedder(nn.Module):
