@@ -68,22 +68,22 @@ class Sampler:
             batch_size = loader.batch_size
 
             for idx, batch in enumerate(loader):
-                # gens = self.generate_batch(
-                #     data=batch,
-                #     model=model,
-                #     embedder=embedder,
-                #     temp=temp,
-                #     greedy=greedy)
-                gens = self.beam_decode(
+                gens = self.generate_batch(
                     data=batch,
                     model=model,
                     embedder=embedder,
-                    beam_size=beam_size)
+                    temp=temp,
+                    greedy=greedy)
+                # gens = self.beam_decode(
+                #     data=batch,
+                #     model=model,
+                #     embedder=embedder,
+                #     beam_size=beam_size)
 
                 batch_length = batch[-1].size(0)
                 start = idx * batch_size
                 end = start + batch_length
-                refs = smiles[start:end] * len(gens)
+                refs = smiles[start:end] # * len(gens)
 
                 for ref, gen in zip(refs, gens):
                     if len(gen) >= 2:
