@@ -65,6 +65,8 @@ class GINEConv(MessagePassing):
 
         # propagate_type: (x: OptPairTensor, edge_attr: OptTensor)
         out = self.propagate(edge_index, x=x, edge_attr=edge_attr, size=size)
+        print(out, out.size())
+        print(x, x[1].size())
 
         x_r = x[1]
         if x_r is not None:
