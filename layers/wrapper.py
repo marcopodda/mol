@@ -8,6 +8,7 @@ from core.datasets.datasets import TrainDataset
 from core.datasets.loaders import TrainDataLoader
 from core.datasets.vocab import Tokens
 from layers.model import Model
+from layers.loss import ContrastiveLoss
 
 
 class Wrapper(pl.LightningModule):
@@ -22,12 +23,13 @@ class Wrapper(pl.LightningModule):
         self.dim_output = len(self.vocab) + len(Tokens)
 
         self.model = Model(hparams, dim_output=self.dim_output)
+        self.contrastive_loss = ContrastiveLoss(batch_size=self.get_batch_size())
 
     def forward(self, data):
         return self.model(data)
 
     def get_batch_size(self):
-        return 32
+        raise NotImplementedError
 
     def configure_optimizers(self):
         optimizer = Adam(self.parameters(), lr=self.hparams.lr)
@@ -49,12 +51,12 @@ class Wrapper(pl.LightningModule):
 
         decoder_ce_loss = F.cross_entropy(decoder_outputs, dec_batch.target, ignore_index=0)
         bce_loss = F.binary_cross_entropy_with_logits(output_fingerprints, target_fingerprints)
-        cos_sim = F.cosine_similarity(encoder_bag, decoder_bag).mean(dim=0)
+        contrastive_loss = self.contrastive_loss(encoder_bag, decoder_bag)
 
-        total_loss = decoder_ce_loss + bce_loss + cos_sim
+        total_loss = decoder_ce_loss + bce_loss + contrastive_loss
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('ce', decoder_ce_loss, prog_bar=True)
         result.log('fl', bce_loss, prog_bar=True)
-        result.log('cs', cos_sim, prog_bar=True)
+        result.log('cl', contrastive_loss, prog_bar=True)
         return result
