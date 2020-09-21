@@ -225,7 +225,7 @@ class Sampler:
             utterance = utterance[::-1]
             utterances.append(utterance)
         utterances = np.array(utterances)
-
+        print(utterances)
         for i in range(utterances.shape[0]):
             vec = utterances[i] - len(Tokens)
             vec = vec[vec >= 0]
