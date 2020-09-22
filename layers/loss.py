@@ -4,7 +4,7 @@ from torch.nn import functional as F
 
 
 class ContrastiveLoss(nn.Module):
-    def __init__(self, batch_size, temperature=2.0):
+    def __init__(self, batch_size, temperature=100.0):
         super().__init__()
         self.batch_size = batch_size
         self.register_buffer("temperature", torch.tensor(temperature))
