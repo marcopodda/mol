@@ -22,7 +22,6 @@ class ContrastiveLoss(nn.Module):
         similarity_matrix = torch.matmul(z_i, z_j.transpose(1, 0))
 
         positives = torch.diag(similarity_matrix)
-        print(positives.size())
         negatives = self.negatives_mask[:batch_size, :batch_size] * similarity_matrix
 
         loss_partial = -(F.logsigmoid(positives) + F.logsigmoid(-negatives))
