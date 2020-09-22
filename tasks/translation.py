@@ -67,7 +67,8 @@ class TranslationDataset(TrainDataset):
             temp = pos_sim
             pos_sim = neg_sim
             neg_sim = temp
-        print(pos_sim, neg_sim)
+
+        # print(pos_sim, neg_sim)
         anc_fingerprint = torch.FloatTensor([get_fingerprint(anc_smiles)])
         pos_fingerprint = torch.FloatTensor([get_fingerprint(pos_smiles)])
         neg_fingerprint = torch.FloatTensor([get_fingerprint(neg_smiles)])
