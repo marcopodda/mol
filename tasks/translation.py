@@ -128,12 +128,16 @@ class TranslationTaskRunner(TaskRunner):
             state_dict = torch.load(self.pretrain_ckpt)['state_dict']
 
             try:
-                wrapper.load_state_dict(state_dict)
-            except Exception:
                 mlp_keys = [k for k in state_dict if "mlp" in k]
                 cl_keys = [k for k in state_dict if "contrastive" in k]
                 [state_dict.pop(k) for k in mlp_keys]
                 [state_dict.pop(k) for k in cl_keys]
+                wrapper.load_state_dict(state_dict)
+            except Exception:
+                # mlp_keys = [k for k in state_dict if "mlp" in k]
+                # cl_keys = [k for k in state_dict if "contrastive" in k]
+                # [state_dict.pop(k) for k in mlp_keys]
+                # [state_dict.pop(k) for k in cl_keys]
                 state_dict.pop('model.decoder.out.weight')
                 state_dict.pop('model.decoder.out.bias')
                 wrapper.load_state_dict(state_dict, strict=False)
