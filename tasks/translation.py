@@ -40,14 +40,26 @@ class TranslationDataset(TrainDataset):
         return data, mol_data.smiles, frags_list
 
     def __getitem__(self, index):
-        x, x_smiles, x_frags = self.get_input_data(index, corrupt=False)
+        # x, x_smiles, x_frags = self.get_input_data(index, corrupt=False)
+        # y, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
+
+        # x_fingerprint = torch.FloatTensor([get_fingerprint(x_smiles)])
+        # y_fingerprint = torch.FloatTensor([get_fingerprint(y_smiles)])
+
+        # return x, y, x_fingerprint, y_fingerprint
+        corrupt = np.random.rand() > 0.5
+        x, x_smiles, x_frags = self.get_input_data(index, corrupt=corrupt, reps=1)
         y, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
+        sim = self.compute_similarity(x_frags, y_frags)
+
+        while not 0.05 < sim < 1.0:
+            x, x_smiles, x_frags = self.get_input_data(index, corrupt=True, reps=1)
+            y, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
+            sim = self.compute_similarity(x_frags, y_frags)
 
         x_fingerprint = torch.FloatTensor([get_fingerprint(x_smiles)])
         y_fingerprint = torch.FloatTensor([get_fingerprint(y_smiles)])
-
         return x, y, x_fingerprint, y_fingerprint
-
 
 class TranslationWrapper(Wrapper):
     dataset_class = TranslationDataset
