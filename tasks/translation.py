@@ -42,15 +42,9 @@ class TranslationDataset(TrainDataset):
     def __getitem__(self, index):
         corrupt = np.random.rand() > 0.5
 
-        anc, anc_smiles, anc_frags = self.get_input_data(index, corrupt=corrupt, reps=1)
+        anc, anc_smiles, anc_frags = self.get_input_data(index, corrupt=False, reps=1)
         pos, pos_smiles, pos_frags = self.get_target_data(index, corrupt=False)
-        pos_sim = self.compute_similarity(anc_frags, pos_smiles)
-
-        max_trials, num_trials = 10, 0
-        while (not 0.4 < pos_sim < 1.0) and num_trials < max_trials:
-            anc, anc_smiles, anc_frags = self.get_input_data(index, corrupt=True, reps=1)
-            pos_sim = self.compute_similarity(anc_frags, pos_smiles)
-            num_trials += 1
+        anc_sim = self.compute_similarity(anc_frags, pos_smiles)
 
         neg, neg_smiles, neg_frags = self.get_target_data(index, corrupt=True, reps=1)
         neg_sim = self.compute_similarity(anc_smiles, neg_frags)
@@ -61,7 +55,7 @@ class TranslationDataset(TrainDataset):
             neg_sim = self.compute_similarity(anc_smiles, neg_frags)
             num_trials += 1
 
-        if neg_sim > pos_sim:
+        if neg_sim > anc_sim:
             # swap
             temp = anc.clone()
             anc = neg.clone()
@@ -72,8 +66,8 @@ class TranslationDataset(TrainDataset):
             anc_smiles = neg_smiles
             neg_smiles = temp
 
-            temp = pos_sim
-            pos_sim = neg_sim
+            temp = anc_sim
+            anc_sim = neg_sim
             neg_sim = temp
 
         anc_fingerprint = torch.FloatTensor([get_fingerprint(anc_smiles)])
