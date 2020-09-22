@@ -74,6 +74,9 @@ class Model(nn.Module):
         self.encoder_dropout = self.hparams.rnn_dropout
 
         self.decoder_dim_state = self.encoder_dim_state
+        if self.hparams.concat:
+            self.decoder_dim_state += self.encoder_dim_state
+
         self.decoder_num_layers = self.hparams.rnn_num_layers
         self.decoder_dim_input = self.encoder_dim_input + self.encoder_dim_state
         self.decoder_dim_attention_input = self.decoder_dim_state + self.encoder_dim_state
@@ -102,12 +105,13 @@ class Model(nn.Module):
 
         # denoise fingerprint
         y_fingerprint_outputs, autoencoder_hidden = self.autoencoder(x_fingerprint)
+        autoencoder_hidden = autoencoder_hidden.repeat(self.decoder_num_layers, 1, 1)
 
         # construct hidden state
-        encoder_hidden += autoencoder_hidden.repeat(self.decoder_num_layers, 1, 1)
+        hidden = torch.cat([encoder_hidden, autoencoder_hidden], dim=-1)
 
         # decode fragment sequence
-        decoder_outputs, dec_bag_of_frags = self.decode(y_batch, dec_inputs, encoder_hidden, encoder_outputs)
+        decoder_outputs, dec_bag_of_frags = self.decode(y_batch, dec_inputs, hidden, encoder_outputs)
         enc_bag_of_frags = self.mlp(enc_bag_of_frags)
         dec_bag_of_frags = self.mlp(dec_bag_of_frags)
         return decoder_outputs, y_fingerprint_outputs, (enc_bag_of_frags, dec_bag_of_frags)
