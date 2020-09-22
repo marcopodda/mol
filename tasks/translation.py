@@ -130,6 +130,10 @@ class TranslationTaskRunner(TaskRunner):
             try:
                 wrapper.load_state_dict(state_dict)
             except Exception:
+                mlp_keys = [k for k in state_dict if "mlp" in state_dict]
+                cl_keys = [k for k in state_dict if "contrastive" in state_dict]
+                [state_dict.pop(k) for k in mlp_keys]
+                [state_dict.pop(k) for k in cl_keys]
                 state_dict.pop('model.decoder.out.weight')
                 state_dict.pop('model.decoder.out.bias')
                 wrapper.load_state_dict(state_dict, strict=False)
