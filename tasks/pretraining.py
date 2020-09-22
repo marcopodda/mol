@@ -12,15 +12,6 @@ class PretrainingWrapper(Wrapper):
     def get_batch_size(self):
         return self.hparams.pretrain_batch_size
 
-
-class PretrainingSampler(Sampler):
-    def prepare_data(self):
-        num_samples = min(250, len(self.dataset))
-        indices = np.random.choice(len(self.dataset), num_samples, replace=False)
-        loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
-        smiles = self.dataset.data.iloc[indices].smiles.tolist()
-        return smiles, loader(batch_size=self.hparams.pretrain_batch_size, shuffle=False)
-
     def post_init_wrapper(self, wrapper):
         print("Loading pretrained model.")
         state_dict = torch.load(self.pretrain_ckpt)['state_dict']
@@ -31,6 +22,15 @@ class PretrainingSampler(Sampler):
         [state_dict.pop(k) for k in cl_keys]
         wrapper.load_state_dict(state_dict, strict=False)
         return wrapper
+
+
+class PretrainingSampler(Sampler):
+    def prepare_data(self):
+        num_samples = min(250, len(self.dataset))
+        indices = np.random.choice(len(self.dataset), num_samples, replace=False)
+        loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
+        smiles = self.dataset.data.iloc[indices].smiles.tolist()
+        return smiles, loader(batch_size=self.hparams.pretrain_batch_size, shuffle=False)
 
 
 class PretrainingTaskRunner(TaskRunner):
