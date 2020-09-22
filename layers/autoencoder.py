@@ -14,7 +14,7 @@ class Autoencoder(nn.Module):
         self.num_layers = self.hparams.rnn_num_layers
 
         self.input = nn.Linear(self.dim_input, self.dim_input // 2)
-        self.bn_input = nn.BatchNorm1d(self.dim_input // 2)
+        self.bn_input = nn.BatchNorm1d(self.input.out_features)
 
         self.input2hidden = nn.Linear(self.dim_input // 2, self.dim_input // 4)
         self.bn_input2hidden = nn.BatchNorm1d(self.input2hidden.out_features)
@@ -31,13 +31,17 @@ class Autoencoder(nn.Module):
         self.output = nn.Linear(self.dim_input // 2, self.dim_input)
 
     def encode(self, inputs):
-        x = F.relu(self.bn_input(self.input(inputs)))
-        x = F.relu(self.bn_input2hidden(self.input2hidden(x)))
+        x = self.input(inputs)
+        x = F.relu(self.bn_input(x))
+        x = self.input2hidden(x)
+        x = F.relu(self.bn_input2hidden(x))
         return self.hidden2bottleneck(x)
 
     def decode(self, hidden):
-        x = F.relu(self.bn_bottleneck2hidden(self.bottleneck2hidden(hidden)))
-        x = F.relu(self.bn_hidden2output(self.hidden2output(x)))
+        x = self.bottleneck2hidden(hidden)
+        x = F.relu(self.bn_bottleneck2hidden(x))
+        x = self.hidden2output(x)
+        x = F.relu(self.bn_hidden2output(x))
         return self.output(x)
 
     def forward(self, batch):
