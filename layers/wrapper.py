@@ -52,12 +52,11 @@ class Wrapper(pl.LightningModule):
         anc_bag, pos_bag, neg_bag = bags
 
         pos_loss = F.cross_entropy(pos_outputs, pos_batch.target, ignore_index=0)
-        neg_loss = F.cross_entropy(neg_outputs, neg_batch.target, ignore_index=0)
-        ce_loss = (pos_loss - neg_loss)
+        neg_loss = F.cross_entropy(neg_outputs, pos_batch.target, ignore_index=0)
         fp_loss = F.binary_cross_entropy_with_logits(output_fingerprint, pos_fingerprint)
         bof_loss = F.triplet_margin_loss(anc_bag, pos_bag, neg_bag)
 
-        total_loss = ce_loss + fp_loss + bof_loss
+        total_loss = pos_loss, neg_loss + fp_loss + bof_loss
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('pl', pos_loss, prog_bar=True)
