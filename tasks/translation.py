@@ -40,16 +40,14 @@ class TranslationDataset(TrainDataset):
         return data, mol_data.smiles, frags_list
 
     def __getitem__(self, index):
-        corrupt = np.random.rand() > 0.5
-
-        anc, anc_smiles, anc_frags = self.get_input_data(index, corrupt=False, reps=1)
+        anc, anc_smiles, anc_frags = self.get_input_data(index, corrupt=False)
         pos, pos_smiles, pos_frags = self.get_target_data(index, corrupt=False)
-        anc_sim = self.compute_similarity(anc_frags, pos_smiles)
-
         neg, neg_smiles, neg_frags = self.get_target_data(index, corrupt=True, reps=1)
+
+        anc_sim = self.compute_similarity(anc_frags, pos_smiles)
         neg_sim = self.compute_similarity(anc_smiles, neg_frags)
 
-        max_trials, num_trials = 10, 0
+        num_trials, max_trials = 0, 10
         while (neg_sim > 0.4 or neg_sim < 0.05) and num_trials < max_trials:
             neg, neg_smiles, neg_frags = self.get_target_data(index, corrupt=True, reps=1)
             neg_sim = self.compute_similarity(anc_smiles, neg_frags)
@@ -59,7 +57,7 @@ class TranslationDataset(TrainDataset):
             # swap
             temp = anc.clone()
             anc = neg.clone()
-            neg = temp
+            neg = temp.clone()
             del temp
 
             temp = anc_smiles
