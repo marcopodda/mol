@@ -32,6 +32,7 @@ class Autoencoder(nn.Module):
 
     def encode(self, inputs):
         x = self.input(inputs)
+        print(x.size())
         x = F.relu(self.bn_input(x))
         x = self.input2hidden(x)
         x = F.relu(self.bn_input2hidden(x))
