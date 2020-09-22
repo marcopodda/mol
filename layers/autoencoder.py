@@ -31,7 +31,7 @@ class Autoencoder(nn.Module):
         self.output = nn.Linear(self.dim_input // 2, self.dim_input)
 
     def encode(self, inputs):
-        x = F.relu(self.bn_input(self.input(inputs)))
+        x = F.relu(self.bn_input(self.input(inputs))
         x = F.relu(self.bn_input2hidden(self.input2hidden(x)))
         return self.hidden2bottleneck(x)
 
