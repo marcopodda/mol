@@ -108,7 +108,7 @@ class Model(nn.Module):
         autoencoder_hidden = autoencoder_hidden.repeat(self.decoder_num_layers, 1, 1)
 
         # construct hidden state
-        hidden = torch.cat([encoder_hidden, autoencoder_hidden], dim=-1)
+        hidden = encoder_hidden + autoencoder_hidden
 
         # decode fragment sequence
         decoder_outputs, dec_bag_of_frags = self.decode(y_batch, dec_inputs, hidden, encoder_outputs)
