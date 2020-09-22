@@ -26,7 +26,7 @@ class ContrastiveLoss(nn.Module):
         # positives = torch.cat([sim_ij, sim_ji], dim=0)
 
         nominator = torch.exp(positives) #  / self.temperature)
-        denominator = self.negatives_mask[:batch_size, :batch_size] * torch.exp(similarity_matrix / self.temperature)
+        denominator = self.negatives_mask[:batch_size, :batch_size] * torch.exp(similarity_matrix) #  / self.temperature)
 
         loss_partial = -torch.log(nominator / torch.sum(denominator, dim=1))
         loss = torch.sum(loss_partial) / batch_size
