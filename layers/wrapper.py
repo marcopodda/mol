@@ -60,7 +60,7 @@ class Wrapper(pl.LightningModule):
         neg_ce_loss = F.cross_entropy(neg_outputs, neg_batch.target, ignore_index=0)
         neg_fp_loss = F.binary_cross_entropy_with_logits(neg_fp_outputs, neg_fp_target)
         # neg_cs_loss = F.cosine_embedding_loss(anc_bag, neg_bag)
-        neg_loss = F.logsimoid(-(neg_ce_loss + neg_fp_loss))
+        neg_loss = F.logsigmoid(-(neg_ce_loss + neg_fp_loss))
 
         total_loss = pos_loss + neg_loss
 
