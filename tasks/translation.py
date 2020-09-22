@@ -40,9 +40,9 @@ class TranslationDataset(TrainDataset):
         return data, mol_data.smiles, frags_list
 
     def __getitem__(self, index):
-        anc, anc_smiles, anc_frags = self.get_input_data(index, corrupt=False)
-        pos, pos_smiles, pos_frags = self.get_target_data(index, corrupt=False)
-        neg, neg_smiles, neg_frags = self.get_target_data(index, corrupt=True, reps=1)
+        anc, anc_smiles, anc_frags = self.get_target_data(index, corrupt=False)
+        pos, pos_smiles, pos_frags = self.get_input_data(index, corrupt=False)
+        neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=1)
 
         anc_sim = self.compute_similarity(anc_frags, pos_smiles)
         neg_sim = self.compute_similarity(anc_smiles, neg_frags)

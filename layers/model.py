@@ -92,15 +92,22 @@ class Model(nn.Module):
         anc_fingerprint, pos_fingerprint, neg_fingerprint = fingerprints
         anc_inputs, pos_inputs, neg_inputs = inputs
 
-        # embed fragment sequence
-        anc_outputs, anc_hidden, anc_bag_of_frags = self.encode(anc_batch, anc_inputs)
+        # encode positive fragment sequence
+        pos_outputs, pos_hidden, pos_bag_of_frags = self.encode(pos_batch, pos_inputs)
 
-        # autoencode input fingerprint
-        fp_outputs, fp_hidden = self.autoencoder(anc_fingerprint)
-        fp_hidden = fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
+        # autoencode positive fingerprint
+        pos_fp_outputs, pos_fp_hidden = self.autoencoder(pos_fingerprint)
+        pos_fp_hidden = pos_fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
 
-        # decode fragment sequence
-        pos_outputs, pos_bag_of_frags = self.decode(pos_batch, pos_inputs, anc_hidden + fp_hidden, anc_outputs)
-        neg_outputs, neg_bag_of_frags = self.decode(neg_batch, neg_inputs, anc_hidden + fp_hidden, anc_outputs)
+        # encode negative fragment sequence
+        neg_outputs, neg_hidden, neg_bag_of_frags = self.encode(neg_batch, neg_inputs)
 
-        return (pos_outputs, neg_outputs, fp_outputs), (anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
+        # autoencode negative fingerprint
+        neg_fp_outputs, neg_fp_hidden = self.autoencoder(neg_fingerprint)
+        neg_fp_hidden = neg_fp_hidden.transnege(1, 0).repeat(self.decoder_num_layers, 1, 1)
+
+        # decode anchor fragment sequence
+        anc_pos_outputs, anc_bag_of_frags = self.decode(anc_batch, pos_inputs, pos_hidden + pos_fp_hidden, pos_outputs)
+        anc_neg_outputs, anc_bag_of_frags = self.decode(anc_batch, neg_inputs, neg_hidden + neg_fp_hidden, neg_outputs)
+
+        return (anc_pos_outputs, anc_neg_outputs), (pos_fp_outputs, neg_fp_outputs), (anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
