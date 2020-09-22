@@ -59,11 +59,9 @@ class GNN(nn.Module):
 
         # aggregate each fragment in the sequence
         output = self.aggregate_nodes(x, frag_batch)
-        # output = F.dropout(output, p=0.25, training=self.training)
 
         # aggregate all fragments in the sequence into a bag of frags
         graph_output = self.aggregate_nodes(x, graph_batch)
-        # graph_output = F.dropout(graph_output, p=0.25, training=self.training)
 
         return output, graph_output
 
@@ -71,7 +69,8 @@ class GNN(nn.Module):
         nodes_per_graph = scatter_add(torch.ones_like(batch), batch)
         nodes_per_graph = nodes_per_graph.repeat_interleave(nodes_per_graph.view(-1))
         nodes_per_graph = torch.sqrt(nodes_per_graph.view(-1, 1).float())
-        graph_repr = global_add_pool(nodes_repr / nodes_per_graph, batch)
+        # graph_repr = global_add_pool(nodes_repr / nodes_per_graph, batch)
+        graph_repr = global_add_pool(nodes_repr, batch)
         return graph_repr
 
 
