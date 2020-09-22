@@ -95,15 +95,16 @@ class Model(nn.Module):
         # embed fragment sequence
         anc_outputs, anc_hidden, anc_bag_of_frags = self.encode(anc_batch, anc_inputs)
 
-        # denoise fingerprint
-        fingerprint_outputs, autoencoder_hidden = self.autoencoder(anc_fingerprint)
-        autoencoder_hidden = autoencoder_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
+        # denoise positive fingerprint
+        pos_fp_outputs, pos_fp_hidden = self.autoencoder(anc_fingerprint)
+        pos_fp_hidden = pos_fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
 
-        # construct hidden state
-        hidden = anc_hidden + autoencoder_hidden
+        # denoise negative fingerprint
+        neg_fp_outputs, neg_fp_hidden = self.autoencoder(anc_fingerprint)
+        neg_fp_hidden = neg_fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
 
         # decode fragment sequence
-        pos_outputs, pos_bag_of_frags = self.decode(pos_batch, pos_inputs, hidden, anc_outputs)
-        neg_outputs, neg_bag_of_frags = self.decode(neg_batch, neg_inputs, hidden, anc_outputs)
+        pos_outputs, pos_bag_of_frags = self.decode(pos_batch, pos_inputs, anc_hidden + pos_fp_hidden, anc_outputs)
+        neg_outputs, neg_bag_of_frags = self.decode(neg_batch, neg_inputs, anc_hidden + neg_fp_hidden, anc_outputs)
 
-        return (anc_outputs, pos_outputs, neg_outputs), fingerprint_outputs, (anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
+        return (pos_outputs, neg_outputs), (pos_fp_outputs, neg_fp_outputs), (anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)

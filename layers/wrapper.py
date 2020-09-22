@@ -45,21 +45,27 @@ class Wrapper(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         batches, fingerprints, _ = batch
         anc_batch, pos_batch, neg_batch = batches
-        anc_fingerprint, pos_fingerprint, neg_fingerprint = fingerprints
+        _, pos_fp_target, neg_fp_target = fingerprints
 
-        outputs, output_fingerprint, bags = self.model(batch)
-        anc_outputs, pos_outputs, neg_outputs = outputs
+        outputs, fp_outputs, bags = self.model(batch)
+        pos_outputs, neg_outputs = outputs
+        pos_fp_outputs, neg_fp_outputs = fp_outputs
         anc_bag, pos_bag, neg_bag = bags
 
-        pos_loss = F.cross_entropy(pos_outputs, pos_batch.target, ignore_index=0)
-        fp_loss = F.binary_cross_entropy_with_logits(output_fingerprint, pos_fingerprint)
-        bof_loss = F.triplet_margin_loss(anc_bag, pos_bag, neg_bag)
+        pos_ce_loss = F.cross_entropy(pos_outputs, pos_batch.target, ignore_index=0)
+        pos_fp_loss = F.binary_cross_entropy_with_logits(pos_fp_outputs, pos_fp_target)
+        pos_cs_loss = F.cosine_embedding_loss(anc_bag, pos_bag)
+        pos_loss = torch.exp(pos_ce_loss + pos_fp_loss + pos_cs_loss)
 
-        total_loss = pos_loss + fp_loss + bof_loss
+        neg_ce_loss = F.cross_entropy(neg_outputs, neg_batch.target, ignore_index=0)
+        neg_fp_loss = F.binary_cross_entropy_with_logits(neg_fp_outputs, neg_fp_target)
+        neg_cs_loss = F.cosine_embedding_loss(anc_bag, neg_bag)
+        neg_loss = torch.exp(neg_ce_loss + neg_fp_loss + neg_cs_loss)
+
+        total_loss = -torch.log(pos_loss) + torch.log(neg_loss)
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('pl', pos_loss, prog_bar=True)
-        result.log('fl', fp_loss, prog_bar=True)
-        result.log('bl', bof_loss, prog_bar=True)
+        result.log('bl', neg_loss, prog_bar=True)
 
         return result
