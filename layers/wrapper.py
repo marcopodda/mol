@@ -61,7 +61,7 @@ class Wrapper(pl.LightningModule):
         neg_fp_loss = F.binary_cross_entropy_with_logits(neg_fp_outputs, anc_fp_target)
         neg_loss = neg_ce_loss + neg_fp_loss
 
-        tloss = F.triplet_margin_loss(anc_bag, pos_bag, neg_bag)
+        tloss = F.triplet_margin_loss(anc_bag, pos_bag, neg_bag, margin=10.0)
 
         total_loss = pos_loss + neg_loss + tloss
 
