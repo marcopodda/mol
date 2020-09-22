@@ -70,10 +70,11 @@ class TrainDataLoader(BaseDataLoader):
         L = self.dataset.max_length
         D = self.hparams.frag_dim_embed
 
-        lengths = [m.length for m in anc]
-        anc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=lengths)
-        pos_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
-        neg_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
+        anc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=0)
+        lengths = [m.length for m in pos]
+        pos_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=lengths)
+        lengths = [m.length for m in neg]
+        neg_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=lengths)
 
         anc_fingerprint = torch.cat(anc_fingerprint, dim=0)
         pos_fingerprint = torch.cat(pos_fingerprint, dim=0)
