@@ -51,6 +51,14 @@ class Model(nn.Module):
             dim_input=self.autoencoder_dim_input,
             dim_hidden=self.autoencoder_dim_hidden)
 
+        self.mlp = nn.Sequential(
+            nn.Linear(self.embedder_dim_output, self.embedder_dim_output),
+            nn.BatchNorm1d(self.embedder_dim_output),
+            nn.ReLU(),
+            nn.Linear(self.embedder_dim_output, self.embedder_dim_output),
+            nn.BatchNorm1d(self.embedder_dim_output)
+        )
+
     def set_dimensions(self):
         self.embedder_num_layers = self.hparams.gnn_num_layers
         self.embedder_dim_input = ATOM_FDIM
@@ -100,5 +108,6 @@ class Model(nn.Module):
 
         # decode fragment sequence
         decoder_outputs, dec_bag_of_frags = self.decode(y_batch, dec_inputs, encoder_hidden, encoder_outputs)
-
+        enc_bag_of_frags = self.mlp(enc_bag_of_frags)
+        dec_bag_of_frags = self.mlp(dec_bag_of_frags)
         return decoder_outputs, y_fingerprint_outputs, (enc_bag_of_frags, dec_bag_of_frags)
