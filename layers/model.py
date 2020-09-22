@@ -104,7 +104,7 @@ class Model(nn.Module):
 
         # autoencode negative fingerprint
         neg_fp_outputs, neg_fp_hidden = self.autoencoder(neg_fingerprint)
-        neg_fp_hidden = neg_fp_hidden.transnege(1, 0).repeat(self.decoder_num_layers, 1, 1)
+        neg_fp_hidden = neg_fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
 
         # decode anchor fragment sequence
         anc_pos_outputs, anc_bag_of_frags = self.decode(anc_batch, pos_inputs, pos_hidden + pos_fp_hidden, pos_outputs)
