@@ -50,4 +50,5 @@ class Autoencoder(nn.Module):
     def forward(self, batch):
         hidden = self.encode(batch)
         output = self.decode(hidden)
+        print(hidden.size())
         return output, hidden
