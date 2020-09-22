@@ -50,5 +50,6 @@ class Autoencoder(nn.Module):
     def forward(self, batch):
         hidden = self.encode(batch)
         output = self.decode(hidden)
-        print(hidden.size())
+        if hidden.ndim < 3:
+            hidden = hidden.unsqueeze(0)
         return output, hidden
