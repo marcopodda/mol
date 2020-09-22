@@ -41,20 +41,40 @@ class TranslationDataset(TrainDataset):
 
     def __getitem__(self, index):
         corrupt = np.random.rand() > 0.5
+
         anc, anc_smiles, anc_frags = self.get_input_data(index, corrupt=corrupt, reps=1)
         pos, pos_smiles, pos_frags = self.get_target_data(index, corrupt=False)
+        pos_sim = self.compute_similarity(anc_frags, pos_smiles)
 
-        sim = self.compute_similarity(anc_frags, pos_frags)
-        while not 0.05 < sim < 1.0:
+        max_trials, num_trials = 10, 0
+        while (not 0.4 < pos_sim < 1.0) and num_trials < max_trials:
             anc, anc_smiles, anc_frags = self.get_input_data(index, corrupt=True, reps=1)
-            pos, pos_smiles, pos_frags = self.get_target_data(index, corrupt=False)
-            sim = self.compute_similarity(anc_frags, pos_frags)
+            pos_sim = self.compute_similarity(anc_frags, pos_smiles)
+            num_trials += 1
 
         neg, neg_smiles, neg_frags = self.get_target_data(index, corrupt=True, reps=1)
-        sim = self.compute_similarity(anc_frags, neg_frags)
-        while sim > 0.4 or sim < 0.05:
+        neg_sim = self.compute_similarity(anc_smiles, neg_frags)
+
+        max_trials, num_trials = 10, 0
+        while (neg_sim > 0.4 or neg_sim < 0.05) and num_trials < max_trials:
             neg, neg_smiles, neg_frags = self.get_target_data(index, corrupt=True, reps=1)
-            sim = self.compute_similarity(anc_frags, neg_frags)
+            neg_sim = self.compute_similarity(anc_smiles, neg_frags)
+            num_trials += 1
+
+        if neg_sim > pos_sim:
+            # swap
+            temp = anc.clone()
+            anc = neg.clone()
+            neg = temp
+            del temp
+
+            temp = anc_smiles
+            anc_smiles = neg_smiles
+            neg_smiles = temp
+
+            temp = pos_sim
+            pos_sim = neg_sim
+            neg_sim = temp
 
         anc_fingerprint = torch.FloatTensor([get_fingerprint(anc_smiles)])
         pos_fingerprint = torch.FloatTensor([get_fingerprint(pos_smiles)])

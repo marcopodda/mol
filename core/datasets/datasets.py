@@ -57,13 +57,13 @@ class BaseDataset:
             if  np.random.rand() > 0.1:
                 mask_index = np.random.choice(len(seq)-1)
                 probs = self.vocab.condition(seq[mask_index])
-                seq[mask_index] = self.vocab.sample(probs=probs)
+                seq[mask_index] = self.vocab.sample() # probs=probs)
 
             # insertion
             if np.random.rand() > 0.1 and len(seq) + 2 <= self.max_length:
                 add_index = np.random.choice(len(seq)-1)
                 probs = self.vocab.condition(seq[add_index])
-                seq.insert(add_index, self.vocab.sample(probs=probs))
+                seq.insert(add_index, self.vocab.sample()) # probs=probs))
 
         return seq
 
@@ -91,10 +91,11 @@ class BaseDataset:
         return get_fingerprint(smiles)
 
     def compute_similarity(self, frags1, frags2):
-        joined1 = mol_to_smiles(join_fragments(frags1[:]))
-        joined2 = mol_to_smiles(join_fragments(frags2[:]))
-        print(joined1, joined2, similarity(joined1, joined2))
-        return similarity(joined1, joined2)
+        if not isinstance(frags1, str):
+            frags1 = mol_to_smiles(join_fragments(frags1[:]))
+        if not isinstance(frags2, str):
+            frags2 = mol_to_smiles(join_fragments(frags2[:]))
+        return similarity(frags1, frags2)
 
     def get_dataset(self):
         data, vocab, max_length = load_data(self.dataset_name)
