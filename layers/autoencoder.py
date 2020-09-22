@@ -51,5 +51,5 @@ class Autoencoder(nn.Module):
         hidden = self.encode(batch)
         output = self.decode(hidden)
         if hidden.ndim < 3:
-            hidden = hidden.unsqueeze(0)
+            hidden = hidden.unsqueeze(1)
         return output, hidden
