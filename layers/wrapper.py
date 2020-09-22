@@ -68,5 +68,6 @@ class Wrapper(pl.LightningModule):
         result = pl.TrainResult(minimize=total_loss)
         result.log('pl', pos_loss, prog_bar=True)
         result.log('nl', neg_loss, prog_bar=True)
+        result.log('tl', tloss, prog_bar=True)
 
         return result
