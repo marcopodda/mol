@@ -58,25 +58,28 @@ class TrainDataLoader(BaseDataLoader):
             raise Exception("Works only for TrainDataset")
 
     def collate(self, data_list):
-        x, y, x_fingerprint, y_fingerprint = zip(*data_list)
+        anc, pos, neg, anc_fingerprint, pos_fingerprint, neg_fingerprint = zip(*data_list)
         sos = self.dataset.sos
         eos = self.dataset.eos
 
-        x_batch = collate_frags(x)
-        y_batch = collate_frags(y)
+        anc_batch = collate_frags(anc)
+        pos_batch = collate_frags(pos)
+        neg_batch = collate_frags(neg)
 
-        B = len(x)
-        L = self.dataset.max_length
+        B = len(anc)
+        L = self.dataset.maanc_length
         D = self.hparams.frag_dim_embed
 
-        lengths = [m.length for m in x]
-        enc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=lengths)
-        dec_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
+        lengths = [m.length for m in anc]
+        anc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=lengths)
+        pos_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
+        neg_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
 
-        x_fingerprint = torch.cat(x_fingerprint, dim=0)
-        y_fingerprint = torch.cat(y_fingerprint, dim=0)
+        anc_fingerprint = torch.cat(anc_fingerprint, dim=0)
+        pos_fingerprint = torch.cat(pos_fingerprint, dim=0)
+        neg_fingerprint = torch.cat(neg_fingerprint, dim=0)
 
-        return (x_batch, y_batch), (x_fingerprint, y_fingerprint), (enc_inputs, dec_inputs)
+        return (anc_batch, pos_batch, neg_batch), (anc_fingerprint, pos_fingerprint, neg_fingerprint), (anc_inputs, pos_inputs, neg_inputs)
 
 
 class EvalDataLoader(BaseDataLoader):

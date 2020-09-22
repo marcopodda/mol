@@ -23,7 +23,6 @@ class Wrapper(pl.LightningModule):
         self.dim_output = len(self.vocab) + len(Tokens)
 
         self.model = Model(hparams, dim_output=self.dim_output)
-        self.contrastive_loss = ContrastiveLoss(batch_size=self.get_batch_size())
 
     def forward(self, data):
         return self.model(data)
@@ -44,21 +43,22 @@ class Wrapper(pl.LightningModule):
         return self.training_loader
 
     def training_step(self, batch, batch_idx):
-        (_, dec_batch), (_, target_fingerprints), _ = batch
+        batches, fingerprints, _ = batch
+        anc_batch, pos_batch, neg_batch = batches
+        anc_fingerprint, pos_fingerprint, neg_fingerprint = fingerprints
 
-        decoder_outputs, output_fingerprints, bags = self.model(batch)
-        encoder_bag, decoder_bag = bags
+        outputs, output_fingerprint, bags = self.model(batch)
+        anc_outputs, pos_outputs, neg_outputs = outputs
+        anc_bag, pos_bag, neg_bag = bags
 
-        decoder_ce_loss = F.cross_entropy(decoder_outputs, dec_batch.target, ignore_index=0)
-        bce_loss = F.binary_cross_entropy_with_logits(output_fingerprints, target_fingerprints)
-        # cs = F.cosine_similarity(decoder_bag, encoder_bag).mean(dim=0)
-        # contrastive_loss = self.contrastive_loss(encoder_bag, decoder_bag)
+        decoder_ce_loss = F.cross_entropy(pos_outputs, pos_batch.target, ignore_index=0)
+        fp_loss = F.triplet_margin_loss(pos_fingerprint, output_fingerprint, neg_fingerprint)
+        bof_loss = F.triplet_margin_loss(anc_bag, pos_bag, neg_bag)
 
-        total_loss = decoder_ce_loss + bce_loss # + contrastive_loss
+        total_loss = decoder_ce_loss + fp_loss + bof_loss
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('ce', decoder_ce_loss, prog_bar=True)
-        result.log('fl', bce_loss, prog_bar=True)
-        # result.log('cl', contrastive_loss, prog_bar=True)
-        # result.log('cs', cs, prog_bar=True)
+        result.log('fl', fp_loss, prog_bar=True)
+        result.log('bl', bof_loss, prog_bar=True)
         return result

@@ -40,26 +40,27 @@ class TranslationDataset(TrainDataset):
         return data, mol_data.smiles, frags_list
 
     def __getitem__(self, index):
-        # x, x_smiles, x_frags = self.get_input_data(index, corrupt=False)
-        # y, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
-
-        # x_fingerprint = torch.FloatTensor([get_fingerprint(x_smiles)])
-        # y_fingerprint = torch.FloatTensor([get_fingerprint(y_smiles)])
-
-        # return x, y, x_fingerprint, y_fingerprint
         corrupt = np.random.rand() > 0.5
-        x, x_smiles, x_frags = self.get_input_data(index, corrupt=corrupt, reps=1)
-        y, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
-        sim = self.compute_similarity(x_frags, y_frags)
+        anc, anc_smiles, anc_frags = self.get_input_data(index, corrupt=corrupt, reps=1)
+        pos, pos_smiles, pos_frags = self.get_target_data(index, corrupt=False)
+        neg, neg_smiles, neg_frags = self.get_target_data(index, corrupt=True, reps=1)
 
+        sim = self.compute_similarity(anc_frags, pos_frags)
         while not 0.05 < sim < 1.0:
-            x, x_smiles, x_frags = self.get_input_data(index, corrupt=True, reps=1)
-            y, y_smiles, y_frags = self.get_target_data(index, corrupt=False)
-            sim = self.compute_similarity(x_frags, y_frags)
+            anc, anc_smiles, anc_frags = self.get_input_data(index, corrupt=True, reps=1)
+            pos, pos_smiles, pos_frags = self.get_target_data(index, corrupt=False)
+            sim = self.compute_similarity(anc_frags, pos_frags)
 
-        x_fingerprint = torch.FloatTensor([get_fingerprint(x_smiles)])
-        y_fingerprint = torch.FloatTensor([get_fingerprint(y_smiles)])
-        return x, y, x_fingerprint, y_fingerprint
+        sim = self.compute_similarity(pos_frags, neg_frags)
+        while sim > 0.4 or sim < 0.05:
+            neg, neg_smiles, neg_frags = self.get_target_data(index, corrupt=True, reps=1)
+            pos, pos_smiles, pos_frags = self.get_target_data(index, corrupt=False)
+            sim = self.compute_similarity(pos_frags, neg_frags)
+
+        anc_fingerprint = torch.FloatTensor([get_fingerprint(anc_smiles)])
+        pos_fingerprint = torch.FloatTensor([get_fingerprint(pos_smiles)])
+        neg_fingerprint = torch.FloatTensor([get_fingerprint(neg_smiles)])
+        return anc, pos, neg, anc_fingerprint, pos_fingerprint, neg_fingerprint
 
 class TranslationWrapper(Wrapper):
     dataset_class = TranslationDataset
@@ -128,18 +129,8 @@ class TranslationTaskRunner(TaskRunner):
             state_dict = torch.load(self.pretrain_ckpt)['state_dict']
 
             try:
-                mlp_keys = [k for k in state_dict if "mlp" in k]
-                cl_keys = [k for k in state_dict if "contrastive" in k]
-                print(mlp_keys, cl_keys)
-                [state_dict.pop(k) for k in mlp_keys]
-                [state_dict.pop(k) for k in cl_keys]
-                wrapper.load_state_dict(state_dict, strict=False)
+                wrapper.load_state_dict(state_dict)
             except Exception:
-                mlp_keys = [k for k in state_dict if "mlp" in k]
-                cl_keys = [k for k in state_dict if "contrastive" in k]
-                print(mlp_keys, cl_keys)
-                [state_dict.pop(k) for k in mlp_keys]
-                [state_dict.pop(k) for k in cl_keys]
                 state_dict.pop('model.decoder.out.weight')
                 state_dict.pop('model.decoder.out.bias')
                 wrapper.load_state_dict(state_dict, strict=False)

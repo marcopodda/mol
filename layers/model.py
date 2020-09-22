@@ -87,19 +87,23 @@ class Model(nn.Module):
         return decoder_outputs, bag_of_frags
 
     def forward(self, batch):
-        (x_batch, y_batch), (x_fingerprint, _), (enc_inputs, dec_inputs) = batch
+        batches, fingerprints, inputs = batch
+        anc_batch, pos_batch, neg_batch = batches
+        anc_fingerprint, pos_fingerprint, neg_fingerprints = fingerprints
+        anc_inputs, pos_inputs, neg_inputs = inputs
 
         # embed fragment sequence
-        encoder_outputs, encoder_hidden, enc_bag_of_frags = self.encode(x_batch, enc_inputs)
+        anc_outputs, anc_hidden, anc_bag_of_frags = self.encode(anc_batch, anc_inputs)
 
         # denoise fingerprint
-        y_fingerprint_outputs, autoencoder_hidden = self.autoencoder(x_fingerprint)
+        fingerprint_outputs, autoencoder_hidden = self.autoencoder(anc_fingerprint)
         autoencoder_hidden = autoencoder_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
 
         # construct hidden state
-        hidden = encoder_hidden + autoencoder_hidden
+        hidden = anc_hidden + autoencoder_hidden
 
         # decode fragment sequence
-        decoder_outputs, dec_bag_of_frags = self.decode(y_batch, dec_inputs, hidden, encoder_outputs)
+        pos_outputs, pos_bag_of_frags = self.decode(pos_batch, pos_inputs, hidden, anc_outputs)
+        neg_outputs, neg_bag_of_frags = self.decode(neg_batch, neg_inputs, hidden, anc_outputs)
 
-        return decoder_outputs, y_fingerprint_outputs, (enc_bag_of_frags, dec_bag_of_frags)
+        return (anc_outputs, pos_outputs, neg_outputs), fingerprint_outputs, (anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
