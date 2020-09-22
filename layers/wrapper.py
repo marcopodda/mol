@@ -47,17 +47,16 @@ class Wrapper(pl.LightningModule):
         anc_batch, pos_batch, neg_batch = batches
         _, pos_fp_target, neg_fp_target = fingerprints
 
-        outputs, fp_outputs, bags = self.model(batch)
-        pos_outputs, neg_outputs = outputs
-        pos_fp_outputs, neg_fp_outputs = fp_outputs
+        outputs, bags = self.model(batch)
+        pos_outputs, neg_outputs, fp_outputs = outputs
         anc_bag, pos_bag, neg_bag = bags
 
         pos_ce_loss = F.cross_entropy(pos_outputs, pos_batch.target, ignore_index=0)
-        pos_fp_loss = F.binary_cross_entropy_with_logits(pos_fp_outputs, pos_fp_target)
+        pos_fp_loss = F.binary_cross_entropy_with_logits(fp_outputs, pos_fp_target)
         pos_loss = 0  # pos_ce_loss + pos_fp_loss
 
         neg_ce_loss = F.cross_entropy(neg_outputs, neg_batch.target, ignore_index=0)
-        neg_fp_loss = F.binary_cross_entropy_with_logits(neg_fp_outputs, neg_fp_target)
+        neg_fp_loss = F.binary_cross_entropy_with_logits(fp_outputs, neg_fp_target)
         neg_loss = neg_ce_loss + neg_fp_loss
 
         total_loss = pos_loss + neg_loss
