@@ -16,8 +16,8 @@ class ContrastiveLoss(nn.Module):
         z_i, z_j as per SimCLR paper
         """
         batch_size = z_i.size(0)
-        z_i = F.normalize(z_i, dim=1)
-        z_j = F.normalize(z_j, dim=1)
+        # z_i = F.normalize(z_i, dim=1)
+        # z_j = F.normalize(z_j, dim=1)
 
         similarity_matrix = torch.matmul(z_i, z_j.transpose(1, 0))
 
