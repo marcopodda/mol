@@ -105,7 +105,7 @@ class Model(nn.Module):
         neg_fp_hidden = neg_fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
 
         # decode anchor fragment sequence
-        anc_pos_outputs, anc_bag_of_frags = self.decode(anc_batch.clone(), anc_inputs, pos_hidden + pos_fp_hidden, pos_outputs)
-        anc_neg_outputs, anc_bag_of_frags = self.decode(anc_batch.clone(), anc_inputs, neg_hidden + neg_fp_hidden, neg_outputs)
+        anc_pos_outputs, anc_bag_of_frags = self.decode(anc_batch.clone(), anc_inputs.clone(), pos_hidden + pos_fp_hidden, pos_outputs)
+        anc_neg_outputs, anc_bag_of_frags = self.decode(anc_batch.clone(), anc_inputs.clone(), neg_hidden + neg_fp_hidden, neg_outputs)
 
         return (anc_pos_outputs, anc_neg_outputs), (pos_fp_outputs, neg_fp_outputs), (anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
