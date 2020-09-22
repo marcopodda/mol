@@ -62,7 +62,7 @@ class Wrapper(pl.LightningModule):
         neg_loss = neg_ce_loss + neg_fp_loss
         closs = -(F.logsigmoid(anc_pos_outputs) + F.logsigmoid(-anc_neg_outputs))
 
-        total_loss = pos_loss + neg_loss + closs.mean(dim=-1)
+        total_loss = pos_loss + neg_loss + closs.sum(dim=-1).mean()
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('pl', pos_loss, prog_bar=True)
