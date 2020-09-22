@@ -74,9 +74,6 @@ class Model(nn.Module):
         self.encoder_dropout = self.hparams.rnn_dropout
 
         self.decoder_dim_state = self.encoder_dim_state
-        if self.hparams.concat:
-            self.decoder_dim_state += self.encoder_dim_state
-
         self.decoder_num_layers = self.hparams.rnn_num_layers
         self.decoder_dim_input = self.encoder_dim_input + self.encoder_dim_state
         self.decoder_dim_attention_input = self.decoder_dim_state + self.encoder_dim_state
