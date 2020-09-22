@@ -67,7 +67,7 @@ class TrainDataLoader(BaseDataLoader):
         neg_batch = collate_frags(neg)
 
         B = len(anc)
-        L = self.dataset.maanc_length
+        L = self.dataset.max_length
         D = self.hparams.frag_dim_embed
 
         lengths = [m.length for m in anc]
