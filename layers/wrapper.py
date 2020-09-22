@@ -51,17 +51,19 @@ class Wrapper(pl.LightningModule):
 
         anc_pos_outputs, anc_neg_outputs = outputs
         pos_fp_outputs, neg_fp_outputs = fp_outputs
-        anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags = bags
+        anc_bag, pos_bag, neg_bag = bags
 
-        # pos_ce_loss = F.cross_entropy(anc_pos_outputs, anc_batch.target, ignore_index=0)
-        # pos_fp_loss = F.binary_cross_entropy_with_logits(pos_fp_outputs, anc_fp_target)
-        pos_loss = 0 # pos_ce_loss + pos_fp_loss
+        pos_ce_loss = F.cross_entropy(anc_pos_outputs, anc_batch.target, ignore_index=0)
+        pos_fp_loss = F.binary_cross_entropy_with_logits(pos_fp_outputs, anc_fp_target)
+        pos_loss = pos_ce_loss + pos_fp_loss
 
         neg_ce_loss = F.cross_entropy(anc_neg_outputs, anc_batch.target, ignore_index=0)
         neg_fp_loss = F.binary_cross_entropy_with_logits(neg_fp_outputs, anc_fp_target)
         neg_loss = neg_ce_loss + neg_fp_loss
 
-        total_loss = pos_loss + neg_loss
+        tloss = F.triplet_margin_loss(anc_bag, pos_bag, neg_bag)
+
+        total_loss = pos_loss + neg_loss + tloss
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('pl', pos_loss, prog_bar=True)
