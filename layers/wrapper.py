@@ -52,7 +52,7 @@ class Wrapper(pl.LightningModule):
         anc_bag, pos_bag, neg_bag = bags
 
         decoder_ce_loss = F.cross_entropy(pos_outputs, pos_batch.target, ignore_index=0)
-        fp_loss = F.triplet_margin_loss(pos_fingerprint, output_fingerprint, neg_fingerprint)
+        fp_loss = F.binary_cross_entropy_with_logits(output_fingerprint, pos_fingerprint)
         bof_loss = F.triplet_margin_loss(anc_bag, pos_bag, neg_bag)
 
         total_loss = decoder_ce_loss + fp_loss + bof_loss
