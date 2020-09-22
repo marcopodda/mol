@@ -54,11 +54,11 @@ class Wrapper(pl.LightningModule):
         # cs = F.cosine_similarity(decoder_bag, encoder_bag).mean(dim=0)
         contrastive_loss = self.contrastive_loss(encoder_bag, decoder_bag)
 
-        total_loss = decoder_ce_loss + bce_loss # + contrastive_loss
+        total_loss = decoder_ce_loss + bce_loss + contrastive_loss
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('ce', decoder_ce_loss, prog_bar=True)
         result.log('fl', bce_loss, prog_bar=True)
-        # result.log('cl', contrastive_loss, prog_bar=True)
+        result.log('cl', contrastive_loss, prog_bar=True)
         # result.log('cs', cs, prog_bar=True)
         return result
