@@ -94,7 +94,7 @@ class Model(nn.Module):
 
         # denoise fingerprint
         y_fingerprint_outputs, autoencoder_hidden = self.autoencoder(x_fingerprint)
-        autoencoder_hidden = autoencoder_hidden.repeat(self.decoder_num_layers, 1, 1)
+        autoencoder_hidden = autoencoder_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
 
         # construct hidden state
         hidden = encoder_hidden + autoencoder_hidden
