@@ -16,14 +16,14 @@ class ContrastiveLoss(nn.Module):
         z_i, z_j as per SimCLR paper
         """
         batch_size = z_i.size(0)
-        # z_i = F.normalize(z_i, dim=1)
-        # z_j = F.normalize(z_j, dim=1)
+        z_i = F.normalize(z_i, dim=1)
+        z_j = F.normalize(z_j, dim=1)
 
         similarity_matrix = torch.matmul(z_i, z_j.transpose(1, 0))
 
         positives = torch.diag(similarity_matrix)
-        nominator = torch.exp(positives / self.temperature)
-        denominator = self.negatives_mask[:batch_size, :batch_size] * torch.exp(similarity_matrix / self.temperature)
+        nominator = torch.exp(F.log(positives) / self.temperature)
+        denominator = self.negatives_mask[:batch_size, :batch_size] * torch.exp(F.log(similarity_matrix) / self.temperature)
 
         loss_partial = torch.log(nominator / torch.sum(denominator, dim=1))
         loss = torch.sum(loss_partial) / batch_size
