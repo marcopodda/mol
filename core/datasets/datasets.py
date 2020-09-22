@@ -91,8 +91,9 @@ class BaseDataset:
         return get_fingerprint(smiles)
 
     def compute_similarity(self, frags1, frags2):
-        joined1 = mol_to_smiles(join_fragments(frags1))
-        joined2 = mol_to_smiles(join_fragments(frags2))
+        joined1 = mol_to_smiles(join_fragments(frags1[:]))
+        joined2 = mol_to_smiles(join_fragments(frags2[:]))
+        print(joined1, joined2, similarity(joined1, joined2))
         return similarity(joined1, joined2)
 
     def get_dataset(self):
