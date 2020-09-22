@@ -51,7 +51,7 @@ class Wrapper(pl.LightningModule):
 
         decoder_ce_loss = F.cross_entropy(decoder_outputs, dec_batch.target, ignore_index=0)
         bce_loss = F.binary_cross_entropy_with_logits(output_fingerprints, target_fingerprints)
-        cs = F.cosine_similarity(decoder_bag, encoder_bag).mean(dim=0)
+        # cs = F.cosine_similarity(decoder_bag, encoder_bag).mean(dim=0)
         contrastive_loss = self.contrastive_loss(encoder_bag, decoder_bag)
 
         total_loss = decoder_ce_loss + bce_loss + contrastive_loss
@@ -60,5 +60,5 @@ class Wrapper(pl.LightningModule):
         result.log('ce', decoder_ce_loss, prog_bar=True)
         result.log('fl', bce_loss, prog_bar=True)
         result.log('cl', contrastive_loss, prog_bar=True)
-        result.log('cs', cs, prog_bar=True)
+        # result.log('cs', cs, prog_bar=True)
         return result
