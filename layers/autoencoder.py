@@ -31,7 +31,7 @@ class Autoencoder(nn.Module):
         self.output = nn.Linear(self.dim_input // 2, self.dim_input)
 
     def encode(self, inputs):
-        if inputs.ndim() == 3:
+        if inputs.ndim == 3:
             inputs = inputs.squeeze(1)
 
         x = self.input(inputs)
