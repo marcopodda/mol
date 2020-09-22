@@ -89,7 +89,7 @@ class Model(nn.Module):
     def forward(self, batch):
         batches, fingerprints, inputs = batch
         anc_batch, pos_batch, neg_batch = batches
-        anc_fingerprint, pos_fingerprint, neg_fingerprints = fingerprints
+        anc_fingerprint, pos_fingerprint, neg_fingerprint = fingerprints
         anc_inputs, pos_inputs, neg_inputs = inputs
 
         # embed fragment sequence
@@ -100,7 +100,7 @@ class Model(nn.Module):
         pos_fp_hidden = pos_fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
 
         # denoise negative fingerprint
-        neg_fp_outputs, neg_fp_hidden = self.autoencoder(anc_fingerprint)
+        neg_fp_outputs, neg_fp_hidden = self.autoencoder(neg_fingerprint)
         neg_fp_hidden = neg_fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
 
         # decode fragment sequence
