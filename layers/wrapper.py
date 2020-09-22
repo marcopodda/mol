@@ -54,17 +54,17 @@ class Wrapper(pl.LightningModule):
 
         pos_ce_loss = F.cross_entropy(pos_outputs, pos_batch.target, ignore_index=0)
         pos_fp_loss = F.binary_cross_entropy_with_logits(pos_fp_outputs, pos_fp_target)
-        pos_targets = torch.ones((anc_bag.size(0),), device=pos_ce_loss.device)
-        pos_cs_loss = F.cosine_embedding_loss(anc_bag, pos_bag, pos_targets)
+        # pos_targets = torch.ones((anc_bag.size(0),), device=pos_ce_loss.device)
+        # pos_cs_loss = F.cosine_embedding_loss(anc_bag, pos_bag, pos_targets)
         pos_loss = -F.logsigmoid(pos_ce_loss)
 
         neg_ce_loss = F.cross_entropy(neg_outputs, neg_batch.target, ignore_index=0)
         neg_fp_loss = F.binary_cross_entropy_with_logits(neg_fp_outputs, neg_fp_target)
-        neg_targets = -1 * torch.ones((anc_bag.size(0),), device=neg_ce_loss.device)
-        neg_cs_loss = F.cosine_embedding_loss(anc_bag, neg_bag, neg_targets)
+        # neg_targets = 1 * torch.ones((anc_bag.size(0),), device=neg_ce_loss.device)
+        # neg_cs_loss = F.cosine_embedding_loss(anc_bag, neg_bag, neg_targets)
         neg_loss = -F.logsigmoid(-neg_ce_loss)
 
-        total_loss = pos_loss + neg_loss + pos_fp_loss + neg_fp_loss + pos_cs_loss + neg_cs_loss
+        total_loss = pos_loss + neg_loss + pos_fp_loss + neg_fp_loss
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('pl', pos_loss, prog_bar=True)
