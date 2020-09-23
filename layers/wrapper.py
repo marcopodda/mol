@@ -55,7 +55,7 @@ class Wrapper(pl.LightningModule):
         y1_fp_loss = F.binary_cross_entropy_with_logits(x_fp_outputs, y1_fp_target)
         y1_loss = y1_ce_loss + y1_fp_loss
 
-        y2_ce_loss = F.cross_entropy(y2_outputs, y2_batch.target, ignore_index=0)
+        y2_ce_loss = F.cross_entropy(y2_outputs / 100.0, y2_batch.target, ignore_index=0)
         y2_fp_loss = F.binary_cross_entropy_with_logits(x_fp_outputs, y2_fp_target)
         y2_loss = y2_ce_loss + y2_fp_loss
 
