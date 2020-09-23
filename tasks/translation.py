@@ -36,8 +36,8 @@ class TranslationDataset(TrainDataset):
     def get_target_data(self, index, corrupt, reps=1):
         target_smiles = self.data.iloc[index].target
         mol_data = self.data[self.data.smiles==target_smiles].iloc[0]
-        data, frags_list = self._get_data(mol_data.frags, corrupt=corrupt, reps=reps)
-        return data, mol_data.smiles, frags_list
+        data, smiles, frags_list = self._get_data(mol_data.frags, corrupt=corrupt, reps=reps)
+        return data, smiles, frags_list
 
     def __getitem__(self, index):
         anc, anc_smiles, anc_frags = self.get_target_data(index, corrupt=False)

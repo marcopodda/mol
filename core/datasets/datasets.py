@@ -80,7 +80,8 @@ class BaseDataset:
         data["frags_batch"] = torch.cat(frags_batch)
         data["length"] = torch.LongTensor([len(frags_list)])
         data["target"] = self._get_target_sequence(frags_smiles)
-        return data, frags_list
+        smiles = mol_to_smiles(join_fragments(frags_list))
+        return data, smiles, frags_list
 
     def _get_target_sequence(self, frags_smiles):
         seq = [self.vocab[f] + len(Tokens) for f in frags_smiles] + [Tokens.EOS.value]
@@ -90,12 +91,8 @@ class BaseDataset:
     def _get_fingerprint(self, smiles):
         return get_fingerprint(smiles)
 
-    def compute_similarity(self, frags1, frags2):
-        if not isinstance(frags1, str):
-            frags1 = mol_to_smiles(join_fragments(frags1[:]))
-        if not isinstance(frags2, str):
-            frags2 = mol_to_smiles(join_fragments(frags2[:]))
-        return similarity(frags1, frags2)
+    def compute_similarity(self, smi1, smi2):
+        return similarity(smi1, smi2)
 
     def get_dataset(self):
         data, vocab, max_length = load_data(self.dataset_name)
@@ -103,20 +100,19 @@ class BaseDataset:
 
     def get_input_data(self, index, corrupt, reps=1):
         mol_data = self.data.iloc[index]
-        data, frags_list = self._get_data(mol_data.frags, corrupt=corrupt, reps=reps)
-        return data, mol_data.smiles, frags_list
+        data, smiles, frags_list = self._get_data(mol_data.frags, corrupt=corrupt, reps=reps)
+        return data, smiles, frags_list
 
 
 class TrainDataset(BaseDataset):
     def __getitem__(self, index):
         x, x_smiles, x_frags = self.get_input_data(index, corrupt=True, reps=1)
         y, y_smiles, y_frags = self.get_input_data(index, corrupt=False)
-        sim = self.compute_similarity(x_frags, y_frags)
+        sim = self.compute_similarity(x_smiles, y_smiles)
 
         while not 0.05 < sim < 1.0:
             x, x_smiles, x_frags = self.get_input_data(index, corrupt=True, reps=1)
-            y, y_smiles, y_frags = self.get_input_data(index, corrupt=False)
-            sim = self.compute_similarity(x_frags, y_frags)
+            sim = self.compute_similarity(x_smiles, y_smiles)
 
         x_fingerprint = torch.FloatTensor([get_fingerprint(x_smiles)])
         y_fingerprint = torch.FloatTensor([get_fingerprint(y_smiles)])
