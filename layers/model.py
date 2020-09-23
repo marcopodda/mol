@@ -96,10 +96,10 @@ class Model(nn.Module):
         x_outputs, x_hidden, x_bag_of_frags = self.encode(x_batch, x_inputs)
 
         # autoencode input fingerprint
-        x_fp_outputs, x_fp_hidden = self.autoencoder(x_fingerprint)
-        x_fp_hidden = x_fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
+        fp_outputs, fp_hidden = self.autoencoder(x_fingerprint)
+        fp_hidden = fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
 
         # decode input sequence
-        y_outputs, y_bag_of_frags = self.decode(y_batch, y_inputs, x_outputs, x_hidden + x_fp_hidden)
+        outputs, y_bag_of_frags = self.decode(y_batch, y_inputs, x_outputs, x_hidden + fp_hidden)
 
-        return (x_fp_outputs, y_outputs), (x_bag_of_frags, y_bag_of_frags)
+        return (fp_outputs, outputs), (x_bag_of_frags, y_bag_of_frags)

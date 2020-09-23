@@ -48,15 +48,15 @@ class Wrapper(pl.LightningModule):
         x_fp_target, y_fp_target = fingerprints
 
         outputs, bags = self.model(batch)
-        x_fp_outputs, y_outputs, y2_outputs = outputs
-        x_bag, y_bag, y2_bag = bags
+        fp_outputs, outputs = outputs
+        x_bag_of_frags, y_bag_of_frags = bags
 
-        y_ce_loss = F.cross_entropy(y_outputs, y_batch.target, ignore_index=0)
-        y_fp_loss = F.binary_cross_entropy_with_logits(x_fp_outputs, y_fp_target)
-        total_loss = y_ce_loss + y_fp_loss
+        ce_loss = F.cross_entropy(outputs, y_batch.target, ignore_index=0)
+        fp_loss = F.binarcross_entropy_with_logits(fp_outputs, y_fp_target)
+        total_loss = ce_loss + fp_loss
 
         result = pl.TrainResult(minimize=total_loss)
-        result.log('ce', y_ce_loss, prog_bar=True)
-        result.log('bce', y_fp_loss, prog_bar=True)
+        result.log('ce', ce_loss, prog_bar=True)
+        result.log('bce', fp_loss, prog_bar=True)
 
         return result
