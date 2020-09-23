@@ -52,7 +52,7 @@ class Wrapper(pl.LightningModule):
         x_bag_of_frags, y_bag_of_frags = bags
 
         ce_loss = F.cross_entropy(outputs, y_batch.target, ignore_index=0)
-        fp_loss = F.binarcross_entropy_with_logits(fp_outputs, y_fp_target)
+        fp_loss = F.binary_cross_entropy_with_logits(fp_outputs, y_fp_target)
         total_loss = ce_loss + fp_loss
 
         result = pl.TrainResult(minimize=total_loss)
