@@ -22,7 +22,7 @@ class Vocab:
             vocab._idx2frag[idx] = smi
 
         vocab._freq = data.freqs.to_dict()
-        setattr(vocab, "_unigram_prob", data.unigram.values)
+        # setattr(vocab, "_unigram_prob", data.unigram.values)
         return vocab
 
     @classmethod

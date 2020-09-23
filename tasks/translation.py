@@ -46,7 +46,7 @@ class TranslationDataset(TrainDataset):
 
         # pos_sim = self.compute_similarity(anc_smiles, pos_smiles)
         sim = similarity(pos_smiles, neg_smiles)
-        print(sim, pos_smiles, neg_smiles)
+        # print(sim, pos_smiles, neg_smiles)
 
         num_trials, max_trials = 0, 10
         while sim < 0.05 and num_trials < max_trials:
@@ -73,10 +73,11 @@ class TranslationDataset(TrainDataset):
         anc_fingerprint = torch.FloatTensor([np.array(get_fingerprint(anc_smiles))])
         pos_fingerprint = torch.FloatTensor([np.array(get_fingerprint(pos_smiles))])
         # print(pos_smiles, neg_smiles)
-        if neg_smiles == "*":
-            neg_fingerprint = (torch.rand_like(anc_fingerprint) > 0.5).float()
-        else:
-            neg_fingerprint = torch.FloatTensor([np.array(get_fingerprint(neg_smiles))])
+        neg_fingerprint = (torch.rand_like(anc_fingerprint) > 0.5).float()
+        # if neg_smiles == "*":
+        #     neg_fingerprint = (torch.rand_like(anc_fingerprint) > 0.5).float()
+        # else:
+        #     neg_fingerprint = torch.FloatTensor([np.array(get_fingerprint(neg_smiles))])
 
         return neg, pos, anc, neg_fingerprint, pos_fingerprint, anc_fingerprint
 

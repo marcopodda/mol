@@ -89,12 +89,6 @@ class BaseDataset:
         padded_seq = pad(seq, self.max_length)
         return padded_seq
 
-    def _get_fingerprint(self, smiles):
-        return get_fingerprint(smiles)
-
-    def compute_similarity(self, smi1, smi2):
-        return similarity(smi1, smi2)
-
     def get_dataset(self):
         data, vocab, max_length = load_data(self.dataset_name)
         return data, vocab, max_length
