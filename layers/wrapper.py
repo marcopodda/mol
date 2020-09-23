@@ -63,7 +63,7 @@ class Wrapper(pl.LightningModule):
 
         p = torch.matmul(anc_bag, pos_bag.transpose(1, 0)).sum()
         n = torch.matmul(anc_bag, neg_bag.transpose(1, 0)).sum()
-        closs = -(F.logsigmoid(p) + F.logsigmoid(-n)).mean()
+        closs = -(F.logsigmoid(p) + F.logsigmoid(-n))
 
         total_loss = pos_loss + closs
 
