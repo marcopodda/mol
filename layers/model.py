@@ -81,9 +81,9 @@ class Model(nn.Module):
         encoder_outputs, encoder_hidden = self.encoder(encoder_inputs)
         return encoder_outputs, encoder_hidden, bag_of_frags
 
-    def decode(self, output_frags, decoder_inputs, encoder_hidden, encoder_outputs):
+    def decode(self, output_frags, decoder_inputs, encoder_outputs, encoder_hidden):
         decoder_inputs, bag_of_frags = self.embedder(output_frags, decoder_inputs, input=True)
-        decoder_outputs = self.decoder(decoder_inputs, encoder_hidden, encoder_outputs)
+        decoder_outputs = self.decoder(decoder_inputs, encoder_outputs, encoder_hidden)
         return decoder_outputs, bag_of_frags
 
     def forward(self, batch):
@@ -100,7 +100,7 @@ class Model(nn.Module):
         x_fp_hidden = x_fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
 
         # decode input sequence
-        y1_outputs, y1_bag_of_frags = self.decode(y1_batch, y1_inputs, x_hidden + x_fp_hidden, x_outputs)
-        y2_outputs, y2_bag_of_frags = self.decode(y2_batch, y2_inputs, x_hidden + x_fp_hidden, x_outputs)
+        y1_outputs, y1_bag_of_frags = self.decode(y1_batch, y1_inputs, x_outputs, x_hidden + x_fp_hidden)
+        y2_outputs, y2_bag_of_frags = self.decode(y2_batch, y2_inputs, x_outputs, x_hidden + x_fp_hidden)
 
         return (x_fp_outputs, y1_outputs, y2_outputs), (x_bag_of_frags, y1_bag_of_frags, y2_bag_of_frags)

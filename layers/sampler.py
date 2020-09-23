@@ -104,8 +104,8 @@ class Sampler:
     def generate_batch(self, data, model, embedder, temp, greedy):
         frags, fingerprints, enc_inputs = data
 
-        enc_outputs, encoder_hidden, _ = model.encode(frags, enc_inputs)
-        batch_size = enc_outputs.size(0)
+        encoder_outputs, encoder_hidden, _ = model.encode(frags, enc_inputs)
+        batch_size = encoder_outputs.size(0)
 
         autoencoder_hidden = model.autoencoder.encode(fingerprints)
         autoencoder_hidden = autoencoder_hidden.repeat(self.hparams.rnn_num_layers, 1, 1)
@@ -116,7 +116,7 @@ class Sampler:
         samples = torch.zeros((batch_size, self.max_length), device=hidden.device)
 
         for it in range(self.max_length):
-            logits, hidden, _ = model.decoder.decode_with_attention(x, hidden, enc_outputs)
+            logits, hidden, _ = model.decoder.decode_with_attention(x, encoder_outputs, hidden)
 
             if greedy:
                 probs = torch.log_softmax(logits, dim=-1)
@@ -154,7 +154,7 @@ class Sampler:
         topk = beam_size  # how many sentence do you want to generate
 
         frags, enc_inputs = data
-        enc_outputs, hidden, _ = model.encode(frags, enc_inputs)
+        encoder_outputs, hidden, _ = model.encode(frags, enc_inputs)
 
         # Number of sentence to generate
         endnodes = []
@@ -188,7 +188,7 @@ class Sampler:
 
             # decode for one step using decoder
             x = embedder(token)
-            logits, hidden, _ = model.decoder.decode_with_attention(x, hidden, enc_outputs)
+            logits, hidden, _ = model.decoder.decode_with_attention(x, hidden, encoder_outputs)
             logits = torch.log_softmax(logits, dim=-1)
 
             # PUT HERE REAL BEAM SEARCH OF TOP
