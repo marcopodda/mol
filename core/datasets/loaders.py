@@ -71,7 +71,7 @@ class TrainDataLoader(BaseDataLoader):
         D = self.hparams.frag_dim_embed
 
         lengths = [m.length for m in x]
-        x_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=lengths)
+        x_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=x_batch.length)
         y1_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
         y2_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
 
