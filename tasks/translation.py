@@ -45,13 +45,13 @@ class TranslationDataset(TrainDataset):
         neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=1)
 
         # pos_sim = self.compute_similarity(anc_smiles, pos_smiles)
-        # neg_sim = self.compute_similarity(anc_smiles, neg_frags)
+        neg_sim = self.compute_similarity(anc_smiles, neg_smiles)
 
-        # num_trials, max_trials = 0, 10
-        # while (neg_sim > 0.4 or neg_sim < 0.05) and num_trials < max_trials:
-        #     neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=1)
-        #     neg_sim = self.compute_similarity(anc_smiles, neg_frags)
-        #     num_trials += 1
+        num_trials, max_trials = 0, 10
+        while (neg_sim > 0.4 or neg_sim < 0.05) and num_trials < max_trials:
+            neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=1)
+            neg_sim = self.compute_similarity(anc_smiles, neg_smiles)
+            num_trials += 1
 
         # if neg_sim > pos_sim:
         #     # swap
