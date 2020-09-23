@@ -61,7 +61,7 @@ class Wrapper(pl.LightningModule):
 
         kl = F.kl_div(torch.softmax(y1_outputs, dim=-1), torch.softmax(y2_outputs, dim=-1))
 
-        total_loss = y1_loss + y2_loss + kl
+        total_loss = y1_loss + y2_loss - kl
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('y1l', y1_loss, prog_bar=True)
