@@ -77,7 +77,6 @@ class TranslationDataset(TrainDataset):
         if neg_smiles == "*":
             neg_fingerprint = (torch.rand_like(anc_fingerprint) > 0.5).float()
         else:
-            print(neg_smiles)
             neg_fingerprint = torch.FloatTensor([np.array(get_fingerprint(neg_smiles))])
 
         return neg, pos, anc, neg_fingerprint, pos_fingerprint, anc_fingerprint
