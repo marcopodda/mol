@@ -73,7 +73,7 @@ class TranslationDataset(TrainDataset):
         pos_fingerprint = torch.FloatTensor([get_fingerprint(pos_smiles)])
         neg_fingerprint = torch.FloatTensor([get_fingerprint(neg_smiles)])
 
-        return anc, pos, neg, anc_fingerprint, pos_fingerprint, neg_fingerprint
+        return neg, pos, neg, neg_fingerprint, pos_fingerprint, neg_fingerprint
 
 class TranslationWrapper(Wrapper):
     dataset_class = TranslationDataset

@@ -61,15 +61,15 @@ class Wrapper(pl.LightningModule):
         # neg_fp_loss = F.binary_cross_entropy_with_logits(neg_fp_outputs, anc_fp_target)
         # neg_loss = neg_ce_loss + neg_fp_loss
 
-        p = torch.matmul(anc_bag, pos_bag.transpose(1, 0)).sum()
-        n = torch.matmul(anc_bag, neg_bag.transpose(1, 0)).sum()
-        closs = -(F.logsigmoid(p) + F.logsigmoid(-n))
+        # p = torch.matmul(anc_bag, pos_bag.transpose(1, 0)).sum()
+        # n = torch.matmul(anc_bag, neg_bag.transpose(1, 0)).sum()
+        # closs = -(F.logsigmoid(p) + F.logsigmoid(-n))
 
-        p = torch.matmul(torch.sigmoid(pos_fp_outputs), anc_fp_target.transpose(1, 0)).sum()
-        n = torch.matmul(torch.sigmoid(neg_fp_outputs), anc_fp_target.transpose(1, 0)).sum()
-        fploss = -(F.logsigmoid(p) + F.logsigmoid(-n))
+        # p = torch.matmul(torch.sigmoid(pos_fp_outputs), anc_fp_target.transpose(1, 0)).sum()
+        # n = torch.matmul(torch.sigmoid(neg_fp_outputs), anc_fp_target.transpose(1, 0)).sum()
+        # fploss = -(F.logsigmoid(p) + F.logsigmoid(-n))
 
-        total_loss = pos_loss + closs + fploss
+        total_loss = pos_loss  #  + closs + fploss
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('pl', pos_loss, prog_bar=True)
