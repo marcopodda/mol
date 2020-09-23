@@ -65,7 +65,11 @@ class Wrapper(pl.LightningModule):
         n = torch.matmul(anc_bag, neg_bag.transpose(1, 0)).sum()
         closs = -(F.logsigmoid(p) + F.logsigmoid(-n))
 
-        total_loss = pos_loss + closs
+        p = torch.matmul(pos_fp_outputs, anc_batch.transpose(1, 0)).sum()
+        n = torch.matmul(neg_fp_outputs, anc_batch.transpose(1, 0)).sum()
+        fploss = -(F.logsigmoid(p) + F.logsigmoid(-n))
+
+        total_loss = pos_loss + closs + fploss
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('pl', pos_loss, prog_bar=True)
