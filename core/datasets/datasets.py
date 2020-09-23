@@ -81,7 +81,6 @@ class BaseDataset:
         data["length"] = torch.LongTensor([len(frags_list)])
         data["target"] = self._get_target_sequence(frags_smiles)
         rec = join_fragments(frags_list)
-        print(rec)
         smiles = mol_to_smiles(rec)
         return data, smiles
 
