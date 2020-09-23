@@ -70,11 +70,10 @@ class TrainDataLoader(BaseDataLoader):
         L = self.dataset.max_length
         D = self.hparams.frag_dim_embed
 
-        x_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=0)
-        lengths = [m.length for m in y1]
-        y1_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=lengths)
-        lengths = [m.length for m in y2]
-        y2_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=lengths)
+        lengths = [m.length for m in x]
+        x_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=lengths)
+        y1_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
+        y2_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
 
         x_fingerprint = torch.cat(x_fingerprint, dim=0)
         y1_fingerprint = torch.cat(y1_fingerprint, dim=0)
