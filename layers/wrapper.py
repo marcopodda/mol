@@ -44,36 +44,26 @@ class Wrapper(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         batches, fingerprints, _ = batch
-        anc_batch, pos_batch, neg_batch = batches
-        anc_fp_target, _, _ = fingerprints
+        x_batch, y1_batch, y2_batch = batches
+        x_fp_target, y1_fp_target, y2_fp_target = fingerprints
 
-        outputs, fp_outputs, bags = self.model(batch)
+        outputs, bags = self.model(batch)
+        x_fp_outputs, y1_outputs, y2_outputs = outputs
+        x_bag, y1_bag, y2_bag = bags
 
-        anc_pos_outputs, anc_neg_outputs = outputs
-        pos_fp_outputs, neg_fp_outputs = fp_outputs
-        anc_bag, pos_bag, neg_bag = bags
+        y1_ce_loss = F.cross_entropy(y1_outputs, y1_batch.target, ignore_index=0)
+        y1_fp_loss = F.binary_cross_entropy_with_logits(x_fp_outputs, y1_fp_target)
+        y1_loss = y1_ce_loss + y1_fp_loss
 
-        pos_ce_loss = F.cross_entropy(anc_pos_outputs, anc_batch.target, ignore_index=0)
-        pos_fp_loss = F.binary_cross_entropy_with_logits(pos_fp_outputs, anc_fp_target)
-        pos_loss = pos_ce_loss + pos_fp_loss
+        y2_ce_loss = F.cross_entropy(y2_outputs, y2_batch.target, ignore_index=0)
+        y2_fp_loss = F.binary_cross_entropy_with_logits(x_fp_outputs, y2_fp_target)
+        y2_loss = y2_ce_loss + y2_fp_loss
 
-        # neg_ce_loss = F.cross_entropy(anc_neg_outputs, anc_batch.target, ignore_index=0)
-        # neg_fp_loss = F.binary_cross_entropy_with_logits(neg_fp_outputs, anc_fp_target)
-        # neg_loss = neg_ce_loss + neg_fp_loss
-
-        # p = torch.matmul(anc_bag, pos_bag.transpose(1, 0)).sum()
-        # n = torch.matmul(anc_bag, neg_bag.transpose(1, 0)).sum()
-        # closs = -(F.logsigmoid(p) + F.logsigmoid(-n))
-
-        # p = torch.matmul(torch.sigmoid(pos_fp_outputs), anc_fp_target.transpose(1, 0)).sum()
-        # n = torch.matmul(torch.sigmoid(neg_fp_outputs), anc_fp_target.transpose(1, 0)).sum()
-        # fploss = -(F.logsigmoid(p) + F.logsigmoid(-n))
-
-        total_loss = pos_loss  #  + closs + fploss
+        total_loss = y1_loss + y2_loss
 
         result = pl.TrainResult(minimize=total_loss)
-        result.log('pl', pos_loss, prog_bar=True)
-        # result.log('nl', neg_loss, prog_bar=True)
+        result.log('y1l', y1_loss, prog_bar=True)
+        result.log('y2l', y2_loss, prog_bar=True)
         # result.log('cl', closs, prog_bar=True)
 
         return result

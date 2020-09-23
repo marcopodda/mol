@@ -58,29 +58,29 @@ class TrainDataLoader(BaseDataLoader):
             raise Exception("Works only for TrainDataset")
 
     def collate(self, data_list):
-        anc, pos, neg, anc_fingerprint, pos_fingerprint, neg_fingerprint = zip(*data_list)
+        x, y1, y2, x_fingerprint, y1_fingerprint, y2_fingerprint = zip(*data_list)
         sos = self.dataset.sos
         eos = self.dataset.eos
 
-        anc_batch = collate_frags(anc)
-        pos_batch = collate_frags(pos)
-        neg_batch = collate_frags(neg)
+        x_batch = collate_frags(x)
+        y1_batch = collate_frags(y1)
+        y2_batch = collate_frags(y2)
 
-        B = len(anc)
+        B = len(x)
         L = self.dataset.max_length
         D = self.hparams.frag_dim_embed
 
-        anc_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=0)
-        lengths = [m.length for m in pos]
-        pos_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=lengths)
-        lengths = [m.length for m in neg]
-        neg_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=lengths)
+        x_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=0)
+        lengths = [m.length for m in y1]
+        y1_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=lengths)
+        lengths = [m.length for m in y2]
+        y2_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=lengths)
 
-        anc_fingerprint = torch.cat(anc_fingerprint, dim=0)
-        pos_fingerprint = torch.cat(pos_fingerprint, dim=0)
-        neg_fingerprint = torch.cat(neg_fingerprint, dim=0)
+        x_fingerprint = torch.cat(x_fingerprint, dim=0)
+        y1_fingerprint = torch.cat(y1_fingerprint, dim=0)
+        y2_fingerprint = torch.cat(y2_fingerprint, dim=0)
 
-        return (anc_batch, pos_batch, neg_batch), (anc_fingerprint, pos_fingerprint, neg_fingerprint), (anc_inputs, pos_inputs, neg_inputs)
+        return (x_batch, y1_batch, y2_batch), (x_fingerprint, y1_fingerprint, y2_fingerprint), (x_inputs, y1_inputs, y2_inputs)
 
 
 class EvalDataLoader(BaseDataLoader):

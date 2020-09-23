@@ -40,41 +40,25 @@ class TranslationDataset(TrainDataset):
         return data, smiles
 
     def __getitem__(self, index):
-        anc, anc_smiles = self.get_target_data(index, corrupt=False)
-        pos, pos_smiles = self.get_input_data(index, corrupt=False)
-        neg, neg_smiles = self.get_input_data(index, corrupt=True, reps=1)
+        x, x_smiles = self.get_input_data(index, corrupt=True, reps=1)
+        y1, y1_smiles = self.get_input_data(index, corrupt=False)
+        y2, y2_smiles = self.get_target_data(index, corrupt=False)
 
-        # pos_sim = self.compute_similarity(anc_smiles, pos_smiles)
-        sim = similarity(pos_smiles, neg_smiles)
-        # print(sim, pos_smiles, neg_smiles)
+        # y1_y1 = self.compute_y1ilarity(y2_smiles, y1_smiles)
+        sim = similarity(y1_smiles, x_smiles)
+        # print(y1, y1_smiles, neg_smiles)
 
         num_trials, max_trials = 0, 10
         while sim < 0.05 and num_trials < max_trials:
-            neg, neg_smiles = self.get_input_data(index, corrupt=True, reps=1)
-            sim = similarity(pos_smiles, neg_smiles)
+            x, x_smiles = self.get_input_data(index, corrupt=True, reps=1)
+            sim = similarity(y1_smiles, x_smiles)
             num_trials += 1
 
-        # if neg_sim > pos_sim:
-        #     # swap
-        #     temp = pos.clone()
-        #     pos = neg.clone()
-        #     neg = temp.clone()
-        #     del temp
+        x_fingerprint = torch.FloatTensor([get_fingerprint(x_smiles)])
+        y1_fingerprint = torch.FloatTensor([get_fingerprint(y1_smiles)])
+        y2_fingerprint = torch.FloatTensor([get_fingerprint(y2_smiles)])
 
-        #     temp = pos_smiles
-        #     pos_smiles = neg_smiles
-        #     neg_smiles = temp
-
-        #     temp = pos_sim
-        #     pos_sim = neg_sim
-        #     neg_sim = temp
-
-        # print(pos_sim, neg_sim)
-        anc_fingerprint = torch.FloatTensor([get_fingerprint(anc_smiles)])
-        pos_fingerprint = torch.FloatTensor([get_fingerprint(pos_smiles)])
-        neg_fingerprint = torch.FloatTensor([get_fingerprint(neg_smiles)])
-
-        return pos, neg, anc, pos_fingerprint, neg_fingerprint, anc_fingerprint
+        return x, y1, y2, x_fingerprint, y1_fingerprint, y2_fingerprint
 
 
 class TranslationWrapper(Wrapper):

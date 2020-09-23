@@ -88,24 +88,19 @@ class Model(nn.Module):
 
     def forward(self, batch):
         batches, fingerprints, inputs = batch
-        anc_batch, pos_batch, neg_batch = batches
-        anc_fingerprint, pos_fingerprint, neg_fingerprint = fingerprints
-        anc_inputs, pos_inputs, neg_inputs = inputs
+        x_batch, y1_batch, y2_batch = batches
+        x_fingerprint, y1_fingerprint, y2_fingerprint = fingerprints
+        x_inputs, y1_inputs, y2_inputs = inputs
 
-        # encode positive fragment sequence
-        pos_outputs, pos_hidden, pos_bag_of_frags = self.encode(pos_batch, pos_inputs)
-        # autoencode positive fingerprint
-        pos_fp_outputs, pos_fp_hidden = self.autoencoder(pos_fingerprint)
-        pos_fp_hidden = pos_fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
+        # encode input fragment sequence
+        x_outputs, x_hidden, x_bag_of_frags = self.encode(x_batch, x_inputs)
 
-        # encode negative fragment sequence
-        neg_outputs, neg_hidden, neg_bag_of_frags = self.encode(neg_batch, neg_inputs)
-        # autoencode negative fingerprint
-        neg_fp_outputs, neg_fp_hidden = self.autoencoder(neg_fingerprint)
-        neg_fp_hidden = neg_fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
+        # autoencode input fingerprint
+        x_fp_outputs, x_fp_hidden = self.autoencoder(x_fingerprint)
+        x_fp_hidden = x_fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
 
-        # decode anchor fragment sequence
-        anc_pos_outputs, anc_bag_of_frags = self.decode(anc_batch.clone(), anc_inputs.clone(), pos_hidden + pos_fp_hidden, pos_outputs)
-        anc_neg_outputs, anc_bag_of_frags = self.decode(anc_batch.clone(), anc_inputs.clone(), neg_hidden + neg_fp_hidden, neg_outputs)
+        # decode input sequence
+        y1_outputs, y1_bag_of_frags = self.decode(y1_batch, y1_inputs, x_hidden + x_fp_hidden, x_outputs)
+        y2_outputs, y2_bag_of_frags = self.decode(y2_batch, y2_inputs, x_hidden + x_fp_hidden, x_outputs)
 
-        return (anc_pos_outputs, anc_neg_outputs), (pos_fp_outputs, neg_fp_outputs), (anc_bag_of_frags, pos_bag_of_frags, neg_bag_of_frags)
+        return (x_fp_outputs, y1_outputs, y2_outputs), (x_bag_of_frags, y1_bag_of_frags, y2_bag_of_frags)
