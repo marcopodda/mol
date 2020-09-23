@@ -40,25 +40,13 @@ class TranslationDataset(TrainDataset):
         return data, smiles
 
     def __getitem__(self, index):
-        x, x_smiles = self.get_input_data(index, corrupt=False, reps=1)
-        y1, y1_smiles = self.get_input_data(index, corrupt=False)
-        y2, y2_smiles = self.get_target_data(index, corrupt=False)
-
-        # y1_y1 = self.compute_y1ilarity(y2_smiles, y1_smiles)
-        sim = similarity(y2_smiles, x_smiles)
-        # print(y1, y1_smiles, neg_smiles)
-
-        num_trials, max_trials = 0, 10
-        while sim < 0.4 and num_trials < max_trials:
-            x, x_smiles = self.get_target_data(index, corrupt=True, reps=1)
-            sim = similarity(y2_smiles, x_smiles)
-            num_trials += 1
+        x, x_smiles = self.get_input_data(index, corrupt=False)
+        y, y_smiles = self.get_target_data(index, corrupt=False)
 
         x_fingerprint = torch.FloatTensor([get_fingerprint(x_smiles)])
-        y1_fingerprint = torch.FloatTensor([get_fingerprint(y1_smiles)])
-        y2_fingerprint = torch.FloatTensor([get_fingerprint(y2_smiles)])
+        y_fingerprint = torch.FloatTensor([get_fingerprint(y_smiles)])
 
-        return x, y1, y2, x_fingerprint, y1_fingerprint, y2_fingerprint
+        return x, y, x_fingerprint, y_fingerprint
 
 
 class TranslationWrapper(Wrapper):
@@ -70,7 +58,7 @@ class TranslationWrapper(Wrapper):
 
 class TranslationSampler(Sampler):
     def prepare_data(self):
-        batch_size = self.hparams.translate_batch_size  # 1
+        batch_size = self.hparams.translate_batch_size
         indices = self.dataset.data[self.dataset.data.is_val == True].index.tolist()
         loader = EvalDataLoader(self.hparams, self.dataset, indices=indices)
         smiles = self.dataset.data.smiles[indices].tolist()

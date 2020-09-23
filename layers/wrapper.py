@@ -44,26 +44,19 @@ class Wrapper(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         batches, fingerprints, _ = batch
-        x_batch, y1_batch, y2_batch = batches
-        x_fp_target, y1_fp_target, y2_fp_target = fingerprints
+        x_batch, y_batch = batches
+        x_fp_target, y_fp_target = fingerprints
 
         outputs, bags = self.model(batch)
-        x_fp_outputs, y1_outputs, y2_outputs = outputs
-        x_bag, y1_bag, y2_bag = bags
+        x_fp_outputs, y_outputs, y2_outputs = outputs
+        x_bag, y_bag, y2_bag = bags
 
-        y1_ce_loss = F.cross_entropy(y1_outputs, y1_batch.target, ignore_index=0)
-        y1_fp_loss = F.binary_cross_entropy_with_logits(x_fp_outputs, y1_fp_target)
-        y1_loss = y1_ce_loss + y1_fp_loss
-
-        y2_ce_loss = F.cross_entropy(y2_outputs / 100.0, y2_batch.target, ignore_index=0)
-        y2_fp_loss = F.binary_cross_entropy_with_logits(x_fp_outputs, y2_fp_target)
-        y2_loss = y2_ce_loss + y2_fp_loss
-
-        total_loss = y2_loss
+        y_ce_loss = F.cross_entropy(y_outputs, y_batch.target, ignore_index=0)
+        y_fp_loss = F.binary_cross_entropy_with_logits(x_fp_outputs, y_fp_target)
+        total_loss = y_ce_loss + y_fp_loss
 
         result = pl.TrainResult(minimize=total_loss)
-        result.log('y1l', y1_loss, prog_bar=True)
-        result.log('y2l', y2_loss, prog_bar=True)
-        # result.log('cl', closs, prog_bar=True)
+        result.log('ce', y_ce_loss, prog_bar=True)
+        result.log('bce', y_fp_loss, prog_bar=True)
 
         return result

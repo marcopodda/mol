@@ -58,13 +58,12 @@ class TrainDataLoader(BaseDataLoader):
             raise Exception("Works only for TrainDataset")
 
     def collate(self, data_list):
-        x, y1, y2, x_fingerprint, y1_fingerprint, y2_fingerprint = zip(*data_list)
+        x, y, x_fingerprint, y_fingerprint = zip(*data_list)
         sos = self.dataset.sos
         eos = self.dataset.eos
 
         x_batch = collate_frags(x)
-        y1_batch = collate_frags(y1)
-        y2_batch = collate_frags(y2)
+        y_batch = collate_frags(y)
 
         B = len(x)
         L = self.dataset.max_length
@@ -72,14 +71,12 @@ class TrainDataLoader(BaseDataLoader):
 
         lengths = [m.length for m in x]
         x_inputs = prefilled_tensor(dims=(B, L, D), fill_with=eos.clone(), fill_at=x_batch.length)
-        y1_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
-        y2_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
+        y_inputs = prefilled_tensor(dims=(B, L, D), fill_with=sos.clone(), fill_at=0)
 
         x_fingerprint = torch.cat(x_fingerprint, dim=0)
-        y1_fingerprint = torch.cat(y1_fingerprint, dim=0)
-        y2_fingerprint = torch.cat(y2_fingerprint, dim=0)
+        y_fingerprint = torch.cat(y_fingerprint, dim=0)
 
-        return (x_batch, y1_batch, y2_batch), (x_fingerprint, y1_fingerprint, y2_fingerprint), (x_inputs, y1_inputs, y2_inputs)
+        return (x_batch, y_batch), (x_fingerprint, y_fingerprint), (x_inputs, y_inputs)
 
 
 class EvalDataLoader(BaseDataLoader):

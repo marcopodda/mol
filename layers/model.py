@@ -88,9 +88,9 @@ class Model(nn.Module):
 
     def forward(self, batch):
         batches, fingerprints, inputs = batch
-        x_batch, y1_batch, y2_batch = batches
-        x_fingerprint, y1_fingerprint, y2_fingerprint = fingerprints
-        x_inputs, y1_inputs, y2_inputs = inputs
+        x_batch, y_batch = batches
+        x_fingerprint, y_fingerprint = fingerprints
+        x_inputs, y_inputs = inputs
 
         # encode input fragment sequence
         x_outputs, x_hidden, x_bag_of_frags = self.encode(x_batch, x_inputs)
@@ -100,7 +100,6 @@ class Model(nn.Module):
         x_fp_hidden = x_fp_hidden.transpose(1, 0).repeat(self.decoder_num_layers, 1, 1)
 
         # decode input sequence
-        y1_outputs, y1_bag_of_frags = self.decode(y1_batch, y1_inputs, x_outputs, x_hidden + x_fp_hidden)
-        y2_outputs, y2_bag_of_frags = self.decode(y2_batch, y2_inputs, x_outputs, x_hidden + x_fp_hidden)
+        y_outputs, y_bag_of_frags = self.decode(y_batch, y_inputs, x_outputs, x_hidden + x_fp_hidden)
 
-        return (x_fp_outputs, y1_outputs, y2_outputs), (x_bag_of_frags, y1_bag_of_frags, y2_bag_of_frags)
+        return (x_fp_outputs, y_outputs), (x_bag_of_frags, y_bag_of_frags)
