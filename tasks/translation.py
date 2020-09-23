@@ -79,7 +79,7 @@ class TranslationDataset(TrainDataset):
         else:
             neg_fingerprint = torch.FloatTensor([np.array(get_fingerprint(neg_smiles))])
 
-        return neg, pos, anc, neg_fingerprint, pos_fingerprint, anc_fingerprint
+        return pos, neg, anc, pos_fingerprint, neg_fingerprint, anc_fingerprint
 
 
 class TranslationWrapper(Wrapper):
