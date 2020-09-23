@@ -100,7 +100,7 @@ class BaseDataset:
 
     def get_input_data(self, index, corrupt, reps=1):
         mol_data = self.data.iloc[index]
-        data, smiles, frags_list = self._get_data(mol_data.frags, corrupt=corrupt, reps=reps)
+        data, smiles = self._get_data(mol_data.frags, corrupt=corrupt, reps=reps)
         return data, smiles
 
 
