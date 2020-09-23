@@ -45,12 +45,13 @@ class TranslationDataset(TrainDataset):
         neg, neg_smiles = self.get_input_data(index, corrupt=True, reps=1)
 
         # pos_sim = self.compute_similarity(anc_smiles, pos_smiles)
-        neg_sim = self.compute_similarity(pos_smiles, neg_smiles)
+        sim = similarity(pos_smiles, neg_smiles)
+        print(sim, pos_smiles, neg_smiles)
 
         num_trials, max_trials = 0, 10
-        while neg_sim < 0.05 and num_trials < max_trials:
+        while sim < 0.05 and num_trials < max_trials:
             neg, neg_smiles = self.get_input_data(index, corrupt=True, reps=1)
-            neg_sim = self.compute_similarity(pos_smiles, neg_smiles)
+            sim = similarity(pos_smiles, neg_smiles)
             num_trials += 1
 
         # if neg_sim > pos_sim:

@@ -80,7 +80,9 @@ class BaseDataset:
         data["frags_batch"] = torch.cat(frags_batch)
         data["length"] = torch.LongTensor([len(frags_list)])
         data["target"] = self._get_target_sequence(frags_smiles)
-        smiles = mol_to_smiles(join_fragments(frags_list))
+        rec = join_fragments(frags_list)
+        print(rec)
+        smiles = mol_to_smiles(rec)
         return data, smiles
 
     def _get_target_sequence(self, frags_smiles):
@@ -108,11 +110,11 @@ class TrainDataset(BaseDataset):
     def __getitem__(self, index):
         x, x_smiles = self.get_input_data(index, corrupt=True, reps=1)
         y, y_smiles = self.get_input_data(index, corrupt=False)
-        sim = self.compute_similarity(x_smiles, y_smiles)
+        sim = similarity(x_smiles, y_smiles)
 
         while not 0.05 < sim < 1.0:
             x, x_smiles = self.get_input_data(index, corrupt=True, reps=1)
-            sim = self.compute_similarity(x_smiles, y_smiles)
+            sim = similarity(x_smiles, y_smiles)
 
         x_fingerprint = torch.FloatTensor([get_fingerprint(x_smiles)])
         y_fingerprint = torch.FloatTensor([get_fingerprint(y_smiles)])
