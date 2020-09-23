@@ -50,7 +50,7 @@ class TranslationDataset(TrainDataset):
 
         num_trials, max_trials = 0, 10
         while sim < 0.4 and num_trials < max_trials:
-            x, x_smiles = self.get_input_data(index, corrupt=True, reps=1)
+            x, x_smiles = self.get_target_data(index, corrupt=True, reps=1)
             sim = similarity(y2_smiles, x_smiles)
             num_trials += 1
 
