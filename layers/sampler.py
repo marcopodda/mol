@@ -84,7 +84,7 @@ class Sampler:
                 start = idx * batch_size
                 end = start + batch_length
                 refs = smiles[start:end] # * len(gens)
-                print(len(refs), len(gens))
+                print(len(refs), len(gens), start, end)
 
                 for ref, gen in zip(refs, gens):
                     if len(gen) >= 2:
