@@ -122,7 +122,7 @@ class TrainDataset(BaseDataset):
 
 class EvalDataset(BaseDataset):
     def __getitem__(self, index):
-        x_molecule, x_smiles, _ = self.get_input_data(index, corrupt=False)
+        x_molecule, x_smiles = self.get_input_data(index, corrupt=False)
         x_fingerprint = torch.FloatTensor([[get_fingerprint(x_smiles)]])
         return x_molecule, x_fingerprint
 
