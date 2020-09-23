@@ -93,6 +93,8 @@ def qed(mol):
 def get_fingerprint(mol):
     if isinstance(mol, str):
         mol = mol_from_smiles(mol)
+    if mol is None:
+        mol = mol_from_smiles("*")
     return AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, nBits=2048, useChirality=False)
 
 
