@@ -36,21 +36,21 @@ class TranslationDataset(TrainDataset):
     def get_target_data(self, index, corrupt, reps=1):
         target_smiles = self.data.iloc[index].target
         mol_data = self.data[self.data.smiles==target_smiles].iloc[0]
-        data, smiles, frags_list = self._get_data(mol_data.frags, corrupt=corrupt, reps=reps)
-        return data, smiles, frags_list
+        data, smiles = self._get_data(mol_data.frags, corrupt=corrupt, reps=reps)
+        return data, smiles
 
     def __getitem__(self, index):
-        anc, anc_smiles, anc_frags = self.get_target_data(index, corrupt=False)
-        pos, pos_smiles, pos_frags = self.get_input_data(index, corrupt=False)
-        neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=1)
+        anc, anc_smiles = self.get_target_data(index, corrupt=False)
+        pos, pos_smiles = self.get_input_data(index, corrupt=False)
+        neg, neg_smiles = self.get_input_data(index, corrupt=True, reps=1)
 
         # pos_sim = self.compute_similarity(anc_smiles, pos_smiles)
-        neg_sim = self.compute_similarity(anc_smiles, neg_smiles)
+        neg_sim = self.compute_similarity(pos_smiles, neg_smiles)
 
         num_trials, max_trials = 0, 10
-        while (neg_sim > 0.4 or neg_sim < 0.05) and num_trials < max_trials:
-            neg, neg_smiles, neg_frags = self.get_input_data(index, corrupt=True, reps=1)
-            neg_sim = self.compute_similarity(anc_smiles, neg_smiles)
+        while neg_sim < 0.05 and num_trials < max_trials:
+            neg, neg_smiles = self.get_input_data(index, corrupt=True, reps=1)
+            neg_sim = self.compute_similarity(pos_smiles, neg_smiles)
             num_trials += 1
 
         # if neg_sim > pos_sim:
@@ -69,15 +69,15 @@ class TranslationDataset(TrainDataset):
         #     neg_sim = temp
 
         # print(pos_sim, neg_sim)
-        anc_fingerprint = torch.FloatTensor([get_fingerprint(anc_smiles)])
-        pos_fingerprint = torch.FloatTensor([get_fingerprint(pos_smiles)])
+        anc_fingerprint = torch.FloatTensor([np.array(get_fingerprint(anc_smiles))])
+        pos_fingerprint = torch.FloatTensor([np.array(get_fingerprint(pos_smiles))])
         # print(pos_smiles, neg_smiles)
         if neg_smiles == "*":
             neg_fingerprint = (torch.rand_like(anc_fingerprint) > 0.5).float()
         else:
-            neg_fingerprint = torch.FloatTensor([get_fingerprint(neg_smiles)])
+            neg_fingerprint = torch.FloatTensor([np.array(get_fingerprint(neg_smiles))])
 
-        return neg, pos, neg, neg_fingerprint, pos_fingerprint, neg_fingerprint
+        return neg, pos, anc, neg_fingerprint, pos_fingerprint, anc_fingerprint
 
 
 class TranslationWrapper(Wrapper):
