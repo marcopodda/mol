@@ -40,7 +40,7 @@ class TranslationDataset(TrainDataset):
         return data, smiles
 
     def __getitem__(self, index):
-        x, x_smiles = self.get_input_data(index, corrupt=True, reps=1)
+        x, x_smiles = self.get_target_data(index, corrupt=True, reps=1)
         y1, y1_smiles = self.get_input_data(index, corrupt=False)
         y2, y2_smiles = self.get_target_data(index, corrupt=False)
 
