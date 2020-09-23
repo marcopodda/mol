@@ -128,7 +128,7 @@ class EvalDataset(BaseDataset):
 
     def get_dataset(self):
         data, vocab, max_length = super().get_dataset()
-        data = data[data.is_test == True].reset_index(drop=True)
+        data = data[data.is_train == True].reset_index(drop=True)[:300]
         return data, vocab, max_length
 
 
