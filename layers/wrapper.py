@@ -59,7 +59,7 @@ class Wrapper(pl.LightningModule):
         y2_fp_loss = F.binary_cross_entropy_with_logits(x_fp_outputs, y2_fp_target)
         y2_loss = y2_ce_loss + y2_fp_loss
 
-        total_loss = y1_loss + y2_loss
+        total_loss = y2_loss
 
         result = pl.TrainResult(minimize=total_loss)
         result.log('y1l', y1_loss, prog_bar=True)
